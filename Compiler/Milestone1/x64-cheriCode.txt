@@ -1,0 +1,18 @@
+Instructions:
+
+x64				Cheri-Risc-V					Meaning
+
+mov  triv, triv									Move 			
+add  triv, triv									Add
+imul triv, triv									Multiply
+
+
+Code:
+x64				Cheri-Risc-V
+
+mov rax, 170679
+mov rdi, rax
+add rdi, rdi
+mov rsp, rdi
+imul rsp, rsp
+mov rbx, 8991

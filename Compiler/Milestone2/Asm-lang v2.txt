@@ -1,0 +1,20 @@
+p	::=	(module info tail)
+ 	 	 	 	 
+info	::=	info?
+ 	 	 	 	 
+tail	::=	(halt triv)
+ 	|	(begin effect ... tail)
+ 	 	 	 	 
+effect	::=	(set! aloc triv)
+ 	|	(set! aloc_1 (binop aloc_1 triv))
+ 	|	(begin effect ... effect)
+ 	 	 	 	 
+triv	::=	int64
+ 	|	aloc
+ 	 	 	 	 
+binop	::=	+
+ 	|	*
+ 	 	 	 	 
+aloc	::=	aloc?
+ 	 	 	 	 
+int64	::=	int64?

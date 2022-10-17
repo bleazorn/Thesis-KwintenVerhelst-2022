@@ -1,0 +1,54 @@
+#lang racket
+
+(provide fvar?
+         isRegister?)
+         
+(module+ test
+  (require rackunit))
+
+(define (fvar? v)
+  (if (symbol? v)
+      (let ([s (symbol->string v)])
+        (if (> (string-length s) 1)
+            (let ([fv (substring s 0 2)]
+                  [n (string->number (substring s 2))])
+              (and (equal? fv "fv") (and (integer? n) (> n 0))))
+            #f))
+      #f))
+
+;Returns given symbol if it is a name for a register in paren-cheri-risc-v, otherwise gives error message
+;(check-reg res) -> symbol?
+;res : symbol?
+(define (isRegister? res)
+  (if (symbol? res)
+      (match res
+        ['zero 'zero]
+        ['ra 'ra]
+        ['sp 'sp]
+        ['gp 'gp]
+        ['tp 'tp]
+        ['fp 'fp]
+        ['pc 'pc]
+        [_ (let* ([s (symbol->string res)]
+                  [l (substring s 0 1)]
+                  [n (substring s 1)])
+             (match `(,l ,n)
+               [`("x" ,n) #:when (and (string->number n) (and (<= 0 (string->number n)) (< (string->number n) 32))) res]
+               [`("a" ,n) #:when (and (string->number n) (and (<= 0 (string->number n)) (< (string->number n) 8))) res]
+               [`("s" ,n) #:when (and (string->number n) (and (<= 0 (string->number n)) (< (string->number n) 12))) res]
+               [`("t" ,n) #:when (and (string->number n) (and (<= 0 (string->number n)) (< (string->number n) 7))) res]
+               [_ #f]))])
+      #f))
+
+(module+ test
+;fvar?
+  ;succes
+  (check-equal? (fvar? 'fv1) #t "fvar?: succes-1: single number fv")
+  (check-equal? (fvar? 'fv20) #t "fvar?: succes-2: double number fv")
+  ;failure
+  (check-equal? (fvar? 0) #f "fvar?: failure-1: integer")
+  (check-equal? (fvar? 'x) #f "fvar?: failure-2: random symbol")
+  (check-equal? (fvar? 'fv) #f "fvar?: failure-3: no number behind fv")
+  (check-equal? (fvar? 'fv.1) #f "fvar?: failure-4: char between fv and number")
+  (check-equal? (fvar? 'fv0) #f "fvar?: failure-5: number is 0, fv starts with 1")
+  )

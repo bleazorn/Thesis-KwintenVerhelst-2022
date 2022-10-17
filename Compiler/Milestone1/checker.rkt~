@@ -1,0 +1,10 @@
+#lang racket
+
+(define (check-paren-cheri-risc-v-syntax p)
+  #t)
+
+(define (check-paren-cheri-risc-v-init p)
+  #t)
+
+(define (check-paren-cheri-risc-v p)
+  #t)
