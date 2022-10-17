@@ -33,12 +33,12 @@ assign-homes
 uncover-locals
 	ok - volgorde locals kan verschillend zijn, ni echt belangrijk
 assign-fvars
-	Op dit moment assigns fvar, hoe dit veranderen naar registers???
+	Op !!!DECISION: use t0, t1, t2, t3 dan pas memory !!!Niet geoptimaliseerd
 replace-locations
 	ok
 flatten-begins
 	ok
 patch-instructions
-	-- optimalisatie zie de faalde test + testen schrijven
+	ok !!!DECISION: claims t4, t5, t6 -- optimalisatie zie de faalde test + testen schrijven
 implement-fvars
 	ok !!!DECISION: fv1 = (fp - 0) fp is frame pointer and frame size is 8

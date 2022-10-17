@@ -1,0 +1,60 @@
+p	::=	(module tail)
+
+tail  	::= 	value
+	|	(begin effect ... tail)
+
+value	::= 	triv
+	|   	(binop triv triv)
+ 	 	 	 	 
+effect	::=	(set! aloc value)
+	|	(begin effect ... effect)
+ 	 	 
+triv	::= 	integer
+	|	aloc
+	 	 
+aloc	::= 	aloc?
+ 	 		 	 
+binop	::=	+
+ 	|	*
+ 	 	 	 	 
+integer	::=	integer12?
+
+
+
+#|
+integer restricties verwijdert
+info == '() sinds je nog geen info hebt, wordt later gedaan
+module 
+	- value
+		- triv
+			(halt triv)
+		- (binop triv1 triv2)
+			- integer1 integer2
+				(set! tmp.1 integer1 ) (set! tmp.1 (+ tmp.1 integer2)) (halt tmp.1)
+				(set! tmp.1 integer1 ) (set! tmp.2 integer2) (set! tmp.1 (* tmp.1 tmp.2)) (halt tmp.1)
+			- integer1 aloc2
+				(set! tmp.1 integer1 ) (set! tmp.1 (binop tmp.1 aloc2)) (halt tmp.1)
+			- aloc1 integer2
+				(set! aloc (+ aloc integer2)) (halt aloc)
+				(set! tmp.2 integer2) (set! tmp.1 (* tmp.1 tmp.2)) (halt tmp.1)
+			- aloc1 aloc2
+				(set! aloc (binop aloc aloc2)) (halt aloc)
+
+			if integer1
+				(set! tmp.1 integer1 )
+			if * en integer2
+				(set! tmp.2 integer2)
+			(halt triv1)
+	- (begin effect ... tail)
+		--- effect methode
+		for every effect except tail
+		- (set! aloc value)
+			- value triv
+				(set! aloc triv)
+			- value (binop triv triv)
+				op het einde (set! aloc triv1) ipv (halt triv1)
+		- (begin effect ... effect)
+			for every
+				--> effect methode
+
+|#

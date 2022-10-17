@@ -42,8 +42,5 @@
          (f element))
        steps))
 
-(define testProgram
-  '(module (let ([x 2]) (let ([x 2]) (+ x x))))
-  )
 
-(test testProgram)
+(test '(module (+ 2 2)))
