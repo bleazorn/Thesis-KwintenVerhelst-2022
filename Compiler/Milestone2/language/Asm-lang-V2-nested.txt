@@ -1,0 +1,57 @@
+p	::=	(begin effect ... tail)
+
+tail 	::= 	(begin effect ... tail)
+	|   	(halt triv)
+ 	 	 	 	 
+effect	::=	(set! loc triv)
+	|	(set! loc (binop loc loc))
+ 	|	(set! loc (+ loc integer))
+	|	(begin effect ... effect)
+ 	 	 
+triv	::= 	integer
+	|	loc
+	 	 
+loc 	::=	reg
+	|	fvar
+ 	 		 	 
+binop	::=	+
+ 	|	*
+ 	 	 	 	 
+reg	::=	zero
+ 	|	ra
+ 	|	sp
+ 	|	gp
+ 	|	tp
+ 	|	fp
+ 	|	pc
+ 	|	a0
+ 	|	a1
+ 	|	a2
+ 	|	a3
+ 	|	a4
+ 	|	a5
+ 	|	a6
+ 	|	a7
+ 	|	s0
+ 	|	s1
+ 	|	s2
+ 	|	s3
+ 	|	s4
+ 	|	s5
+ 	|	s6
+ 	|	s7
+ 	|	s8
+ 	|	s9
+ 	|	s10
+ 	|	s11
+ 	|	t0
+ 	|	t1
+ 	|	t2
+ 	|	t3			| claimed voor nu. Check later of dit gaat
+ 	|	t4			| claimed voor nu. Check later of dit gaat
+ 	|	t5			| claimed voor nu. Check later of dit gaat
+ 	|	t6
+
+fvar 	::= 	fvar?
+ 	 	 	 	 
+integer	::=	integer12?

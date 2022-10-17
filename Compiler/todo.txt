@@ -1,0 +1,44 @@
+Get package on ubuntu??
+
+Make makefile
+
+Milestone 1
+
+Herschrijf de wraps en interpreter
+
+
+Milestone 2
+
+generate-cheri-risc-v
+	update met versie 2
+	Can risc-v put integer direct in memory?
+optimize-let-bindings
+	niet geimplementeerd???
+Create makefile
+Zet het op github
+Problemen met uitwerking programma
+interpreters en checkers maken
+
+
+uniquify
+	ok
+sequentialize-let
+	ok
+normalize-bind
+	ok
+select-instructions
+	!!!DECISION: zie laatste 2 tests
+assign-homes
+	ok
+uncover-locals
+	ok - volgorde locals kan verschillend zijn, ni echt belangrijk
+assign-fvars
+	Op dit moment assigns fvar, hoe dit veranderen naar registers???
+replace-locations
+	ok
+flatten-begins
+	ok
+patch-instructions
+	-- optimalisatie zie de faalde test + testen schrijven
+implement-fvars
+	ok !!!DECISION: fv1 = (fp - 0) fp is frame pointer and frame size is 8

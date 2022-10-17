@@ -1,0 +1,26 @@
+p	::=	(module tail)
+
+tail  	::= 	value
+	|	(let ([aloc value] ...) tail)	
+
+value	::= 	triv
+	|   	(binop triv triv)
+	|	(let ([aloc value] ...) value)
+ 	 	 
+triv	::= 	integer
+	|	aloc
+	 	 
+aloc	::= 	aloc?
+ 	 		 	 
+binop	::=	+
+ 	|	*
+ 	 	 	 	 
+integer	::=	integer12?
+
+#|
+(let ([x.1 1]) x.1)
+(begin (set! x.1 1) x.1)
+ 
+(let ([aloc value]) tv)
+(begin (set! aloc value) tv) 
+|#

@@ -1,0 +1,21 @@
+p	::=	(module tail)
+
+tail  	::= 	value
+	|	(begin effect ... tail)	
+
+value	::= 	triv
+	|   	(binop triv triv)
+	|	(begin effect ... value)
+ 	 	 	 	 
+effect	::=	(set! aloc value)
+	|	(begin effect ... effect)
+ 	 	 
+triv	::= 	integer
+	|	aloc
+	 	 
+aloc	::= 	aloc?
+ 	 		 	 
+binop	::=	+
+ 	|	*
+ 	 	 	 	 
+integer	::=	integer12?

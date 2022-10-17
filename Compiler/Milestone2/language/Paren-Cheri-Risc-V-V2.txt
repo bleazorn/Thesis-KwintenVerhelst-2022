@@ -1,0 +1,74 @@
+p	::=	(begin s ...)
+ 	 	 	 	 
+s	::=	(set! addr reg)			| Move in memory		
+	|	(set! reg loc)			| get in register (geheugen, register, integer)
+	|	(set! reg integer)
+ 	|	(set! reg (binop reg reg))	| add en mul
+ 	|	(set! reg (+ reg integer))
+ 	 	 	 	 
+loc 	::=	reg
+	|	addr
+ 	 		 	 
+binop	::=	+
+ 	|	*
+ 	 	 	 	 
+reg	::=	zero
+ 	|	ra
+ 	|	sp
+ 	|	gp
+ 	|	tp
+ 	|	fp
+ 	|	pc
+ 	|	a0
+ 	|	a1
+ 	|	a2
+ 	|	a3
+ 	|	a4
+ 	|	a5
+ 	|	a6
+ 	|	a7
+ 	|	s0
+ 	|	s1
+ 	|	s2
+ 	|	s3
+ 	|	s4
+ 	|	s5
+ 	|	s6
+ 	|	s7
+ 	|	s8
+ 	|	s9
+ 	|	s10
+ 	|	s11
+ 	|	t0
+ 	|	t1
+ 	|	t2
+ 	|	t3
+ 	|	t4
+ 	|	t5
+ 	|	t6
+
+addr	::= 	(fbp - dispoff)
+
+fbp	::=	frame-base-pointer-register?
+
+dispoff	::=	dispoffset?
+ 	 	 	 	 
+integer	::=	integer12?
+
+#|
+la t0, symbol	loads address symbol in t0
+	lui t0, SYMBOL[31:12]
+	addi t0, t0, SYMBOL[11:0]
+lw t0, symbol	loads wat in address symbol in memory is in t0
+	lui t0, SYMBOL[31:12]
+	lw  t0, SYMBOL[11:0](t0)
+sw t0, symbol	stores wat in t0 is in memory op address symbol
+	lui t0, SYMBOL[31:12]
+	sw  t0, SYMBOL[11:0](t0)
+
+risc-v can't store integer directly in memory only register content
+
+la t0, SYMBOL	== 	lw t0, SYMBOL	
+lw t0, 0(t0)
+
+|#
