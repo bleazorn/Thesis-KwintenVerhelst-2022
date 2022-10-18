@@ -3,9 +3,9 @@ p	::=	(s ...)
 s	::=	sw reg, addr			store in memory on address symbol
 	|	lw reg, addr			loads what is in memory on address symbol
 	|	addi reg, reg, 0    		move register	
-	|	addi rd, zero, integer		insert integer 
+	|	li rd, x0, integer		insert integer 
 	|	add reg, reg, reg  		addition reg 
- 	|	addi reg, reg, integer 		addition int
+ 	|	li reg, reg, integer 		addition int
  	|	mul  reg, reg, reg		multiplication
  	 	 	 	 
 loc 	::=	reg
@@ -53,4 +53,4 @@ fbp	::=	frame-base-pointer-register?
 
 dispoff	::=	dispoffset?
  	 	 	 	 
-integer	::=	integer12?
+integer	::=	integer32?

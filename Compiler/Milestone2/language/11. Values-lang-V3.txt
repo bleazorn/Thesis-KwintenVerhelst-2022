@@ -15,4 +15,4 @@ x	::= 	name?
 binop	::=	+
  	|	*
  	 	 	 	 
-integer	::=	integer12?
+integer	::=	integer32?

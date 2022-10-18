@@ -19,9 +19,9 @@
 (define (select-binop binop t1 t2 tail)
   (if (and (triv? t1) (triv? t2))
       (let* ([tmp1 (if (integer? t1) (freshtmp) t1)]
-             [tmp2 (if (and (equal? binop '*) (integer? t2)) (freshtmp) t2)]
+             [tmp2 (if (integer? t2) (freshtmp) t2)]
              [pre1 (if (integer? t1) `((set! ,tmp1 ,t1)) '())]
-             [pre2 (if (and (equal? binop '*) (integer? t2)) (append pre1 `((set! ,tmp2 ,t2))) pre1)] 
+             [pre2 (if (integer? t2) (append pre1 `((set! ,tmp2 ,t2))) pre1)] 
              )
         (append pre2 `((set! ,tmp1 (,binop ,tmp1 ,tmp2))) `(,(append tail `(,tmp1)))))
       #f))
@@ -69,7 +69,7 @@
 ;select-binop
   ;succes
   (check-select (select-binop '+ 5 4 '(halt))
-                '((set! tmp.1 5) (set! tmp.1 (+ tmp.1 4)) (halt tmp.1))
+                '((set! tmp.1 5) (set! tmp.2 4) (set! tmp.1 (+ tmp.1 tmp.2)) (halt tmp.1))
                 "select-binop: succes-1: add int int")
   (check-select (select-binop '* 5 4 '(halt))
                 '((set! tmp.1 5) (set! tmp.2 4) (set! tmp.1 (* tmp.1 tmp.2)) (halt tmp.1))
@@ -78,7 +78,7 @@
                 '((set! tmp.1 5) (set! tmp.1 (+ tmp.1 x.1)) (halt tmp.1))
                 "select-binop: succes-3: add int aloc")
   (check-select (select-binop '+ 'x.1 4 `(set! y.3))
-                '((set! x.1 (+ x.1 4)) (set! y.3 x.1))
+                '((set! tmp.1 4) (set! x.1 (+ x.1 tmp.1)) (set! y.3 x.1))
                 "select-binop: succes-4: add aloc int")
   (check-select (select-binop '* 'x.1 4 `(set! y.3))
                 '((set! tmp.1 4) (set! x.1 (* x.1 tmp.1)) (set! y.3 x.1))
@@ -111,7 +111,7 @@
 ;select-instructions
   ;succes
   (check-select (select-instructions '(module (+ 2 2)))
-                '(module () (begin (set! tmp.1 2) (set! tmp.1 (+ tmp.1 2)) (halt tmp.1)))
+                '(module () (begin (set! tmp.1 2) (set! tmp.2 2) (set! tmp.1 (+ tmp.1 tmp.2)) (halt tmp.1)))
                 "select-instructions: succes-1: one operation")
   
   (check-select (select-instructions
@@ -124,7 +124,7 @@
                       (begin
                         (set! x.1 (+ 2 2))
                         x.1)))
-                '(module () (begin (set! x.1 2) (set! x.1 (+ x.1 2)) (halt x.1)))
+                '(module () (begin (set! x.1 2) (set! tmp.1 2) (set! x.1 (+ x.1 tmp.1)) (halt x.1)))
                 "select-instructions: succes-3: a set with operation     !!!anders dan oplossing boek sinds b in binop kan verschillend zijn dan a")
   (check-select (select-instructions
                  '(module

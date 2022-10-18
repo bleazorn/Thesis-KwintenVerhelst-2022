@@ -8,7 +8,12 @@
          resetfresh
          freshtmp
          fresh
-         name?)
+         name?
+         isAddress?
+         dec->hex-string)
+
+;(require cpsc411/compiler-lib)
+
          
 (module+ test
   (require rackunit))
@@ -65,8 +70,8 @@
 (define (name? v)
   (symbol? v))
 
-;Returns given symbol if it is a name for a register in paren-cheri-risc-v, otherwise gives error message
-;(check-reg res) -> symbol?
+;Returns given symbol if it is a name for a register in paren-cheri-risc-v, otherwise returns false
+;(check-reg res) -> symbol?/boolean?
 ;res : symbol?
 (define (isRegister? res)
   (if (symbol? res)
@@ -89,17 +94,56 @@
                [_ #f]))])
       #f))
 
+;Converts a number less then 16 to its hex
+;(getHexSymbol n)->string?
+;n: integer?
+(define (getHexSymbol n)
+  (cond [(and (< n 10) (>= n 0)) (number->string n)]
+        [(= n 10) "a"]
+        [(= n 11) "b"]
+        [(= n 12) "c"]
+        [(= n 13) "d"]
+        [(= n 14) "e"]
+        [(= n 15) "f"]
+        [else #f])) 
+
+;converts a number to its hex
+;(dec->hex-build n)->string?
+;n: integer?
+(define (dec->hex-build n)
+  (if (< n 16)
+      (getHexSymbol n)
+      (string-append (dec->hex-string (quotient n 16)) (getHexSymbol (remainder n 16)))))
+
+;converts a number to its hex, but gives an error if something went wrong in the calculation
+;(dec->hex-string n)->string?
+;n: integer?
+(define (dec->hex-string n)
+  (let ([x (dec->hex-build n)])
+    (if (equal? n  (string->number (format "#x~a" x)))
+        x
+        (error (format "something went wrong with calculating the hexidecimal for ~a" n)))))
+
+
+;Returns given symbol if it is an address, otherwise returns false. address in stile (isRegister? - integer?)
+;(isAddress? a)->symbol?/boolean?
+;a:any/c
+(define (isAddress? a)
+  (match a
+    [`(,r - ,n) #:when (and (isRegister? r) (integer? n)) a]
+    [_ #f]))
+
+
 (module+ test
 ;fvar?
   ;succes
-  (check-true (fvar? 'fv1) "fvar?: succes-1: single number fv")
+  (check-true (fvar? 'fv0) "fvar?: succes-1: single number fv")
   (check-true (fvar? 'fv20) "fvar?: succes-2: double number fv")
   ;failure
   (check-false (fvar? 0) "fvar?: failure-1: integer")
   (check-false (fvar? 'x) "fvar?: failure-2: random symbol")
   (check-false (fvar? 'fv) "fvar?: failure-3: no number behind fv")
   (check-false (fvar? 'fv.1) "fvar?: failure-4: char between fv and number")
-  (check-false (fvar? 'fv0) "fvar?: failure-5: number is 0, fv starts with 1")
 ;aloc?
   ;succes
   (check-true (aloc? 'x.1) "aloc?: succes-1: single letter single didget")
@@ -133,4 +177,11 @@
   (check-equal? (info/c 0) "info/c: failure-1: integer")
   (check-equal? (info/c 0) "info/c: failure-1: integer")
   |#
+;isAddress?
+  ;succes
+  (check-equal? (isAddress? '(a0 - 5)) '(a0 - 5) "isAddress?: succes-1: an address")
+  ;failure
+  (check-false (isAddress? "(a0 - 5)") "isAddress?: failure-1: not a symbol")
+  (check-false (isAddress? '(a10 - 5)) "isAddress?: failure-2: not a register")
+  (check-false (isAddress? '(a0 - a0)) "isAddress?: failure-3: not a number")
   )

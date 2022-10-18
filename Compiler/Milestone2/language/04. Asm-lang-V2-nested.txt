@@ -5,7 +5,6 @@ tail 	::= 	(begin effect ... tail)
  	 	 	 	 
 effect	::=	(set! loc triv)
 	|	(set! loc (binop loc loc))
- 	|	(set! loc (+ loc integer))
 	|	(begin effect ... effect)
  	 	 
 triv	::= 	integer
@@ -54,4 +53,4 @@ reg	::=	zero
 
 fvar 	::= 	fvar?
  	 	 	 	 
-integer	::=	integer12?
+integer	::=	integer32?

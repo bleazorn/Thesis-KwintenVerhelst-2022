@@ -18,4 +18,4 @@ aloc	::= 	aloc?
 binop	::=	+
  	|	*
  	 	 	 	 
-integer	::=	integer12?
+integer	::=	integer32?

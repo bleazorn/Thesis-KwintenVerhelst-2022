@@ -2,7 +2,6 @@ p	::=	(begin effect ... (halt triv))
  	 	 	 	 
 effect	::=	(set! loc triv)
 	|	(set! loc (binop loc loc))
- 	|	(set! loc (+ loc integer))
  	 	 
 triv	::= 	integer
 	|	loc
@@ -50,7 +49,7 @@ reg	::=	zero
 
 fvar 	::= 	fvar?
  	 	 	 	 
-integer	::=	integer12?
+integer	::=	integer32?
 
 #|
 address restricties verwijdert, je kan nu (set! fv1 fv2) doen (geen geldige risc-v instructie)

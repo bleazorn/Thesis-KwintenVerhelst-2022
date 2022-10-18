@@ -1,0 +1,56 @@
+p	::=	(s ...)
+ 	 	 	 	 
+s	::=	sw reg, addr			store in memory on address symbol
+	|	lw reg, addr			loads what is in memory on address symbol
+	|	addi reg, reg, 0    		move register	
+	|	li rd, zero, integer		insert integer 
+	|	add reg, reg, reg  		addition reg 
+ 	|	li reg, reg, integer 		addition int
+ 	|	mul  reg, reg, reg		multiplication
+ 	 	 	 	 
+loc 	::=	reg
+	|	addr
+ 	 	
+ 	 	 	 	 
+reg	::=	zero
+ 	|	ra
+ 	|	sp
+ 	|	gp
+ 	|	tp
+ 	|	fp
+ 	|	pc
+ 	|	a0
+ 	|	a1
+ 	|	a2
+ 	|	a3
+ 	|	a4
+ 	|	a5
+ 	|	a6
+ 	|	a7
+ 	|	s0
+ 	|	s1
+ 	|	s2
+ 	|	s3
+ 	|	s4
+ 	|	s5
+ 	|	s6
+ 	|	s7
+ 	|	s8
+ 	|	s9
+ 	|	s10
+ 	|	s11
+ 	|	t0
+ 	|	t1
+ 	|	t2
+ 	|	t3
+ 	|	t4
+ 	|	t5
+ 	|	t6
+
+addr	::= 	(fbp - dispoff)			(32 bit)
+
+fbp	::=	frame-base-pointer-register?
+
+dispoff	::=	dispoffset?
+ 	 	 	 	 
+integer	::=	integer32?

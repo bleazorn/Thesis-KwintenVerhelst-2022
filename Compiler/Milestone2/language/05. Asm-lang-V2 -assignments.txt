@@ -7,7 +7,6 @@ tail  	::= 	(begin effect ... tail)
  	 	 	 	 
 effect	::=	(set! aloc triv)
 	|	(set! aloc (binop aloc aloc))
- 	|	(set! aloc (+ aloc integer))
 	|	(begin effect ... effect)
  	 	 
 triv	::= 	integer
@@ -21,7 +20,7 @@ aloc	::= 	aloc?
 binop	::=	+
  	|	*
  	 	 	 	 
-integer	::=	integer12?
+integer	::=	integer32?
 
 fvar	::= 	fvar
 

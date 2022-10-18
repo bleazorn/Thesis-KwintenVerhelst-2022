@@ -1,0 +1,17 @@
+--Decisions
+	select-instructions
+		zie laatste 2 tests
+	assign-fvars
+		use t0, t1, t2, t3 dan pas memory
+	patch-instructions
+		claims t4, t5, t6
+	implement-fvars
+		fv1 = (fp - 0) fp is frame pointer and frame size is 8
+
+	sp en fp initialisatie
+		auipc fp, %pcrel_hi(0x81f00000)
+    		addi sp, fp, 0
+
+	Shell
+		signed 32bit int [-2147483648 to 2147483647]
+

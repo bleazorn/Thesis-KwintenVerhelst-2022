@@ -4,7 +4,6 @@ s	::=	(set! addr reg)			| Move in memory
 	|	(set! reg loc)			| get in register (geheugen, register, integer)
 	|	(set! reg integer)
  	|	(set! reg (binop reg reg))	| add en mul
- 	|	(set! reg (+ reg integer))
  	 	 	 	 
 loc 	::=	reg
 	|	addr
@@ -53,7 +52,7 @@ fbp	::=	frame-base-pointer-register?
 
 dispoff	::=	dispoffset?
  	 	 	 	 
-integer	::=	integer12?
+integer	::=	integer32?
 
 #|
 la t0, symbol	loads address symbol in t0
@@ -65,10 +64,20 @@ lw t0, symbol	loads wat in address symbol in memory is in t0
 sw t0, symbol	stores wat in t0 is in memory op address symbol
 	lui t0, SYMBOL[31:12]
 	sw  t0, SYMBOL[11:0](t0)
+Als in stack 
+	addi sp, sp, -dispoff
+	sw rd, 0(sp)
+	
+	lw rd, 0(sp)
+	addi sp, sp, +dispoff
 
 risc-v can't store integer directly in memory only register content
 
 la t0, SYMBOL	== 	lw t0, SYMBOL	
 lw t0, 0(t0)
+
+li is voor optelling integer32   2 opties: li a0, 90112 of li a0, 0x16000 (dec of hex)
+	lui t0, SYMBOL[31:12]
+	addi t0, t0, SYMBOL[11:0] 
 
 |#

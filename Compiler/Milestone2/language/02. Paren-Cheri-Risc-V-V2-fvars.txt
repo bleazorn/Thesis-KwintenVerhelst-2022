@@ -4,7 +4,6 @@ s	::=	(set! fvar reg)
 	|	(set! reg loc)
 	|	(set! reg integer),
  	|	(set! reg (binop reg reg))
- 	|	(set! reg (+ reg integer))
  	 	 	 	 
 loc 	::=	reg
 	|	fvar
@@ -49,4 +48,4 @@ reg	::=	zero
 
 fvar 	::= 	fvar?
  	 	 	 	 
-integer	::=	integer12?
+integer	::=	integer32?
