@@ -1,0 +1,20 @@
+p	::=	(module info tail)
+
+info	::= 	(#:from-contract (info/c (locals (aloc ...))))
+
+tail  	::= 	(begin effect ... tail)
+	|	(halt triv)
+ 	 	 	 	 
+effect	::=	(set! aloc triv)
+ 	|	(set! aloc (binop aloc aloc))
+	|	(begin effect ... effect)
+ 	 	 
+triv	::= 	integer
+	|	aloc
+	 	 
+aloc	::= 	aloc?
+ 	 		 	 
+binop	::=	+
+ 	|	*
+ 	 	 	 	 
+integer	::=	integer32?

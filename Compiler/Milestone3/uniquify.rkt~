@@ -1,0 +1,11 @@
+#lang racket
+
+(module+ test
+  (require rackunit))
+
+
+(define uniquify
+  #t)
+
+(module+ test
+  (check-equal? #t #t "first test"))

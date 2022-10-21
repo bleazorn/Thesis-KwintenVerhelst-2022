@@ -1,0 +1,18 @@
+p	::=	(module tail)
+
+tail  	::= 	value
+	|	(let ([x value] ...) tail)	
+
+value	::= 	triv
+	|   	(binop triv triv)
+	|	(let ([x value] ...) value)
+ 	 	 
+triv	::= 	integer
+	|	x
+	 	 
+x	::= 	name?
+ 	 		 	 
+binop	::=	+
+ 	|	*
+ 	 	 	 	 
+integer	::=	integer32?

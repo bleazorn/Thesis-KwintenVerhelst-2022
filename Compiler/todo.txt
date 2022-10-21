@@ -3,11 +3,15 @@ Milestone 2
 optimize-let-bindings interpreters en checkers 
 	niet geimplementeerd???
 
-Create makefile
+Add variables to the compile file en makefile
+
+Milestone 3
 
 Optelling en returning negatives shell
 	(module (let ([y -10] [x -5]) y))
 	(module (let ([y -10] [x -5]) (+ x y)))
+
+grep awk - shell cript
 
 
 --Compiler Steps

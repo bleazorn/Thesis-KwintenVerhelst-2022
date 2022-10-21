@@ -1,0 +1,14 @@
+#lang racket
+
+(provide conflict-analysis)
+
+(module+ test
+  (require rackunit))
+
+(define (conflict-analysis p)
+  #t)
+
+(module+ test
+;uncover-triv
+  ;succes
+  (check-equal? #t #t "test"))

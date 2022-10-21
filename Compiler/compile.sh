@@ -7,11 +7,14 @@ varEmulator=/home/kwinten/T/sail-cheri-riscv/c_emulator/
 
 echo "Compile from file"
 racket $varRacket $varFile
-cd $varBuilder
+
 echo "Make elf"
+cd $varBuilder
 make $varCurLoc/test.elf
-cd $varEmulator
+
 echo "Run emulator"
+cd $varEmulator
 ./cheri_riscv_sim_RV64 $varCurLoc/test.elf
+
 cd $varCurLoc
 

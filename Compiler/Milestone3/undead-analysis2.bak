@@ -1,0 +1,25 @@
+#lang racket
+
+(require "common.rkt")
+(provide undead-analysis)
+
+(module+ test
+  (require rackunit))
+
+;
+;(remove-undead u undead-out)->undead-set?
+;u: aloc?
+;undead-out: undead-set?
+(define (undead-remove u undead-out)
+  (if (aloc? u)
+      (remove u undead-out)
+      undead-out))
+
+;
+;(cons-undead u undead-out)->undead-set?
+;u: aloc?
+;undead-out: undead-set?
+(define (undead-cons u undead-out)
+  (if (and (aloc? u) (not (member u undead-out)))
+      (cons u undead-out)
+      undead-out))
