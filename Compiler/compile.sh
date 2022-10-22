@@ -14,7 +14,9 @@ make $varCurLoc/test.elf
 
 echo "Run emulator"
 cd $varEmulator
-./cheri_riscv_sim_RV64 $varCurLoc/test.elf
+./cheri_riscv_sim_RV64 $varCurLoc/test.elf -V 
 
 cd $varCurLoc
+echo $output
+
 

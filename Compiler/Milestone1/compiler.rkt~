@@ -1,4 +1,0 @@
-#lang racket
-
-(define (generate-cheri-risc-v p)
-  #t)

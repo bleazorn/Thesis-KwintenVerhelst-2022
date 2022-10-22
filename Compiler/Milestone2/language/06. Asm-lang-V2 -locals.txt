@@ -1,3 +1,5 @@
+assign-fvars
+
 p	::=	(module info tail)
 
 info	::= 	(#:from-contract (info/c (locals (aloc ...))))
@@ -7,6 +9,7 @@ tail  	::= 	(begin effect ... tail)
  	 	 	 	 
 effect	::=	(set! aloc triv)
  	|	(set! aloc (binop aloc aloc))
+	|	(set! aloc (+ aloc int12))
 	|	(begin effect ... effect)
  	 	 
 triv	::= 	integer
@@ -17,4 +20,8 @@ aloc	::= 	aloc?
 binop	::=	+
  	|	*
  	 	 	 	 
-integer	::=	integer32?
+integer	::=	int32
+	|	int12
+
+int32	::=	int32?
+int12	::=	int12?

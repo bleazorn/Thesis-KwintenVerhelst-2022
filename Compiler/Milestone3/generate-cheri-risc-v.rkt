@@ -27,6 +27,7 @@ store in memory    sw rd, addr       (addr => register)
 (define (generate-binop bin)
  (match bin
    [`(set! ,a (* ,b ,c)) (format "mul ~a, ~a, ~a" a b c)]
+   [`(set! ,a (+ ,b ,c)) #:when (integer? c) (format "addi ~a, ~a, ~a" a b c)]
    [`(set! ,a (+ ,b ,c)) (format "add ~a, ~a, ~a" a b c)]
    [_ #f]))
 
@@ -35,10 +36,11 @@ store in memory    sw rd, addr       (addr => register)
 ; s: any?
 (define (generate-set s)
   (match s 
-    [`(set! ,a ,b) #:when (isAddress? a) (format "addi sp, sp, ~a\n~asw ~a, ~a" framesize indent b (generate-addr a))]
+    [`(set! ,a ,b) #:when (isAddress? a) (format "sw ~a, ~a" b (generate-addr a))]
     [`(set! ,a ,b) #:when (isAddress? b) (format "lw ~a, ~a" a (generate-addr b))]
     [`(set! ,a (,binop ,b ,c)) (generate-binop s)]
-    [`(set! ,a ,b) #:when (integer? b) (format "li ~a, ~a" a b)]
+    [`(set! ,a ,b) #:when (and (integer? b) (and (>= b -2048) (< b 2048))) (format "addi ~a, x0, ~a" a b)]
+    [`(set! ,a ,b) #:when (and (integer? b) (or (< b -2048) (>= b 2048))) (format "li ~a, ~a" a b)]
     [`(set! ,a ,b) (format "addi ~a, ~a, 0" a b)]
     [_ #f]))
 

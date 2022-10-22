@@ -22,13 +22,13 @@
 
 ;changes the names in the let naming to alocs and also gives an updated locs
 ;(uniquify-letNames n locs)->list? '('((aloc value)...) locs) car->'((aloc value)...) en cdr ->locs-updated
-;n: list? '((name value) ...)
+;names: list? '((name value) ...)
 ;locs: list? '((name aloc) ...)
 (define (uniquify-letNames names locs)
   (for/lists (first sec #:result (list first (append sec locs)))
              ([n names])
     (let ([f (fresh (car n))])
-      (values `(,f ,(second n)) `(,(car n) ,f)))))
+      (values `[,f ,(second n)] `(,(car n) ,f)))))
 
 ;
 ;
@@ -47,7 +47,8 @@
 ;locs: list? '((name aloc) ...)
 (define (uniquify-value v locs)
   (match v
-    [`(let ,a ,b) (uniquify-let v locs)]
+    [`(let ,names ,body) (let ([newNames (uniquify-letNames names locs)])
+                           `(let ,(car newNames) ,(uniquify-value body (second newNames))))]
     [`(,binop ,t1 ,t2) `(,binop ,(uniquify-triv t1 locs) ,(uniquify-triv t2 locs))]
     [t (uniquify-triv t locs)]))
 
@@ -57,7 +58,8 @@
 ;locs: list? '((name aloc) ...)
 (define (uniquify-tail t locs)
   (match t
-    [`(let ,a ,b) (uniquify-let t locs)]
+    [`(let ,names ,body) (let ([newNames (uniquify-letNames names locs)])
+                           `(let ,(car newNames) ,(uniquify-tail body (second newNames))))]
     [v (uniquify-value v locs)]))
 
 ;Compiles Values-lang-V3? to Values-lang-V3-unique? by resolving all lexical identifiers to abstract locations.
@@ -66,6 +68,7 @@
 (define (uniquify m)
   (match m
     [`(module ,a) `(module ,(uniquify-tail a '()))]))
+    
           
 (module+ test
   (define (check-uniquify t1 t2 text)

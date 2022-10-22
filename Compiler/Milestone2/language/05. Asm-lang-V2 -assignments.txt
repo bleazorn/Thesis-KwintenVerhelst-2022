@@ -1,3 +1,5 @@
+replace-locations
+
 p	::=	(module info tail)
 
 info	::= 	(#:from-contract (info/c (locals (aloc ...)) (assignment ((alloc loc) ... )) ))
@@ -7,6 +9,7 @@ tail  	::= 	(begin effect ... tail)
  	 	 	 	 
 effect	::=	(set! aloc triv)
 	|	(set! aloc (binop aloc aloc))
+	|	(set! aloc (+ aloc int12))
 	|	(begin effect ... effect)
  	 	 
 triv	::= 	integer
@@ -19,10 +22,7 @@ aloc	::= 	aloc?
  	 		 	 
 binop	::=	+
  	|	*
- 	 	 	 	 
-integer	::=	integer32?
-
-fvar	::= 	fvar
+ 	 	 	 	
 
 reg	::=	zero
  	|	ra
@@ -56,5 +56,11 @@ reg	::=	zero
  	|	t2
  	|	t3
  	|	t4
- 	|	t5
- 	|	t6
+
+fvar	::= 	fvar?
+ 	
+integer	::=	int32
+	|	int12
+
+int32	::=	int32?
+int12	::=	int12?

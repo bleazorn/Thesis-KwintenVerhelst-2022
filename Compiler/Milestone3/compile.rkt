@@ -13,6 +13,8 @@
          "generate-cheri-risc-v.rkt"
          "wrapRunTime.rkt"
          "wrapBoilerplate.rkt")
+;(require racket/system)
+
 (provide compile-file
          compile-program)
 

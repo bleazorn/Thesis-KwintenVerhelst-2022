@@ -1,3 +1,5 @@
+normalize-bind
+
 p	::=	(module tail)
 
 tail  	::= 	value

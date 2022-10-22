@@ -43,7 +43,8 @@
 (define (replace-locations p)
   (match p
     [`(module () ,pro) p]
-    [`(module ((locals (,l ...)) (assignment (,a ...))) ,pro) (replace-tail pro a)]
+    [`(module ((locals ,loc) (assignment ,ass)) ,pro) (replace-tail pro ass)]
+    [`(module ((locals ,loc) (conflicts ,conf) (assignment ,ass)) ,pro) (replace-tail pro ass)]
     [_ #f]))
 
 (module+ test

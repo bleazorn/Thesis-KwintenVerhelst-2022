@@ -1,8 +1,0 @@
-#lang racket
-
-(define (tes symbol)
-  (match (string->list (symbol->string symbol))
-    [`(#\a ,i1 ...) #:when (foldl (lambda (i b) (and (char-numeric? i) b)) #t i) i]
-    [_ #f]))
-
-(tes 'a12)

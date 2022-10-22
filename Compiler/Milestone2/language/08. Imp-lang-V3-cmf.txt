@@ -1,3 +1,5 @@
+select-instructions
+
 p	::=	(module tail)
 
 tail  	::= 	value

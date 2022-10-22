@@ -38,7 +38,6 @@
     [`(begin ,e ... ,tail) `(begin ,@(flatten-begin e) ,@(flatten-tail tail))]
     [_ #f]))
 
-
 (module+ test
 ;flatten-begins
   ;succes
@@ -53,6 +52,9 @@
                 "flatten-begins: succes-3: effect and tail nested")
   (check-equal? (flatten-begins '(begin (begin (set! a1 50) (set! a2 50)) (begin (begin (set! a0 50) (halt a0)))))
                 '(begin (set! a1 50) (set! a2 50) (set! a0 50) (halt a0))
+                "flatten-begins: succes-4: tail double nested")
+  (check-equal? (flatten-begins '(begin (set! a4 50) (begin (set! a3 50) (begin (set! a1 50) (set! a2 50))) (set! a5 50) (begin (begin (set! a0 50) (halt a0)))))
+                '(begin (set! a4 50) (set! a3 50) (set! a1 50) (set! a2 50) (set! a5 50) (set! a0 50) (halt a0))
                 "flatten-begins: succes-4: tail double nested")
   ;failure
   (check-false (flatten-begins '(begin (halt a0) (set! a0 50)))

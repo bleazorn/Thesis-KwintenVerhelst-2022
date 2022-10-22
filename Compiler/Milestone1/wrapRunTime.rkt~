@@ -1,4 +1,0 @@
-#lang racket
-
-(define ( wrap-cheri-risc-v-run-time p)
-  #t)

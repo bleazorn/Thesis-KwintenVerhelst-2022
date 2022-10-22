@@ -1,5 +1,0 @@
-#lang racket
-
-(define (p-append p1 p2)
-  (match `(,p1 ,p2)
-    [`((begin ,s1 ...) (begin ,s2 ...)) `(begin ,@s1 ,@s2)]))

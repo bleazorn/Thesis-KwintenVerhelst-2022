@@ -1,4 +1,0 @@
-#lang racket
-
-(define (interp-paren-cheri-risc-v p)
-  #t)

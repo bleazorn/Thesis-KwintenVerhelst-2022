@@ -10,7 +10,9 @@
 ;effect?
 (define (normalize-effect e)
   (match e
-    [`(set! ,a (begin ,e ... ,v)) (append '(begin) (map (lambda (eff) (normalize-effect eff)) e) `((set! ,a ,v)))]   
+    [`(set! ,a (begin ,e ... ,v)) (append '(begin) (map (lambda (eff) (normalize-effect eff)) e) (match v
+                                                                                                   [`(begin ,e ...) `(,(normalize-effect `(set! ,a ,v)))]
+                                                                                                   [_ `((set! ,a ,v))]))]
     [`(set! ,a ,b) e]
     [`(begin ,e ...) `(begin ,@(map (lambda (eff) (normalize-effect eff)) e))]))
 
@@ -61,4 +63,7 @@
                 "normalize-bind: succes-2: begin tail no normalizing")
   (check-equal? (normalize-bind '(module (begin (set! x.1 2) (set! x.2 (begin (set! x.2 3) (+ x.2 2))) (+ x.1 x.2))))
                 '(module (begin (set! x.1 2) (begin (set! x.2 3) (set! x.2 (+ x.2 2))) (+ x.1 x.2)))
-                "normalize-bind: succes-3: begin tail one normalizing"))
+                "normalize-bind: succes-3: begin effect one normalizing")
+  (check-equal? (normalize-bind '(module (begin (set! x.1 2) (set! x.2 (begin (set! x.2 3) (begin (set! z.3 5) (+ x.2 z.3)))) (+ x.1 x.2))))
+                '(module (begin (set! x.1 2) (begin (set! x.2 3) (begin (set! z.3 5) (set! x.2 (+ x.2 z.3)))) (+ x.1 x.2)))
+                "normalize-bind: succes-4: begin value in begin effect two normalizing"))

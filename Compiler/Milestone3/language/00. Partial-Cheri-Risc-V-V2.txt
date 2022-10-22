@@ -3,9 +3,11 @@ p	::=	(s ...)
 s	::=	sw reg, addr			store in memory on address symbol
 	|	lw reg, addr			loads what is in memory on address symbol
 	|	addi reg, reg, 0    		move register	
-	|	li rd, x0, integer		insert integer 
+	|	li rd, int32			insert integer 32bits
+	|	addi rd, x0, int12		insert integer 12bits
 	|	add reg, reg, reg  		addition reg 
- 	|	li reg, reg, integer 		addition int
+ 	|	li reg, reg, int32 		addition int 32bits
+	|	addi reg, reg, int12 		addition int 12bits
  	|	mul  reg, reg, reg		multiplication
  	 	 	 	 
 loc 	::=	reg
@@ -49,8 +51,9 @@ reg	::=	zero
 
 addr	::= 	(fbp - dispoff)			(32 bit)
 
-fbp	::=	frame-base-pointer-register?
+fbp	::=	fp
 
 dispoff	::=	dispoffset?
  	 	 	 	 
-integer	::=	integer32?
+int32	::=	integer32?
+int12	::=	int12?

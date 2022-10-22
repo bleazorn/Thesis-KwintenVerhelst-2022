@@ -19,10 +19,15 @@
 (define (select-binop binop t1 t2 tail)
   (if (and (triv? t1) (triv? t2))
       (let* ([tmp1 (if (integer? t1) (freshtmp) t1)]
-             [tmp2 (if (integer? t2) (freshtmp) t2)]
+             [tmp2 (cond
+                     [(and (integer? t2) (not (equal? binop '+))) (freshtmp)]
+                     [(and (integer? t2) (and (equal? binop '+) (or (< t2 -2048) (>= t2 2048)))) (freshtmp)]
+                     [else t2])]
              [pre1 (if (integer? t1) `((set! ,tmp1 ,t1)) '())]
-             [pre2 (if (integer? t2) (append pre1 `((set! ,tmp2 ,t2))) pre1)] 
-             )
+             [pre2 (cond
+                     [(and (integer? t2) (not (equal? binop '+))) (append pre1 `((set! ,tmp2 ,t2)))]
+                     [(and (integer? t2) (and (equal? binop '+) (or (< t2 -2048) (>= t2 2048)))) (append pre1 `((set! ,tmp2 ,t2)))]
+                     [else pre1])])
         (append pre2 `((set! ,tmp1 (,binop ,tmp1 ,tmp2))) `(,(append tail `(,tmp1)))))
       #f))
 
@@ -69,7 +74,7 @@
 ;select-binop
   ;succes
   (check-select (select-binop '+ 5 4 '(halt))
-                '((set! tmp.1 5) (set! tmp.2 4) (set! tmp.1 (+ tmp.1 tmp.2)) (halt tmp.1))
+                '((set! tmp.1 5) (set! tmp.1 (+ tmp.1 tmp.2)) (halt tmp.1))
                 "select-binop: succes-1: add int int")
   (check-select (select-binop '* 5 4 '(halt))
                 '((set! tmp.1 5) (set! tmp.2 4) (set! tmp.1 (* tmp.1 tmp.2)) (halt tmp.1))

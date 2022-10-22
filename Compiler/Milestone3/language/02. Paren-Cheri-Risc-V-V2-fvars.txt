@@ -1,9 +1,12 @@
+implement-fvars
+
 p	::=	(begin s ...)
  	 	 	 	 
 s	::=	(set! fvar reg)	
 	|	(set! reg loc)
 	|	(set! reg integer),
  	|	(set! reg (binop reg reg))
+	|	(set! reg (+ reg int12))
  	 	 	 	 
 loc 	::=	reg
 	|	fvar
@@ -48,4 +51,8 @@ reg	::=	zero
 
 fvar 	::= 	fvar?
  	 	 	 	 
-integer	::=	integer32?
+integer	::=	int32
+	|	int12
+
+int32	::=	int32?
+int12	::=	int12?

@@ -17,7 +17,7 @@
 
 ;use t0, t1, t2, t3 dan pas memory
 (define (freshLocal)
-  (if (< l 3)
+  (if (< l 4)
       (string->symbol (format "t~a" (getLocal)))
       (freshfvar)))
       

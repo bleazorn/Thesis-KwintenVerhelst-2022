@@ -1,9 +1,12 @@
+generate-cheri-risc-v
+
 p	::=	(begin s ...)
  	 	 	 	 
 s	::=	(set! addr reg)			| Move in memory		
 	|	(set! reg loc)			| get in register (geheugen, register, integer)
 	|	(set! reg integer)
  	|	(set! reg (binop reg reg))	| add en mul
+	|	(set! reg (+ reg int12))	| add 
  	 	 	 	 
 loc 	::=	reg
 	|	addr
@@ -52,7 +55,11 @@ fbp	::=	frame-base-pointer-register?
 
 dispoff	::=	dispoffset?
  	 	 	 	 
-integer	::=	integer32?
+integer	::=	int32
+	|	int12
+
+int32	::=	int32?
+int12	::=	int12?
 
 #|
 Verschil met versie 1

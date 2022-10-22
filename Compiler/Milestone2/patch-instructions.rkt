@@ -7,15 +7,18 @@
   (require rackunit))
 
 ;claims t4 t5 t6
-(define t 3)
+(define t 6)
 
 (define (newTemp)
   (if (>= t 6)
-      (set! t 4)
+      (set! t 5)
       (set! t (add1 t)))
   (string->symbol (format "t~a" t)))
 
-(define firstClaimReg 't4)
+(define (resetTemp)
+  (set! t 6))
+
+(define firstClaimReg 't5)
 
 (define (triv? t)
   (or (integer? t) (or (fvar? t) (isRegister? t))))
@@ -76,15 +79,22 @@
 ;a,b,c:triv?
 (define (patch-binop a b c binop)
   (let* ([aReg (if (isRegister? a) a (newTemp))]
-        [bReg (if (isRegister? b) b (newTemp))]
-        [cReg (if (equal? b c)
-                  bReg
-                  (if (isRegister? c) c (newTemp)))])
+         [bReg (cond
+                 [(isRegister? b) b]
+                 [(equal? a b) aReg]
+                 [else (newTemp)])]
+         [cReg (cond
+                 [(isRegister? c) c]
+                 [(equal? b c) bReg]
+                 [else (newTemp)])])
     (let ([aSet (if (isRegister? a) '() `((set! ,a ,aReg)))]
-          [bSet (if (isRegister? b) '() `((set! ,bReg ,b)))]
-          [cSet (if (equal? b c)
-                    '()
-                    (if (isRegister? c) '() `((set! ,cReg ,c))))])
+          [bSet (cond
+                 [(isRegister? b) '()]
+                 [else `((set! ,bReg ,b))])]
+          [cSet (cond
+                 [(isRegister? c) '()]
+                 [(equal? b c) '()]
+                 [else `((set! ,cReg ,c))])])
       (append bSet cSet `((set! ,aReg (,binop ,bReg ,cReg))) aSet))))
     
 
@@ -285,71 +295,74 @@
 ;|#
 
 (module+ test
+  (define (check-patch? t1 t2 text)
+    (resetTemp)
+    (check-equal? t1 t2 text))
   #|
 ;patch-triv
-  (check-equal? (patch-triv 'a0 '(((fv0 a0)(fv1 t0)) (fv0 fv1)))
+  (check-patch? (patch-triv 'a0 '(((fv0 a0)(fv1 t0)) (fv0 fv1)))
                 'a0
                 "patch-triv: succes-1: not activated")
-  (check-equal? (patch-triv 'fv0 '(((fv0 a0)(fv1 t0)) (fv0 fv1)))
+  (check-patch? (patch-triv 'fv0 '(((fv0 a0)(fv1 t0)) (fv0 fv1)))
                 'a0
                 "patch-triv: succes-2: activated")
 ;patch-trivs
   ;succes
-  (check-equal? (patch-trivs '(a0) '(() ()))
+  (check-patch? (patch-trivs '(a0) '(() ()))
                 '()
                 "patch-trivs: succes-1: just a register")
-  (check-equal? (patch-trivs '(fv0) '(((fv0 a0)) ()))
+  (check-patch? (patch-trivs '(fv0) '(((fv0 a0)) ()))
                 '()
                 "patch-trivs: succes-2: already in register memory")
-  (check-equal? (patch-trivs '(fv0) '(((fv0 a0)) (fv0)))
+  (check-patch? (patch-trivs '(fv0) '(((fv0 a0)) (fv0)))
                 '((set! a0 fv0))
                 "patch-trivs: succes-3: not in register memory")
-  (check-equal? (patch-trivs '(fv0 fv0) '(((fv0 a0)) ()))
+  (check-patch? (patch-trivs '(fv0 fv0) '(((fv0 a0)) ()))
                 '()
                 "patch-trivs: succes-4: two same memories already in a register")
-  (check-equal? (patch-trivs '(fv0 a0) '(((fv0 a0)) (fv0)))
+  (check-patch? (patch-trivs '(fv0 a0) '(((fv0 a0)) (fv0)))
                 '((set! a0 fv0))
                 "patch-trivs: succes-5: one register one memory not in register")
-  (check-equal? (patch-trivs '(fv0 fv1) '(((fv0 a0)(fv1 t0)) (fv0)))
+  (check-patch? (patch-trivs '(fv0 fv1) '(((fv0 a0)(fv1 t0)) (fv0)))
                 '((set! a0 fv0))
                 "patch-trivs: succes-6: two memories on already in register")
-  (check-equal? (patch-trivs '(fv0 fv1) '(((fv0 a0)(fv1 t0)) (fv0 fv1)))
+  (check-patch? (patch-trivs '(fv0 fv1) '(((fv0 a0)(fv1 t0)) (fv0 fv1)))
                 '((set! a0 fv0) (set! t0 fv1))
                 "patch-trivs: succes-7: two memories not in register")
 ;patch-binop
   ;succes
-  (check-equal? (patch-binop 'a0 'a1 'a2 '+ '(((fv0 t4)(fv1 t5)) (fv0 fv1)))
+  (check-patch? (patch-binop 'a0 'a1 'a2 '+ '(((fv0 t4)(fv1 t5)) (fv0 fv1)))
                 '((set! a0 (+ a1 a2)))
                 "patch-binop: succes-1: all registers")
-  (check-equal? (patch-binop 'a0 'fv1 'a2 '+ '(((fv0 t4)(fv1 t5)) (fv0)))
+  (check-patch? (patch-binop 'a0 'fv1 'a2 '+ '(((fv0 t4)(fv1 t5)) (fv0)))
                 '((set! a0 (+ t5 a2)))
                 "patch-binop: succes-2: one memory already in a register")
-  (check-equal? (patch-binop 'a0 'fv1 'a2 '+ '(((fv0 t4)(fv1 t5)) (fv0 fv1)))
+  (check-patch? (patch-binop 'a0 'fv1 'a2 '+ '(((fv0 t4)(fv1 t5)) (fv0 fv1)))
                 '((set! t5 fv1) (set! a0 (+ t5 a2)))
                 "patch-binop: succes-3: one memory not in a register")
   ;|#
 ;patch-instructions
   ;succes
-  (check-equal? (patch-instructions '(begin (set! a1 42) (halt a1)))
+  (check-patch? (patch-instructions '(begin (set! a1 42) (halt a1)))
                 '(begin (set! a1 42) (set! a0 a1))
                 "patch-instructions: succes-1: one instruction")
-  (check-equal? (patch-instructions
+  (check-patch? (patch-instructions
                  '(begin
                     (set! fv0 0)
                     (set! fv1 42)
                     (set! fv0 fv1)
                     (halt fv0)))
-                '(begin (set! t4 0) (set! fv0 t4) (set! t5 42) (set! fv1 t5) (set! t6 fv1) (set! fv0 t6) (set! a0 fv0))
+                '(begin (set! t5 0) (set! fv0 t5) (set! t6 42) (set! fv1 t6) (set! t5 fv1) (set! fv0 t5) (set! a0 fv0))
                 "patch-instructions: succes-2: a fvar in second argument")
-  (check-equal? (patch-instructions
+  (check-patch? (patch-instructions
                  '(begin
                     (set! fv0 0)
                     (set! fv1 42)
                     (set! fv0 (+ fv0 fv1))
                     (halt fv0)))
-                '(begin (set! t4 0) (set! fv0 t4) (set! t5 42) (set! fv1 t5) (set! t4 fv0) (set! t5 fv1) (set! t6 (+ t4 t5)) (set! fv0 t6) (set! a0 fv0))
+                '(begin (set! t5 0) (set! fv0 t5) (set! t6 42) (set! fv1 t6) (set! t5 fv0) (set! t6 fv1) (set! t5 (+ t5 t6)) (set! fv0 t5) (set! a0 fv0))
                 "patch-instructions: succes-3: fvars in binop")
-  (check-equal? (patch-instructions
+  (check-patch? (patch-instructions
                  '(begin
                     (set! t1 0)
                     (set! t2 0)
