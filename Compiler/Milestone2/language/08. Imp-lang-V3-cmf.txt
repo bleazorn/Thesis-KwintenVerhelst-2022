@@ -19,7 +19,7 @@ aloc	::= 	aloc?
 binop	::=	+
  	|	*
  	 	 	 	 
-integer	::=	integer32?
+integer	::=	int32?
 
 
 

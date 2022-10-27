@@ -85,7 +85,9 @@
                  [else (newTemp)])]
          [cReg (cond
                  [(isRegister? c) c]
+                 [(equal? a c) aReg]
                  [(equal? b c) bReg]
+                 [(and (equal? binop '+) (and (integer? c) (and (< c 2048) (>= c -2048)))) c]
                  [else (newTemp)])])
     (let ([aSet (if (isRegister? a) '() `((set! ,a ,aReg)))]
           [bSet (cond
@@ -94,6 +96,7 @@
           [cSet (cond
                  [(isRegister? c) '()]
                  [(equal? b c) '()]
+                 [(and (equal? binop '+) (and (integer? c) (and (< c 2048) (>= c -2048)))) '()]
                  [else `((set! ,cReg ,c))])])
       (append bSet cSet `((set! ,aReg (,binop ,bReg ,cReg))) aSet))))
     
@@ -298,49 +301,41 @@
   (define (check-patch? t1 t2 text)
     (resetTemp)
     (check-equal? t1 t2 text))
-  #|
-;patch-triv
-  (check-patch? (patch-triv 'a0 '(((fv0 a0)(fv1 t0)) (fv0 fv1)))
-                'a0
-                "patch-triv: succes-1: not activated")
-  (check-patch? (patch-triv 'fv0 '(((fv0 a0)(fv1 t0)) (fv0 fv1)))
-                'a0
-                "patch-triv: succes-2: activated")
-;patch-trivs
-  ;succes
-  (check-patch? (patch-trivs '(a0) '(() ()))
-                '()
-                "patch-trivs: succes-1: just a register")
-  (check-patch? (patch-trivs '(fv0) '(((fv0 a0)) ()))
-                '()
-                "patch-trivs: succes-2: already in register memory")
-  (check-patch? (patch-trivs '(fv0) '(((fv0 a0)) (fv0)))
-                '((set! a0 fv0))
-                "patch-trivs: succes-3: not in register memory")
-  (check-patch? (patch-trivs '(fv0 fv0) '(((fv0 a0)) ()))
-                '()
-                "patch-trivs: succes-4: two same memories already in a register")
-  (check-patch? (patch-trivs '(fv0 a0) '(((fv0 a0)) (fv0)))
-                '((set! a0 fv0))
-                "patch-trivs: succes-5: one register one memory not in register")
-  (check-patch? (patch-trivs '(fv0 fv1) '(((fv0 a0)(fv1 t0)) (fv0)))
-                '((set! a0 fv0))
-                "patch-trivs: succes-6: two memories on already in register")
-  (check-patch? (patch-trivs '(fv0 fv1) '(((fv0 a0)(fv1 t0)) (fv0 fv1)))
-                '((set! a0 fv0) (set! t0 fv1))
-                "patch-trivs: succes-7: two memories not in register")
+  ;#|
 ;patch-binop
   ;succes
-  (check-patch? (patch-binop 'a0 'a1 'a2 '+ '(((fv0 t4)(fv1 t5)) (fv0 fv1)))
+  (check-patch? (patch-binop 'a0 'a1 'a2 '+)
                 '((set! a0 (+ a1 a2)))
-                "patch-binop: succes-1: all registers")
-  (check-patch? (patch-binop 'a0 'fv1 'a2 '+ '(((fv0 t4)(fv1 t5)) (fv0)))
-                '((set! a0 (+ t5 a2)))
-                "patch-binop: succes-2: one memory already in a register")
-  (check-patch? (patch-binop 'a0 'fv1 'a2 '+ '(((fv0 t4)(fv1 t5)) (fv0 fv1)))
+                "patch-binop: succes-01: all registers")
+  (check-patch? (patch-binop 'a0 'a1 5 '+)
+                '((set! a0 (+ a1 5)))
+                "patch-binop: succes-02: 12bit integer add")
+  (check-patch? (patch-binop 'a0 'a1 5 '*)
+                '((set! t5 5) (set! a0 (* a1 t5)))
+                "patch-binop: succes-03: 12bit integer mul")
+  (check-patch? (patch-binop 'a0 'a1 5000 '+)
+                '((set! t5 5000) (set! a0 (+ a1 t5)))
+                "patch-binop: succes-04: 32bit integer add")
+  (check-patch? (patch-binop 'fv0 'a1 'a2 '+)
+                '((set! t5 (+ a1 a2)) (set! fv0 t5) )
+                "patch-binop: succes-05: one memory a")
+  (check-patch? (patch-binop 'a0 'fv1 'a2 '+)
                 '((set! t5 fv1) (set! a0 (+ t5 a2)))
-                "patch-binop: succes-3: one memory not in a register")
-  ;|#
+                "patch-binop: succes-06: one memory b")
+  (check-patch? (patch-binop 'a0 'a1 'fv2 '+)
+                '((set! t5 fv2) (set! a0 (+ a1 t5)))
+                "patch-binop: succes-07: one memory c")
+  (check-patch? (patch-binop 'fv0 'fv1 'fv2 '+)
+                '((set! t6 fv1) (set! t5 fv2) (set! t5 (+ t6 t5)) (set! fv0 t5))
+                "patch-binop: succes-08: all memory")
+;patch-set
+  ;succes
+  (check-patch? (patch-setLong '(set! a0 a1)) '((set! a0 a1)) "patch-set: succes-1: reg reg")
+  (check-patch? (patch-setLong '(set! a0 fv1)) '((set! a0 fv1)) "patch-set: succes-2: reg fvar")
+  (check-patch? (patch-setLong '(set! a0 11)) '((set! a0 11)) "patch-set: succes-3: reg int")
+  (check-patch? (patch-setLong '(set! fv0 a1)) '((set! fv0 a1)) "patch-set: succes-4: fvar reg")
+  (check-patch? (patch-setLong '(set! fv0 fv1)) '((set! t5 fv1) (set! fv0 t5)) "patch-set: succes-5: fvar fvar")
+  (check-patch? (patch-setLong '(set! fv0 11)) '((set! t5 11) (set! fv0 t5)) "patch-set: succes-6: fvar int")
 ;patch-instructions
   ;succes
   (check-patch? (patch-instructions '(begin (set! a1 42) (halt a1)))

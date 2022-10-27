@@ -1,0 +1,73 @@
+optimize-let-bindings interpreters en checkers 
+	niet geimplementeerd???
+
+tester.rkt aangeven waarom faalde (error message)
+
+Milestone 4
+
+--Compiler Steps
+	
+uniquify
+	ok
+sequentialize-let
+	ok
+normalize-bind
+	ok
+select-instructions
+	** select pred not -- check voor optimalisatie
+uncover-locals
+	ok -volgorde locals kan verschillend zijn, ni echt belangrijk
+undead-analysis
+	--
+conflict-analysis
+	--
+assign-registers
+	ok
+replace-locations
+	ok
+expose-basic-blocks
+	--
+resolve-predicates
+	ok
+flatten-program
+	ok
+patch-instructions
+	ok   -- check voor optimalisatie
+implement-fvars
+	ok
+generalize-cheri-risc-v
+	ok
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

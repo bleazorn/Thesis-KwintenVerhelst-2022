@@ -6,7 +6,6 @@ s	::=	sw reg, addr			store in memory on address symbol
 	|	li rd, int32			insert integer 32bits
 	|	addi rd, x0, int12		insert integer 12bits
 	|	add reg, reg, reg  		addition reg 
- 	|	li reg, reg, int32 		addition int 32bits
 	|	addi reg, reg, int12 		addition int 12bits
  	|	mul  reg, reg, reg		multiplication
  	 	 	 	 

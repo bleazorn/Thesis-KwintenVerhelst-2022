@@ -1,0 +1,91 @@
+link-paren-cheri-risc-v
+
+p	::=	(begin s ...)
+ 	 	 	 	 
+s	::=	(set! addr trg)			| Move in memory		
+	|	(set! reg loc)			| get in register (geheugen, register, integer)
+	|	(set! reg triv)
+ 	|	(set! reg (binop reg reg))	| add en mul
+	|	(set! reg (+ reg int12))	| add 
+	|	(jump trg)
+	| 	(compare reg opand)
+	|	(jump-if relop pc-addr)
+
+trg	::=	reg
+	|	pc-addr
+
+triv	::= 	trg			!!!waarom is triv weg in vorige versies???
+	| 	integer
+
+opand	::= 	integer
+	|	reg
+	 	 	 	 
+loc 	::=	reg
+	|	addr
+
+relop	::=	 <
+ 	 |	 <=
+ 	 |	 =
+ 	 |	 >=
+ 	 |	 >
+ 	 |	 !=
+ 	 		 	 
+binop	::=	+
+ 	|	*
+ 	 	 	 	 
+reg	::=	zero
+ 	|	ra
+ 	|	sp
+ 	|	gp
+ 	|	tp
+ 	|	fp
+ 	|	pc
+ 	|	a0
+ 	|	a1
+ 	|	a2
+ 	|	a3
+ 	|	a4
+ 	|	a5
+ 	|	a6
+ 	|	a7
+ 	|	s0
+ 	|	s1
+ 	|	s2
+ 	|	s3
+ 	|	s4
+ 	|	s5
+ 	|	s6
+ 	|	s7
+ 	|	s8
+ 	|	s9
+ 	|	s10
+ 	|	s11
+ 	|	t0
+ 	|	t1
+ 	|	t2
+ 	|	t3
+ 	|	t4
+ 	|	t5
+ 	|	t6
+
+addr	::= 	(fbp - dispoff)
+
+fbp	::=	frame-base-pointer-register?
+
+dispoff	::=	dispoffset?
+
+pc-addr	::= 	natural-number/c
+ 	 	 	 	 
+integer	::=	int32
+	|	int12
+
+int32	::=	int32?
+int12	::=	int12?
+
+#|
+label 
+jump
+conditional
+conditional jump
+Kan label in address gestoken worden?
+|#

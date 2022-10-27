@@ -1,0 +1,36 @@
+uniquify
+
+p	::=	(module tail)
+
+pred 	::= 	(relop triv triv)
+	|	(true)
+	|	(false)
+	|	(not pred)
+	| 	(let ([x value] ...) pred)
+	|	(if pred pred pred)
+
+tail  	::= 	value
+	|	(let ([x value] ...) tail)
+	|	(if pred tail tail)	
+
+value	::= 	triv
+	|   	(binop triv triv)
+	|	(let ([x value] ...) value)
+	|	(if pred value value)
+ 	 	 
+triv	::= 	integer
+	|	x
+	 	 
+x	::= 	name?
+ 	 		 	 
+binop	::=	+
+ 	|	*
+
+relop	::= 	<
+	|	<=
+	|	=
+	|	>=
+	|	>
+	|	!=
+ 	 	 	 	 
+integer	::=	int32?

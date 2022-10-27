@@ -43,11 +43,36 @@
 (define (replace-locations p)
   (match p
     [`(module () ,pro) p]
-    [`(module ((locals (,l ...)) (assignment (,a ...))) ,pro) (replace-tail pro a)]
+    [`(module ((locals ,loc) (assignment ,ass)) ,pro) (replace-tail pro ass)]
+    [`(module ((locals ,loc) (conflicts ,conf) (assignment ,ass)) ,pro) (replace-tail pro ass)]
     [_ #f]))
 
 (module+ test
-;replace-locations
+;replace-triv
+  ;succes
+  (check-equal? (replace-triv 'x.1 '((x.1 a0))) 'a0 "replace-triv: succes-1: aloc")
+  (check-equal? (replace-triv 5 '((x.1 a0))) 5 "replace-triv: succes-1: integer")
+  ;failure
+  (check-equal? (replace-triv 'x.1 '((y.1 a0))) 'x.1 "replace-triv: failure-1: aloc not assigned")
+  ;(check-equal? (replace-triv 'x.1 '(x.1 a0)) error "replace-triv: failure-2: assign wrong")
+;replace-effect
+  ;succes
+  (check-equal? (replace-effect '(set! x.1 y.2) '((x.1 a0) (y.2 a1))) '(set! a0 a1) "replace-effect: succes-1: set")
+  (check-equal? (replace-effect '(set! x.1 x.1) '((x.1 a0) (y.2 a1))) '(set! a0 a0) "replace-effect: succes-2: set same trivs")
+
+  (check-equal? (replace-effect '(set! x.1 (+ y.2 z.3)) '((x.1 a0) (y.2 a1) (z.3 a2))) '(set! a0 (+ a1 a2)) "replace-effect: succes-3: binop")
+  (check-equal? (replace-effect '(set! x.1 (+ x.1 5)) '((x.1 a0) (y.2 a1))) '(set! a0 (+ a0 5)) "replace-effect: succes-4: binop same trivs")
+
+  (check-equal? (replace-effect '(begin (set! x.1 x.1) (set! y.2 5) (set! x.1 (+ x.1 y.2))) '((x.1 a0) (y.2 a1))) '(begin (set! a0 a0) (set! a1 5) (set! a0 (+ a0 a1))) "replace-effect: succes-5: begin")
+;replace-tail
+  ;succes
+  (check-equal? (replace-tail '(halt y.2) '((x.1 a0) (y.2 a1))) '(halt a1) "replace-tail: succes-1: halt")
+  (check-equal? (replace-tail '(begin (set! x.1 x.1) (set! y.2 5) (set! x.1 (+ x.1 y.2)) (halt x.1)) '((x.1 a0) (y.2 a1))) '(begin (set! a0 a0) (set! a1 5) (set! a0 (+ a0 a1)) (halt a0)) "replace-tail: succes-2: begin")
+  ;failure
+  (check-equal? (replace-tail '(begin (set! x.1 x.1) (set! y.2 5) (set! x.1 (+ x.1 y.2))) '((x.1 a0) (y.2 a1))) '(begin (set! a0 a0) (set! a1 5) #f) "replace-tail: failure-1: begin no halt")
+
+
+  ;replace-locations
   ;succes
   (check-equal? (replace-locations
                  '(module ((locals (x.1)) (assignment ((x.1 rax))))

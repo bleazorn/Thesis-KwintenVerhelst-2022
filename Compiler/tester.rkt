@@ -1,0 +1,54 @@
+#lang racket
+
+(require racket/system)
+(module+ test
+  (require rackunit))
+
+(define (check-program-file program result)
+  (define-values (sp out in err)
+    (subprocess #f #f #f "/bin/bash" "./tester.sh" program (number->string result)))
+  (define output (port->string out))
+  (close-input-port out)
+  (close-output-port in)
+  (close-input-port err)
+  (subprocess-wait sp)
+  output
+  )
+
+(define (check-program-p program result)
+  (write-string-to-file "tmpTest" program)
+  (define output (check-program-file "tmpTest" result))
+  (delete-file "tmpTest")
+  (pretty-display (format "~a\nResult: ~a" program output)) 
+  (second (string-split output "\n")))
+
+(define (write-string-to-file file program)
+  (cond [(file-exists? file) (delete-file file)])
+  (with-output-to-file file
+    (lambda () (printf (~a program)))))
+
+(define (check-program program result)
+  (if (and (string? program) (file-exists? program))
+      (check-program-file program result)
+      (check-program-p program result)))
+
+(module+ test
+  (define (check-Program program result text)
+    (check-equal? (check-program program result) "Test Succeed" text))
+  (define (check-Program-failed program result text)
+    (check-equal? (check-program program result) "Test Failed" text))
+;Milestone3
+  ;succes
+  (check-Program '(module 50) 50 "Program: succes-1: value integer")
+  (check-Program '(module -50) -50 "Program: succes-2: value negative integer")
+  (check-Program '(module (+ 50 1)) 51 "Program: succes-3: value binop")
+  (check-Program '(module (let ([x 10]) (+ 50 x))) 60 "Program: succes-4: let one var")
+  (check-Program '(module (let ([x 10] [y 5]) (+ y x))) 15 "Program: succes-5: let two var")
+  (check-Program '(module (let ([x (+ 2 3)]) (+ 50 x))) 55 "Program: succes-6: binop in let")
+  (check-Program '(module (let ([x (+ 2 3)]) (let ([y (* 6 10)]) (+ y x)))) 65 "Program: succes-7: nested let")
+  (check-Program '(module (let ([a 1] [b 2]) (let ([c (+ a b)]) (let ([x (+ a b)] [y (+ a c)] [l 5]) (+ c x))))) 6 "Program: succes-7: complex program")
+  (check-Program '(module (let ([a 1] [b 2]) (let ([c (+ a b)]) (let ([x (+ a b)] [y (+ a c)] [l 5]) (let ([z (+ a b)] [d (+ y x)] [e (+ c l)]) (+ c e)))))) 11 "Program: succes-9: put things in memory")
+  (check-Program '(module (let ([x -10] [y -5]) (+ y x))) -15 "Program: succes-10: neg vars")
+  ;failure
+  (check-Program-failed '(module (let ([a 1] [b 2] [c 3] [x 4] [y 5] [z 6]) (* (+ (* a b) (+ x y)) (* c z)))) 29 "Program: succes-1: binop can only have trivs")
+  )

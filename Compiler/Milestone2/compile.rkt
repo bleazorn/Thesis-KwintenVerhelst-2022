@@ -13,7 +13,6 @@
          "generate-cheri-risc-v.rkt"
          "wrapRunTime.rkt"
          "wrapBoilerplate.rkt")
-;(require racket/system)
 
 (provide compile-file
          compile-program)
@@ -60,6 +59,7 @@
 
 (define (compile program)
   (println "Compiling Program")
+  (println program)
   (compileSteps 0 12 program))
 
 (define (test program)
@@ -94,6 +94,7 @@
       (println (format "File ~a does not exist" file))))
 
 (define (compile-program p)
+  (println p)
   (write-program p))
 
 (define (compile-file file)
@@ -102,7 +103,7 @@
 ;######################################################################
 
 (define testProgram
-  '(module (let ([w 2048][x 2][y 3][z 4]) (let ([y 10] [x 5]) (+ x x))))
+  '(module (+ 50 0))
   )
 (module+ test
   (check-equal? #t #t "test"))

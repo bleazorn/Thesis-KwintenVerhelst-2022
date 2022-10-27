@@ -21,12 +21,10 @@
       (let* ([tmp1 (if (integer? t1) (freshtmp) t1)]
              [tmp2 (cond
                      [(and (integer? t2) (not (equal? binop '+))) (freshtmp)]
-                     [(and (integer? t2) (and (equal? binop '+) (or (< t2 -2048) (>= t2 2048)))) (freshtmp)]
                      [else t2])]
              [pre1 (if (integer? t1) `((set! ,tmp1 ,t1)) '())]
              [pre2 (cond
                      [(and (integer? t2) (not (equal? binop '+))) (append pre1 `((set! ,tmp2 ,t2)))]
-                     [(and (integer? t2) (and (equal? binop '+) (or (< t2 -2048) (>= t2 2048)))) (append pre1 `((set! ,tmp2 ,t2)))]
                      [else pre1])])
         (append pre2 `((set! ,tmp1 (,binop ,tmp1 ,tmp2))) `(,(append tail `(,tmp1)))))
       #f))
@@ -74,7 +72,7 @@
 ;select-binop
   ;succes
   (check-select (select-binop '+ 5 4 '(halt))
-                '((set! tmp.1 5) (set! tmp.1 (+ tmp.1 tmp.2)) (halt tmp.1))
+                '((set! tmp.1 5) (set! tmp.1 (+ tmp.1 4)) (halt tmp.1))
                 "select-binop: succes-1: add int int")
   (check-select (select-binop '* 5 4 '(halt))
                 '((set! tmp.1 5) (set! tmp.2 4) (set! tmp.1 (* tmp.1 tmp.2)) (halt tmp.1))
@@ -83,7 +81,7 @@
                 '((set! tmp.1 5) (set! tmp.1 (+ tmp.1 x.1)) (halt tmp.1))
                 "select-binop: succes-3: add int aloc")
   (check-select (select-binop '+ 'x.1 4 `(set! y.3))
-                '((set! tmp.1 4) (set! x.1 (+ x.1 tmp.1)) (set! y.3 x.1))
+                '((set! x.1 (+ x.1 4)) (set! y.3 x.1))
                 "select-binop: succes-4: add aloc int")
   (check-select (select-binop '* 'x.1 4 `(set! y.3))
                 '((set! tmp.1 4) (set! x.1 (* x.1 tmp.1)) (set! y.3 x.1))
@@ -91,6 +89,21 @@
   (check-select (select-binop '+ 'x.1 'x.2 `(set! y.3))
                 '((set! x.1 (+ x.1 x.2)) (set! y.3 x.1))
                 "select-binop: succes-6: add aloc aloc")
+  (check-select (select-binop '+ 'x.1 5000 '(halt))
+                '((set! tmp.1 5000) (set! x.1 (+ x.1 tmp.1)) (halt x.1))
+                "select-binop: succes-7: add aloc int32")
+  (check-select (select-binop '+ 'x.1 -5000 '(halt))
+                '((set! tmp.1 -5000) (set! x.1 (+ x.1 tmp.1)) (halt x.1))
+                "select-binop: succes-8: add aloc int32")
+  (check-select (select-binop '+ 5 5000 '(halt))
+                '((set! tmp.1 5) (set! tmp.2 5000) (set! tmp.1 (+ tmp.1 tmp.2)) (halt tmp.1))
+                "select-binop: succes-7: add int int32")
+  (check-select (select-binop '+ 5000 5000 '(halt))
+                '((set! tmp.1 5000) (set! tmp.2 5000) (set! tmp.1 (+ tmp.1 tmp.2)) (halt tmp.1))
+                "select-binop: succes-7: add int32 int32")
+  (check-select (select-binop '+ 'x.1 214748364845 '(halt))
+                '((set! tmp.1 214748364845) (set! x.1 (+ x.1 tmp.1)) (halt x.1))
+                "select-binop: succes-7: add aloc int>32")
 ;select-value
   ;succes
   (check-select (select-value 5 '(halt))
@@ -109,6 +122,12 @@
 
 ;select-effect
   ;succes
+  (check-select (select-effect '(begin (set! x.1 5) (set! x.2 x.1) (set! x.1 5)))
+                '(begin (set! x.1 5) (set! x.2 x.1) (set! x.1 5))
+                "select-effect: succes-1: set of effecten")
+  (check-select (select-effect '(set! x.1 (+ 5 4)))
+                '(begin (set! x.1 5) (set! x.1 5) (set! x.1 5))
+                "select-effect: succes-1: set of effecten")
   (check-select (select-effect '(begin (set! x.1 5) (set! x.1 5) (set! x.1 5)))
                 '(begin (set! x.1 5) (set! x.1 5) (set! x.1 5))
                 "select-effect: succes-1: set of effecten")

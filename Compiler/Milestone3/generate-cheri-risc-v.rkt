@@ -27,7 +27,7 @@ store in memory    sw rd, addr       (addr => register)
 (define (generate-binop bin)
  (match bin
    [`(set! ,a (* ,b ,c)) (format "mul ~a, ~a, ~a" a b c)]
-   [`(set! ,a (+ ,b ,c)) #:when (integer? c) (format "addi ~a, ~a, ~a" a b c)]
+   [`(set! ,a (+ ,b ,c)) #:when (and (integer? c) (and (< c 2048) (>= c -2048))) (format "addi ~a, ~a, ~a" a b c)]
    [`(set! ,a (+ ,b ,c)) (format "add ~a, ~a, ~a" a b c)]
    [_ #f]))
 
@@ -53,24 +53,9 @@ store in memory    sw rd, addr       (addr => register)
     [_ #f]))
 
 (module+ test
-;generate-add
-  #|
-  ;succes
-  (check-equal? (generate-add '(set! a0 (+ a0 50))) "addi a0, a0, 50" "generate-add: succes-1: addition met integer")
-  (check-equal? (generate-add '(set! a0 (+ a0 a0))) "add a0, a0, a0" "generate-add: succes-2: addition met register")
-
-  ;failure
-  (check-equal? (generate-add '(set! a0 (* a0 50))) #f "generate-add: failure-1: verkeerde operatie")
-  
-  (check-equal? (generate-add '(set! a0 (+ 50 50))) "addi a0, 50, 50" "generate-add: failure-2: addition met verkeerde triv - checker faalde")
-  (check-equal? (generate-add '(set! a0 (+ 50 a0))) "add a0, 50, a0" "generate-add: failure-3: addition met verkeerde triv - checker faalde")
-
-  (check-equal? (generate-add '(set! 50 (+ a0 50))) "addi 50, a0, 50" "generate-add: failure-4: addition met verkeerde triv - checker faalde")
-  (check-equal? (generate-add '(set! 50 (+ a0 a0))) "add 50, a0, a0" "generate-add: failure-5: addition met verkeerde triv - checker faalde")
-|#
 ;generate-binop
   ;succes
-  (check-equal? (generate-binop '(set! a0 (+ a0 50))) "addi a0, a0, 50" "generate-binop: succes-1: addition met integer")
+  (check-equal? (generate-binop '(set! a0 (+ a0 50))) "addi a0, a0, 50" "generate-binop: succes-1: addition met 12bit int")
   (check-equal? (generate-binop '(set! a0 (+ a0 a0))) "add a0, a0, a0" "generate-binop: succes-2: addition met register")
   (check-equal? (generate-binop '(set! a0 (* a0 a0))) "mul a0, a0, a0" "generate-binop: succes-3: multiplier met register")
 
@@ -78,7 +63,7 @@ store in memory    sw rd, addr       (addr => register)
   (check-equal? (generate-binop '(set! a0 (* a0 50))) "mul a0, a0, 50" "generate-binop: failure-1: multiplier met integer - checker faalde")
   (check-equal? (generate-binop '(set! a0 (* 50 a0))) "mul a0, 50, a0" "generate-binop: failure-4: multiplier met verkeerde triv - checker faalde")
   (check-equal? (generate-binop '(set! 50 (* a0 a0))) "mul 50, a0, a0" "generate-binop: failure-7: multiplier met verkeerde triv - checker faalde")
-
+  (check-equal? (generate-binop '(set! a0 (+ a0 50000))) "add a0, a0, 50000" "generate-binop: failure-4: addition met 32bit int")
   (check-equal? (generate-binop '(set! a0 (- a0 50))) #f "generate-binop: failure-8: niet bestaande operation")
 
 ;generate-set
@@ -90,6 +75,7 @@ store in memory    sw rd, addr       (addr => register)
   (check-equal? (generate-set '(set! a0 (* t0 t1))) "mul a0, t0, t1" "generate-set: succes-5: multiplier met register")
   (check-equal? (generate-set '(set! a0 (fp - 0))) "lw a0, -0(fp)" "generate-set: succes-6: load from memory")
   (check-equal? (generate-set '(set! (fp - 0) a0)) "sw a0, -0(fp)" "generate-set: succes-7: store in memory")
+  (check-equal? (generate-set '(set! a0 50000)) "li a0, 50000" "generate-set: succes-8: voeg 32bit int toe")
   
   ;failure
   (check-equal? (generate-set '(set! 50 50)) "addi 50, x0, 50" "generate-set: failure-1: copy met verkeerde triv - checker faalde")

@@ -5,7 +5,9 @@
          "normalize-bind.rkt"
          "select-instructions.rkt"
          "replace-locations.rkt"
-         "assign-fvars.rkt"
+         "assign-registers.rkt"
+         "conflict-analysis.rkt"
+         "undead-analysis.rkt"
          "uncover-locals.rkt"
          "flatten-begins.rkt"
          "patch-instructions.rkt"
@@ -13,7 +15,6 @@
          "generate-cheri-risc-v.rkt"
          "wrapRunTime.rkt"
          "wrapBoilerplate.rkt")
-;(require racket/system)
 
 (provide compile-file
          compile-program)
@@ -29,7 +30,9 @@
         patch-instructions
         flatten-begins
         replace-locations
-        assign-fvars
+        assign-registers
+        conflict-analysis
+        undead-analysis
         uncover-locals
         select-instructions
         normalize-bind
@@ -60,10 +63,11 @@
 
 (define (compile program)
   (println "Compiling Program")
-  (compileSteps 0 12 program))
+  (println program)
+  (compileSteps 0 (sub1 (length steps)) program))
 
 (define (test program)
-  (compileStepsDis 2 12 program))
+  (compileStepsDis 2 (sub1 (length steps)) program))
 
 ;write a given string to a given file
 ;(write-string-to-file file string) -> any
@@ -84,8 +88,8 @@
 ;compile a given program and write to the file "test.S"
 ;(write-program p) -> void
 ;p:
-(define (write-program p)
-  (write-program-to-file "test.S" p))
+(define (write-program p file)
+  (write-program-to-file file p))
 
 
 (define (read-program-from-file file)
@@ -94,18 +98,19 @@
       (println (format "File ~a does not exist" file))))
 
 (define (compile-program p)
-  (write-program p))
+  (write-program p "Test.S"))
 
 (define (compile-file file)
-  (write-program (read-program-from-file file)))
+  (write-program (read-program-from-file file) (format "~a.S" (car (string-split file ".")))))
 
 ;######################################################################
 
 (define testProgram
-  '(module (let ([w 2048][x 2][y 3][z 4]) (let ([y 10] [x 5]) (+ x x))))
+  '(module (let ([a 1] [b 2]) (let ([c (+ a b)]) (let ([x (+ a b)] [y (+ a c)] [l 5]) (let ([z (+ a b)] [d (+ y x)] [e (+ c l)]) (+ c e))))))
   )
 (module+ test
   (check-equal? #t #t "test"))
-;(test testProgram)
-;(write-program testProgram)
-;(compile-file "test.txt")
+
+(test testProgram)
+;(write-program testProgram "ap.S")
+;(compile-file "ap.txt")

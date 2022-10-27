@@ -1,0 +1,37 @@
+sequentialize-let
+
+p	::=	(module tail)
+
+pred	::=	(relop triv triv)
+	|	(true)
+	|	(false)
+	|	(not pred)
+	|	(let ([aloc value] ...) pred)
+	|	(if pred pred pred)
+
+tail  	::= 	value
+	|	(let ([aloc value] ...) tail)
+	|	(if pred tail tail)	
+
+value	::= 	triv
+	|   	(binop triv triv)
+	|	(let ([aloc value] ...) value)
+	|	(if pred value value)
+ 	 	 
+triv	::= 	integer
+	|	aloc
+	 	 
+aloc	::= 	aloc?
+ 	 		 	 
+binop	::=	+
+ 	|	*
+
+relop	::=	 <
+ 	 |	 <=
+ 	 |	 =
+ 	 |	 >=
+ 	 |	 >
+ 	 |	 !=
+ 	 	 	 	 
+integer	::=	int32?
+
