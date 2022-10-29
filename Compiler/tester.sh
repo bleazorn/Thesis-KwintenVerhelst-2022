@@ -1,6 +1,6 @@
 #!/bin/bash
 
-output=$(./compiler.sh $1 | awk '/FAILURE/ || /SUCCES/')
+output=$(./runProgram.sh $1 | awk '/FAILURE/ || /SUCCES/')
 
 if [ $2 -lt 0 ]
 then 
