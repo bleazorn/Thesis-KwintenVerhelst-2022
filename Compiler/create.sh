@@ -24,8 +24,7 @@ else
 	fi
 fi
 
-echo compiler$varVerbose.sh
-file=compiler.sh
+file=runProgram.sh
 cat <<< "#!/bin/bash" > $file
 cat <<< "varRacket=$varRacket" >> $file
 cat <<< "varBuilder=$varBuilder" >> $file
@@ -57,5 +56,62 @@ echo $varEmulator
 echo "Run emulator"
 ~/$varEmulator $varCurLoc/$varELF -V 
 
+EOF
+
+file=verboseRunProgram.sh
+cat <<< "#!/bin/bash" > $file
+cat <<< "varRacket=$varRacket" >> $file
+cat <<< "varBuilder=$varBuilder" >> $file
+cat <<< "varEmulator=$varEmulator" >> $file
+
+cat << 'EOF' >>$file
+varCurLoc=${PWD}
+echo $varCurLoc
+
+if [ -z "$1" ]
+then
+	varFile="test.txt"
+else
+	varFile=$1
+fi
+
+tmp=$(echo $varFile| cut -d'.' -f 1)
+varELF=$tmp.elf
+
+echo $varRacket
+echo "Compile from file"
+racket $varRacket $varFile
+
+echo $varBuilder
+echo "Make elf"
+make -C $varBuilder $varCurLoc/$varELF
+
+echo $varEmulator
+echo "Run emulator"
+~/$varEmulator $varCurLoc/$varELF
+
+EOF
+
+file=compiler.sh
+cat <<< "#!/bin/bash" > $file
+cat <<< "varRacket=$varRacket" >> $file
+cat << 'EOF' >>$file
+
+varCurLoc=${PWD}
+echo $varCurLoc
+
+if [ -z "$1" ]
+then
+	varFile="test.txt"
+else
+	varFile=$1
+fi
+
+tmp=$(echo $varFile| cut -d'.' -f 1)
+varELF=$tmp.elf
+
+echo $varRacket
+echo "Compile from file"
+racket $varRacket $varFile
 EOF
 
