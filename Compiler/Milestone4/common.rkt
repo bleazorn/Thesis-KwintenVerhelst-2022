@@ -13,6 +13,7 @@
          fresh
          name?
          isAddress?
+         isTmp?
          dec->hex-string)
 
 ;(require cpsc411/compiler-lib)
@@ -75,6 +76,15 @@
   (set! fres (add1 fres))
   (if (symbol? v)
       (string->symbol (format "~a.~a" v fres))
+      #f))
+
+(define (isTmp? t)
+  (if (symbol? t)
+      (let* ([symv (symbol->string t)]
+             [indexes (indexes-of (string->list symv) #\.)])
+        (if (and (and (equal? (length indexes) 1) (string->number (substring symv (first indexes)))) (equal? "tmp" (substring symv 0 (first indexes))))
+            #t 
+            #f))
       #f))
 
 (define (name? v)

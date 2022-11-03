@@ -31,14 +31,14 @@
 ;locals: list? '(aloc? ...)
 (define (uncover-pred p locals)
   (match p
-    [`(,relop ,a ,b) (uncover-triv b (uncover-triv a locals))]
-    ['(true) locals]
-    ['(false) locals]
-    [`(not ,pred) (uncover-pred pred locals)]
     [`(begin ,e ... ,pred) (uncover-pred pred (uncover-begins e locals))]
     [`(if ,p1 ,p2 ,p3) (let* ([p1Loc (uncover-pred p1 locals)]
                               [p2Loc (uncover-pred p2 p1Loc)])
                                (uncover-pred p3 p2Loc))]
+    [`(,relop ,a ,b) (uncover-triv b (uncover-triv a locals))]
+    ['(true) locals]
+    ['(false) locals]
+    [`(not ,pred) (uncover-pred pred locals)]
     [_ #f]))
 
 
@@ -98,6 +98,21 @@
   ;failure
   (check-false (uncover-begins '(set! y.2 5) '()) "uncover-begins: failure-1: wrong list")
   ;(check-false (uncover-begins '(begin (set! y.2 5) (set! z.3 5) (set! x.1 (* y.2 z.3)) (set! w.4 x.1)) '()) "uncover-begins: failure-4: wrong list")
+;uncover-pred
+  ;succes
+  (check-equal? (uncover-pred '(= x.1 x.1) '()) '(x.1) "uncover-pred: succes-01: relop same empty loc")
+  (check-equal? (uncover-pred '(= x.1 x.1) '(x.1)) '(x.1) "uncover-pred: succes-02: relop same not empty loc")
+  (check-equal? (uncover-pred '(= x.1 x.1) '(y.2)) '(y.2 x.1) "uncover-pred: succes-03: relop same not empty loc")
+  (check-equal? (uncover-pred '(= x.1 y.2) '(z.3)) '(z.3 x.1 y.2) "uncover-pred: succes-04: relop not empty loc")
+
+  (check-equal? (uncover-pred '(true) '(x.1 y.2 z.3)) '(x.1 y.2 z.3) "uncover-pred: succes-05: relop not empty loc")
+  (check-equal? (uncover-pred '(false) '(x.1 y.2 z.3)) '(x.1 y.2 z.3) "uncover-pred: succes-06: relop not empty loc")
+  (check-equal? (uncover-pred '(not (= x.1 y.2)) '(z.3)) '(z.3 x.1 y.2) "uncover-pred: succes-07: not")
+
+  (check-equal? (uncover-pred '(begin (set! y.2 5) (set! z.3 5) (set! x.1 (* y.2 z.3)) (set! w.4 x.1) (= p.5 w.4)) '(y.0)) '(y.0 y.2 z.3 x.1 w.4 p.5) "uncover-pred: succes-08: one begin")
+  (check-equal? (uncover-pred '(begin (set! y.2 5) (begin (set! z.3 5) (set! x.1 (* y.2 z.3))) (set! w.4 x.1) (= p.5 w.4)) '(y.0)) '(y.0 y.2 z.3 x.1 w.4 p.5) "uncover-pred: succes-09: nested begins")
+  
+  (check-equal? (uncover-pred '(if (= x.1 y.2) (= z.3 y.2) (= x.1 a.4)) '(z.3)) '(z.3 x.1 y.2 a.4) "uncover-pred: succes-10: if")
 ;uncover-effects
   ;succes
   (check-equal? (uncover-effects '(set! x.1 4) '()) '(x.1) "uncover-begins: succes-1: integer set empty locals")
@@ -110,6 +125,8 @@
 
   (check-equal? (uncover-effects '(begin (set! y.2 5) (set! z.3 5) (set! x.1 (* y.2 z.3)) (set! w.4 x.1)) '(y.0)) '(y.0 y.2 z.3 x.1 w.4) "uncover-begins: succes-7: one begin")
   (check-equal? (uncover-effects '(begin (set! y.2 5) (begin (set! z.3 5) (set! x.1 (* y.2 z.3))) (set! w.4 x.1)) '(y.0)) '(y.0 y.2 z.3 x.1 w.4) "uncover-begins: succes-8: nested begins")
+
+  (check-equal? (uncover-pred '(if (= x.1 y.2) (set! x.1 z.2) (begin (set! y.2 5) (begin (set! z.3 5) (set! x.1 (* y.2 z.3))) (set! w.4 x.1))) '(z.3)) '(z.3 x.1 y.2 z.2 w.4) "uncover-pred: succes-9: if")
   ;failure
   (check-false (uncover-effects '(set! x.1 7 4) '()) "uncover-begins: failure-1: wrong input")
 ;uncover-tail
@@ -122,8 +139,10 @@
 
   (check-equal? (uncover-tail '(begin (set! y.2 5) (set! z.3 5) (set! x.1 (* y.2 z.3)) (halt x.1)) '(y.0)) '(y.0 y.2 z.3 x.1) "uncover-tail: succes-7: one begin")
   (check-equal? (uncover-tail '(begin (set! y.2 5) (begin (set! z.3 5) (set! x.1 (* y.2 z.3))) (halt x.1)) '(y.0)) '(y.0 y.2 z.3 x.1) "uncover-tail: succes-8: nested begins")
+
+  (check-equal? (uncover-tail '(if (= x.1 y.2) (halt a.4) (begin (set! y.2 5) (set! z.3 5) (set! w.5 (* y.2 z.3)) (halt x.1))) '(z.3)) '(z.3 x.1 y.2 a.4 w.5) "uncover-pred: succes-10: if")
   ;failure
-  (check-false (uncover-effects '(set! x.1 7 4) '()) "uncover-begins: failure-1: wrong input")
+  (check-false (uncover-tail '(set! x.1 7 4) '()) "uncover-begins: failure-1: wrong input")
   (check-false (uncover-tail '(begin (set! y.2 5) (begin (set! z.3 5) (set! x.1 (* y.2 z.3))) (set! x.1 5)) '(y.0)) "uncover-tail: failure-2: no halt")
 ;uncover-locals
   ;succes

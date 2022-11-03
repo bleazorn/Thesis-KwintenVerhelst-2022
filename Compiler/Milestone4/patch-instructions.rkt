@@ -120,7 +120,7 @@
   (match e
     [`(set! ,a (,binop ,b ,c)) (patch-binop a b c binop)]
     [`(set! ,a ,b) (patch-set e)]
-    [`(halt ,a) `((set! a0 ,a))]
+    [`(halt ,a) `((set! a0 ,a)(jump "end"))]
     [`(with-label ,l ,b) (patch-with-label e)]
     [`(jump ,l) `((jump ,l))]
     [`(compare ,a (,relop ,b ,c)) (patch-compare e)]
@@ -206,7 +206,7 @@
 ;patch-instructions
   ;succes
   (check-patch? (patch-instructions '(begin (set! a1 42) (halt a1)))
-                '(begin (set! a1 42) (set! a0 a1))
+                '(begin (set! a1 42) (set! a0 a1) (jump "end"))
                 "patch-instructions: succes-1: one instruction")
   (check-patch? (patch-instructions
                  '(begin
@@ -214,7 +214,7 @@
                     (set! fv1 42)
                     (set! fv0 fv1)
                     (halt fv0)))
-                '(begin (set! t5 0) (set! fv0 t5) (set! t6 42) (set! fv1 t6) (set! t5 fv1) (set! fv0 t5) (set! a0 fv0))
+                '(begin (set! t5 0) (set! fv0 t5) (set! t6 42) (set! fv1 t6) (set! t5 fv1) (set! fv0 t5) (set! a0 fv0) (jump "end"))
                 "patch-instructions: succes-2: a fvar in second argument")
   (check-patch? (patch-instructions
                  '(begin
@@ -222,7 +222,7 @@
                     (set! fv1 42)
                     (set! fv0 (+ fv0 fv1))
                     (halt fv0)))
-                '(begin (set! t5 0) (set! fv0 t5) (set! t6 42) (set! fv1 t6) (set! t5 fv0) (set! t6 fv1) (set! t5 (+ t5 t6)) (set! fv0 t5) (set! a0 fv0))
+                '(begin (set! t5 0) (set! fv0 t5) (set! t6 42) (set! fv1 t6) (set! t5 fv0) (set! t6 fv1) (set! t5 (+ t5 t6)) (set! fv0 t5) (set! a0 fv0) (jump "end"))
                 "patch-instructions: succes-3: fvars in binop")
   (check-patch? (patch-instructions
                  '(begin
@@ -232,5 +232,15 @@
                     (set! t1 t2)
                     (set! t1 (+ t1 t3))
                     (halt t1)))
-                '(begin (set! t1 0) (set! t2 0) (set! t3 42) (set! t1 t2) (set! t1 (+ t1 t3)) (set! a0 t1))
-                "patch-instructions: succes-4: multiple instructions no changes"))
+                '(begin (set! t1 0) (set! t2 0) (set! t3 42) (set! t1 t2) (set! t1 (+ t1 t3)) (set! a0 t1) (jump "end"))
+                "patch-instructions: succes-4: multiple instructions no changes")
+  (check-patch? (patch-instructions '(begin (with-label L0 (set! a1 50)) (set! a2 50) (set! a0 50) (jump L1)
+                                           (with-label L1 (set! a1 50)) (set! a2 50) (set! a0 50) (jump-if L0 (= a0 a1)) (jump L2)
+                                           (with-label L2 (set! a1 50)) (set! a2 50) (set! a0 50) (halt a0)))
+               '(begin (with-label L0 (set! a1 50)) (set! a2 50) (set! a0 50) (jump L1)
+                                           (with-label L1 (set! a1 50)) (set! a2 50) (set! a0 50) (jump-if L0 (= a0 a1)) (jump L2)
+                                           (with-label L2 (set! a1 50)) (set! a2 50) (set! a0 50) (set! a0 a0) (jump "end"))
+               "patch-instructions: succes-5: multiple labels")
+
+)
+ 

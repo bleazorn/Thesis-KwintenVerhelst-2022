@@ -95,7 +95,7 @@ sltiu reg, reg, int12		compares < unsigned 12 bit integer
 ; p: any?
 (define (generate-cheri-risc-v p)
     (match p
-    [`(begin ,s ...) (foldl (lambda (s string) (format "~a~a" string (generate-set s))) "" s)]
+    [`(begin ,s ...) (format "~aend:\n" (foldl (lambda (s string) (format "~a~a" string (generate-set s))) "" s))]
     [_ #f]))
 
 (module+ test
@@ -150,7 +150,7 @@ sltiu reg, reg, int12		compares < unsigned 12 bit integer
   (check-equal? (generate-set '(st! a0)) #f "generate-set: failure-4: te weinig argumenten")
   (check-equal? (generate-set 'a) #f "generate-set: failure-5: verkeerd argument")
 ;generate-cheri-risc-v
-  (check-equal? (generate-cheri-risc-v '(begin (set! a0 (+ t0 450)))) "    addi a0, t0, 450\n" "generate-cheri-risc-v: succes-1: een enkele instructie")
+  (check-equal? (generate-cheri-risc-v '(begin (set! a0 (+ t0 450)))) "    addi a0, t0, 450\nend:\n" "generate-cheri-risc-v: succes-1: een enkele instructie")
   (check-equal? (generate-cheri-risc-v
                  '(begin
                     (set! a0 50)
@@ -159,7 +159,7 @@ sltiu reg, reg, int12		compares < unsigned 12 bit integer
                     (set! sp t0)
                     (set! sp (* sp sp))
                     (set! a1 2000)))
-                "    addi a0, x0, 50\n    addi t0, a0, 0\n    add t0, t0, t0\n    addi sp, t0, 0\n    mul sp, sp, sp\n    addi a1, x0, 2000\n"
+                "    addi a0, x0, 50\n    addi t0, a0, 0\n    add t0, t0, t0\n    addi sp, t0, 0\n    mul sp, sp, sp\n    addi a1, x0, 2000\nend:\n"
                 "generate-cheri-risc-v: succes-2: meerdere instructies")
   
 ;failure 

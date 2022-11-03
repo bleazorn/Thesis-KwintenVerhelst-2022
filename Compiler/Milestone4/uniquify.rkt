@@ -47,13 +47,13 @@
 ;locs: list? '((name aloc) ...)
 (define (uniquify-pred p locs)
   (match p
+    [`(let ,names ,body) (let ([newNames (uniquify-letNames names locs)])
+                           `(let ,(car newNames) ,(uniquify-pred body (second newNames))))]
+    [`(if ,p1 ,p2 ,p3) `(if ,(uniquify-pred p1 locs) ,(uniquify-pred p2 locs) ,(uniquify-pred p3 locs))]
     [`(,relop ,a ,b) `(,relop ,(uniquify-triv a locs) ,(uniquify-triv b locs))]
     ['(true) '(true)]
     ['(false) '(false)]
     [`(not ,pred) `(not ,(uniquify-pred pred locs))]
-    [`(let ,names ,body) (let ([newNames (uniquify-letNames names locs)])
-                           `(let ,(car newNames) ,(uniquify-pred body (second newNames))))]
-    [`(if ,p1 ,p2 ,p3) `(if ,(uniquify-pred p1 locs) ,(uniquify-pred p2 locs) ,(uniquify-pred p3 locs))]
     [_ #f]))
   
 ;
@@ -64,8 +64,8 @@
   (match v
     [`(let ,names ,body) (let ([newNames (uniquify-letNames names locs)])
                            `(let ,(car newNames) ,(uniquify-value body (second newNames))))]
-    [`(,binop ,t1 ,t2) `(,binop ,(uniquify-triv t1 locs) ,(uniquify-triv t2 locs))]
     [`(if ,p ,v1 ,v2) `(if ,(uniquify-pred p locs) ,(uniquify-value v1 locs) ,(uniquify-value v2 locs))]
+    [`(,binop ,t1 ,t2) `(,binop ,(uniquify-triv t1 locs) ,(uniquify-triv t2 locs))]
     [t (uniquify-triv t locs)]))
 
 ;
@@ -116,6 +116,38 @@
   (check-uniquify (uniquify-letNames '((x (+ y x))) '((y y.1) (x x.0))) '(((x.1 (+ y.1 x.0))) ((x x.1) (y y.1) (x x.0))) "uniquify-letNames: succes-6: name in binop in let name")
   (check-uniquify (uniquify-letNames '((x (let ((y y)) (+ y x)))) '((y y.1) (x x.0))) '(((x.1 (let ((y.2 y.1)) (+ y.2 x.0)))) ((x x.1) (y y.1) (x x.0))) "uniquify-letNames: succes-7: let in name")
   ;failure
+;uniquify-pred
+  ;succes
+  (check-uniquify (uniquify-pred '(< x 5) '((x x.1))) '(< x.1 5) "uniquify-pred: succes-01: relop int change")
+  (check-uniquify (uniquify-pred '(true) '((x x.1))) '(true) "uniquify-pred: succes-02: true")
+  (check-uniquify (uniquify-pred '(false) '((x x.1))) '(false) "uniquify-pred: succes-03: false")
+  (check-uniquify (uniquify-pred '(not (< x 5)) '((x x.1))) '(not (< x.1 5)) "uniquify-pred: succes-04: not relop")
+  
+  (check-uniquify (uniquify-pred '(let ((x 2)) (= x x)) '((x x.0))) '(let ((x.1 2)) (= x.1 x.1)) "uniquify-value: succes-05: let on name")
+  (check-uniquify (uniquify-pred '(let ((x 2) (y 3)) (< y x)) '((x x.0))) '(let ((x.1 2) (y.2 3)) (< y.2 x.1)) "uniquify-value: succes-06: let multiple name") 
+  (check-uniquify (uniquify-pred '(let ((x 2) (y 3)) (let ((x 4) (y 5)) (> y x))) '((x x.0)))
+                  '(let ((x.1 2) (y.2 3)) (let ((x.3 4) (y.4 5)) (> y.4 x.3))) "uniquify-value: succes-07: nested let")
+  (check-uniquify (uniquify-pred '(let ((x x) (y 3)) (let ((x (+ x y))) (!= y x))) '((x x.0)))
+                  '(let ((x.1 x.0) (y.2 3)) (let ((x.3 (+ x.1 y.2))) (!= y.2 x.3))) "uniquify-value: succes-08: nested let and has relop and triv val in let")
+  (check-uniquify (uniquify-pred '(let ((x x) (y 3)) (let ((x 4) (y (let ((x 7)) x))) (<= y x))) '((x x.0)))
+                  '(let ((x.1 x.0) (y.2 3)) (let ((x.3 4) (y.4 (let ((x.5 7)) x.5))) (<= y.4 x.3))) "uniquify-value: succes-09: nested let and has let val in let")
+  (check-uniquify (uniquify-pred '(let ((x x) (y 3)) (let ((x 4) (y (let ((x 7)) x))) (true))) '((x x.0)))
+                  '(let ((x.1 x.0) (y.2 3)) (let ((x.3 4) (y.4 (let ((x.5 7)) x.5))) (true))) "uniquify-value: succes-10: nested let and has let val in let")
+
+  (check-uniquify (uniquify-pred '(if (< x y) (= x z) (= y z)) '((x x.1) (y y.2) (z z.3))) '(if (< x.1 y.2) (= x.1 z.3) (= y.2 z.3)) "uniquify-pred: succes-11: if relop")
+  (check-uniquify (uniquify-pred '(if (if (< x y) (= x z) (= y z)) (= x z) (= y z)) '((x x.1) (y y.2) (z z.3)))
+                  '(if (if (< x.1 y.2) (= x.1 z.3) (= y.2 z.3)) (= x.1 z.3) (= y.2 z.3))
+                  "uniquify-pred: succes-12: if relop")
+  (check-uniquify (uniquify-pred '(if (< x y) (if (< x y) (= x z) (= y z)) (= y z)) '((x x.1) (y y.2) (z z.3)))
+                  '(if (< x.1 y.2) (if (< x.1 y.2) (= x.1 z.3) (= y.2 z.3)) (= y.2 z.3))
+                  "uniquify-pred: succes-13: if relop")
+  (check-uniquify (uniquify-pred '(if (< x y) (= x z) (if (< x y) (= x z) (= y z))) '((x x.1) (y y.2) (z z.3)))
+                  '(if (< x.1 y.2) (= x.1 z.3) (if (< x.1 y.2) (= x.1 z.3) (= y.2 z.3)))
+                  "uniquify-pred: succes-14: if relop")
+
+  ;failure
+  (check-uniquify (uniquify-pred '(= x y) '((x x.1))) '(= x.1 #f) "uniquify-pred: failure-01: relop not change")
+
 ;uniquify-value
   ;succes
   (check-uniquify (uniquify-value 1 '((x x.1))) 1 "uniquify-value: succes-01: integer")
@@ -134,6 +166,17 @@
                   '(let ((x.1 x.0) (y.2 3)) (let ((x.3 (+ x.1 y.2))) (+ y.2 x.3))) "uniquify-value: succes-10: nested let and has binop and triv val in let")
   (check-uniquify (uniquify-value '(let ((x x) (y 3)) (let ((x 4) (y (let ((x 7)) x))) (+ y x))) '((x x.0)))
                   '(let ((x.1 x.0) (y.2 3)) (let ((x.3 4) (y.4 (let ((x.5 7)) x.5))) (+ y.4 x.3))) "uniquify-value: succes-11: nested let and has let val in let")
+
+  (check-uniquify (uniquify-value '(if (< x y) (+ x z) (+ y z)) '((x x.1) (y y.2) (z z.3))) '(if (< x.1 y.2) (+ x.1 z.3) (+ y.2 z.3)) "uniquify-value: succes-12: if relop")
+  (check-uniquify (uniquify-value '(if (if (< x y) (= x z) (= y z)) (+ x z) (+ y z)) '((x x.1) (y y.2) (z z.3)))
+                  '(if (if (< x.1 y.2) (= x.1 z.3) (= y.2 z.3)) (+ x.1 z.3) (+ y.2 z.3))
+                  "uniquify-value: succes-13: if relop")
+  (check-uniquify (uniquify-value '(if (< x y) (if (< x y) (+ x z) (+ y z)) (+ y z)) '((x x.1) (y y.2) (z z.3)))
+                  '(if (< x.1 y.2) (if (< x.1 y.2) (+ x.1 z.3) (+ y.2 z.3)) (+ y.2 z.3))
+                  "uniquify-value: succes-13: if relop")
+  (check-uniquify (uniquify-value '(if (< x y) (+ x z) (if (< x y) (+ x z) (+ y z))) '((x x.1) (y y.2) (z z.3)))
+                  '(if (< x.1 y.2) (+ x.1 z.3) (if (< x.1 y.2) (+ x.1 z.3) (+ y.2 z.3)))
+                  "uniquify-value: succes-14: if relop")
   ;failure
   (check-uniquify (uniquify-value "x" '((x x.0))) #f "uniquify-value: failure-01: triv has wrong symbol")
   (check-uniquify (uniquify-value '(+ "x" 4) '((x x.0))) '(+ #f 4) "uniquify-value: failure-02: binop has wrong symbol")
@@ -156,6 +199,17 @@
                   '(let ((x.1 x.0) (y.2 3)) (let ((x.3 (+ x.1 y.2))) (+ y.2 x.3))) "uniquify-tail: succes-10: nested let and has binop and triv val in let")
   (check-uniquify (uniquify-tail '(let ((x x) (y 3)) (let ((x 4) (y (let ((x 7)) x))) (+ y x))) '((x x.0)))
                   '(let ((x.1 x.0) (y.2 3)) (let ((x.3 4) (y.4 (let ((x.5 7)) x.5))) (+ y.4 x.3))) "uniquify-tail: succes-11: nested let and has let val in let")
+
+  (check-uniquify (uniquify-tail '(if (< x y) (+ x z) (+ y z)) '((x x.1) (y y.2) (z z.3))) '(if (< x.1 y.2) (+ x.1 z.3) (+ y.2 z.3)) "uniquify-tail: succes-12: if relop")
+  (check-uniquify (uniquify-tail '(if (if (< x y) (= x z) (= y z)) (+ x z) (+ y z)) '((x x.1) (y y.2) (z z.3)))
+                  '(if (if (< x.1 y.2) (= x.1 z.3) (= y.2 z.3)) (+ x.1 z.3) (+ y.2 z.3))
+                  "uniquify-tail: succes-13: if relop")
+  (check-uniquify (uniquify-tail '(if (< x y) (if (< x y) (+ x z) (+ y z)) (+ y z)) '((x x.1) (y y.2) (z z.3)))
+                  '(if (< x.1 y.2) (if (< x.1 y.2) (+ x.1 z.3) (+ y.2 z.3)) (+ y.2 z.3))
+                  "uniquify-tail: succes-13: if relop")
+  (check-uniquify (uniquify-tail '(if (< x y) (+ x z) (if (< x y) (+ x z) (+ y z))) '((x x.1) (y y.2) (z z.3)))
+                  '(if (< x.1 y.2) (+ x.1 z.3) (if (< x.1 y.2) (+ x.1 z.3) (+ y.2 z.3)))
+                  "uniquify-tail: succes-14: if relop")
   ;failure
   (check-uniquify (uniquify-tail "x" '((x x.0))) #f "uniquify-tail: failure-01: triv has wrong symbol")
   (check-uniquify (uniquify-tail '(+ "x" 4) '((x x.0))) '(+ #f 4) "uniquify-tail: failure-02: binop has wrong symbol")

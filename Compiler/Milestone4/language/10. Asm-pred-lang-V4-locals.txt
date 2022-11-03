@@ -11,8 +11,8 @@ pred	::=	(relop aloc aloc)
 	|	(begin effect ... pred)
 	|	(if pred pred pred)
 
-tail 	::= 	(begin effect ... tail)
-	|   	(halt triv)
+tail 	::= 	(halt triv)
+	|	(begin effect ... tail)  	
 	|	(if pred tail tail)
  	 	 	 	 
 effect	::=	(set! aloc triv)

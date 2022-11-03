@@ -1,7 +1,17 @@
 optimize-let-bindings interpreters en checkers 
 	niet geimplementeerd???
 
-tester.rkt aangeven waarom faalde (error message)
+tester.rkt aangeven waarom faalde
+
+calling conventions
+	array overflow
+	stack
+	bescherment data
+object capabilities
+
+tester 16 not if -> expose blocks
+tester 17 something overwritten
+tester 18 if value
 
 Milestone 4
 
@@ -14,23 +24,23 @@ sequentialize-let
 normalize-bind
 	ok
 select-instructions
-	** select pred not -- check voor optimalisatie
+	ok -- check voor optimalisatie
 uncover-locals
-	ok -volgorde locals kan verschillend zijn, ni echt belangrijk
+	ok --volgorde locals kan verschillend zijn, ni echt belangrijk
 undead-analysis
-	--
+	ok
 conflict-analysis
-	--
+	ok
 assign-registers
 	ok
 replace-locations
 	ok
 expose-basic-blocks
-	--
+	-- - herschrijven
 resolve-predicates
-	ok
+	ok 
 flatten-program
-	ok
+	ok   -- optimalisatie (jump L1) (with-label L1) (als er maar 1 jump L1 is)
 patch-instructions
 	ok   -- check voor optimalisatie
 implement-fvars

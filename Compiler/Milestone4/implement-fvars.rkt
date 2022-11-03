@@ -64,6 +64,9 @@
   ;failure
   (check-equal? (change-fvar 0) 0 "change-fvar: failure-1: integer")
   (check-equal? (change-fvar 'x) 'x "change-fvar: failure-2: random symbol")
+;implement-set
+  ;succes
+  (check-equal? (implement-set '(with-label L1 (set! fv0 fv1))) '(with-label L1 (set! (fp - 0) (fp - 8))) "implement-set: succes-01: with-label")
 ;implement-fvars
   ;succes
   (check-equal? (implement-fvars '(begin

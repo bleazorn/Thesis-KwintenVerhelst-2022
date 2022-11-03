@@ -17,7 +17,7 @@
 (define (normalize-effect e)
   (match e
     [`(set! ,a (begin ,e ... ,v)) (append '(begin) (map (lambda (eff) (normalize-effect eff)) e) (normalize-set a v))]
-    [`(set! ,a (if ,p ,v1 ,v2)) `(if ,p ,(normalize-set a v1) ,(normalize-set a v1))]
+    [`(set! ,a (if ,p ,v1 ,v2)) `(if ,p ,@(normalize-set a v1) ,@(normalize-set a v2))]
     [`(set! ,a ,b) e]
     [`(begin ,e ...) `(begin ,@(map (lambda (eff) (normalize-effect eff)) e))]))
 
@@ -27,12 +27,12 @@
 ;p:pred?
 (define (normalize-pred p)
   (match p
+    [`(begin ,e ... ,pred) `(begin ,@(map (lambda (eff) (normalize-effect eff)) e) ,(normalize-pred pred))]
+    [`(if ,p1 ,p2 ,p3) `(if ,(normalize-pred p1) ,(normalize-pred p2) ,(normalize-pred p3))]
     [`(,relop ,a ,b) `(,relop ,a ,b)]
     ['(true) '(true)]
     ['(false) '(false)]
     [`(not ,pred) `(not ,(normalize-pred pred))]
-    [`(begin ,e ... ,pred) `(begin ,@(map (lambda (eff) (normalize-effect eff)) e) ,(normalize-pred pred))]
-    [`(if ,p1 ,p2 ,p3) `(if ,(normalize-pred p1) ,(normalize-pred p2) ,(normalize-pred p3))]
     [_ #f]))
 ;
 ;(normalize-value v)->value?
@@ -66,22 +66,50 @@
   ;succes
   (check-equal? (normalize-effect '(set! y.3 (begin (set! x.1 2) (set! x.2 2) (+ x.1 x.2))))
                 '(begin (set! x.1 2) (set! x.2 2) (set! y.3 (+ x.1 x.2)))
-                "normalize-effect: succes-1: a normalizing last value is not begin")
+                "normalize-effect: succes-01: a normalizing last value is not begin")
   (check-equal? (normalize-effect '(set! y.3 (+ x.1 x.2)))
                 '(set! y.3 (+ x.1 x.2))
-                "normalize-effect: succes-2: set no normalizing")
+                "normalize-effect: succes-02: set no normalizing")
   (check-equal? (normalize-effect '(begin (set! x.1 2) (set! x.2 2)))
                 '(begin (set! x.1 2) (set! x.2 2))
-                "normalize-effect: succes-3: begin no normalizing")
+                "normalize-effect: succes-03: begin no normalizing")
   (check-equal? (normalize-effect '(begin (set! x.1 2) (set! x.2 2)))
                 '(begin (set! x.1 2) (set! x.2 2))
-                "normalize-effect: succes-4: normalizing")
+                "normalize-effect: succes-04: normalizing")
+  
   (check-equal? (normalize-effect '(set! y.3 (begin (set! x.1 2) (set! x.2 2) (begin (set! x.3 2) (set! x.4 2) (+ x.3 x.4)))))
                 '(begin (set! x.1 2) (set! x.2 2) (begin (set! x.3 2) (set! x.4 2) (set! y.3 (+ x.3 x.4))))
-                "normalize-effect: succes-5: normalizing with value a begin")
+                "normalize-effect: succes-05: normalizing with value a begin")
   (check-equal? (normalize-effect '(set! y.3 (begin (set! x.1 2) (set! y.4 (begin (set! x.5 2) (set! x.6 2) (+ x.5 x.6))) (begin (set! x.3 2) (set! x.4 2) (+ y.4 x.4)))))
                 '(begin (set! x.1 2) (begin (set! x.5 2) (set! x.6 2) (set! y.4 (+ x.5 x.6))) (begin (set! x.3 2) (set! x.4 2) (set! y.3 (+ y.4 x.4))))
-                "normalize-effect: succes-5: normalizing with value a begin")
+                "normalize-effect: succes-06: normalizing with value a begin")
+  
+  (check-equal? (normalize-effect '(set! z.3 (if (true) x.1 (+ x.1 y.2))))
+                '(if (true) (set! z.3 x.1) (set! z.3 (+ x.1 y.2)))
+                "normalize-effect: succes-07: normalize if")
+  (check-equal? (normalize-effect '(set! z.3 (if (true) (begin (set! x.1 y.2) x.1) (if (= x.1 y.2) y.2 (+ x.1 y.2)))))
+                '(if (true) (begin (set! x.1 y.2) (set! z.3 x.1)) (if (= x.1 y.2) (set! z.3 y.2) (set! z.3 (+ x.1 y.2))))
+                "normalize-effect: succes-08: normalize nested if")
+
+;normalize-pred
+  ;succes
+  (check-equal? (normalize-pred '(< x.1 y.1)) '(< x.1 y.1) "normalize-pred: succes-01: relop")
+  (check-equal? (normalize-pred '(true)) '(true) "normalize-pred: succes-02: true")
+  (check-equal? (normalize-pred '(false)) '(false) "normalize-pred: succes-03: false")
+  (check-equal? (normalize-pred '(not (< x.1 y.1))) '(not (< x.1 y.1)) "normalize-pred: succes-04: not")
+
+  (check-equal? (normalize-pred '(begin (set! z.3 (begin (set! x.1 y.2) x.1)) (true))) '(begin (begin (set! x.1 y.2) (set! z.3 x.1)) (true)) "normalize-pred: succes-05: begin")
+
+  (check-equal? (normalize-pred '(if (true) (false) (not (= x.1 y.1)))) '(if (true) (false) (not (= x.1 y.1))) "normalize-pred: succes-06: if")
+;normalize-value
+  ;succes
+  (check-equal? (normalize-value '(begin (set! z.3 (begin (set! x.1 y.2) x.1)) (+ x.1 y.2))) '(begin (begin (set! x.1 y.2) (set! z.3 x.1)) (+ x.1 y.2)) "normalize-value: succes-05: begin")
+  (check-equal? (normalize-value '(if (true) (+ x.1 y.2) (+ x.1 y.2))) '(if (true) (+ x.1 y.2) (+ x.1 y.2)) "normalize-value: succes-06: if")
+;normalize-tail
+  ;succes
+  (check-equal? (normalize-tail '(begin (set! z.3 (begin (set! x.1 y.2) x.1)) (+ x.1 y.2))) '(begin (begin (set! x.1 y.2) (set! z.3 x.1)) (+ x.1 y.2)) "normalize-tail: succes-05: begin")
+  (check-equal? (normalize-tail '(if (true) (+ x.1 y.2) (+ x.1 y.2))) '(if (true) (+ x.1 y.2) (+ x.1 y.2)) "normalize-tail: succes-06: if")
+
 ;normalize-bind
   ;succes
   (check-equal? (normalize-bind '(module (+ 2 2)))

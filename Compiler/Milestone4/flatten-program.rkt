@@ -6,29 +6,14 @@
   (require rackunit))
 
 ;
-;(flatten-begin effects)->list? '((set! ...) ...)
-;effects->list? '(effect? ...)
-(define (flatten-begin effects)
-  (foldl (lambda (eff pro) (append pro (flatten-effect eff))) '() effects))
-
-;
-;(flatten-effect e)->list? '((set! ...) ...)
-;e: effect?
-(define (flatten-effect e)
-  (match e
-    [`(begin ,e ...) (flatten-begin e)]
-    [`(set! ,a ,b) `((set! ,a ,b))]
-    [_ #f]))
-
-;
 ;(flatten-tail t)->list? '((set! ...) ...)
 ;t: tail?
 (define (flatten-tail t)
   (match t
-    [`(begin ,e ... ,tail) `(,@(flatten-begin e) ,@(flatten-tail tail))]
+    [`(begin ,e ... ,tail) `(,@e ,@(flatten-tail tail))]
     [`(halt ,triv) `((halt ,triv))]
     [`(jump ,l) `((jump ,l))]
-    [`(if (,relop ,a ,b) (jump ,l1) (jump ,l2)) `((jump-if ,l1 (relop ,a ,b)) (jump ,l2))]
+    [`(if (,relop ,a ,b) (jump ,l1) (jump ,l2)) `((jump-if ,l1 (,relop ,a ,b)) (jump ,l2))]
     [_ #f]))
 
 ;
@@ -57,13 +42,29 @@
   (check-equal? (flatten-tail '(begin (set! a1 50) (begin (set! a0 50) (halt a0))))
                 '((set! a1 50) (set! a0 50) (halt a0))
                 "flatten-tail: succes-2: tail nested")
-  (check-equal? (flatten-tail '(begin (begin (set! a1 50) (set! a2 50)) (begin (set! a0 50) (halt a0))))
+  (check-equal? (flatten-tail '(begin (set! a1 50) (set! a2 50) (begin (set! a0 50) (halt a0))))
                 '((set! a1 50) (set! a2 50) (set! a0 50) (halt a0))
                 "flatten-tail: succes-3: effect and tail nested")
-  (check-equal? (flatten-tail '(begin (begin (set! a1 50) (set! a2 50)) (begin (begin (set! a0 50) (halt a0)))))
+  (check-equal? (flatten-tail '(begin (set! a1 50) (set! a2 50) (begin (begin (set! a0 50) (halt a0)))))
                 '((set! a1 50) (set! a2 50) (set! a0 50) (halt a0))
                 "flatten-tail: succes-4: tail double nested")
-  (check-equal? (flatten-tail '(begin (set! a4 50) (begin (set! a3 50) (begin (set! a1 50) (set! a2 50))) (set! a5 50) (begin (begin (set! a0 50) (halt a0)))))
+  (check-equal? (flatten-tail '(begin (set! a4 50) (set! a3 50) (begin (set! a1 50) (set! a2 50) (set! a5 50) (begin (begin (set! a0 50) (halt a0))))))
                 '((set! a4 50) (set! a3 50) (set! a1 50) (set! a2 50) (set! a5 50) (set! a0 50) (halt a0))
                 "flatten-tail: succes-4: tail double nested")
+  (check-equal? (flatten-tail '(if (= a0 a1) (jump L1) (jump L2)))
+                `((jump-if L1 (= a0 a1)) (jump L2))
+                "flatten-tail: succes-5: if")
+;flatten-program
+  ;succes
+  (check-equal? (flatten-program '(module (define L0 (begin (set! a1 50) (set! a2 50) (begin (begin (set! a0 50) (jump L1)))))
+                                   (define L1 (begin (set! a1 50) (set! a2 50) (begin (begin (set! a0 50) (if (= a0 a1) (jump L0) (jump L2))))))
+                                   (define L2 (begin (set! a1 50) (set! a2 50) (begin (begin (set! a0 50) (halt a0)))))))
+                '(begin (with-label L0 (set! a1 50)) (set! a2 50) (set! a0 50) (jump L1)
+                       (with-label L1 (set! a1 50)) (set! a2 50) (set! a0 50) (jump-if L0 (= a0 a1)) (jump L2)
+                       (with-label L2 (set! a1 50)) (set! a2 50) (set! a0 50) (halt a0))
+                "flatten-program: succes-01: mul def")
  )
+
+
+
+

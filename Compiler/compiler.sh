@@ -1,8 +1,5 @@
 #!/bin/bash
-varRacket=Milestone3/main.rkt
-
-varCurLoc=${PWD}
-echo $varCurLoc
+varRacket=Milestone4/main.rkt
 
 if [ -z "$1" ]
 then
@@ -10,9 +7,6 @@ then
 else
 	varFile=$1
 fi
-
-tmp=$(echo $varFile| cut -d'.' -f 1)
-varELF=$tmp.elf
 
 echo $varRacket
 echo "Compile from file"

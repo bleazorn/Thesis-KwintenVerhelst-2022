@@ -42,7 +42,7 @@
 ;p: Asm-lang-V2-assignments?
 (define (replace-locations p)
   (match p
-    [`(module () ,pro) p]
+    [`(module () ,pro) `(begin ,pro)]
     [`(module ((locals ,loc) (assignment ,ass)) ,pro) (replace-tail pro ass)]
     [`(module ((locals ,loc) (conflicts ,conf) (assignment ,ass)) ,pro) (replace-tail pro ass)]
     [_ #f]))

@@ -1,3 +1,34 @@
 This is the code for the thesis "A nanopass compiler for CHERI-RISC-V"
+
 Each Milestone map contains a previous version of the compiler.
-Kwinten Verhelst
+Current version: 4 in the map Milestone4.
+
+Makefile creates binaries for the racket files of the Program via the make command.
+	Also has the clean command to remove those binaries.
+
+compile.sh has a text file as input. If no argument is given, it wil default to test.txt.
+	It wil create cheri-risc-v code for the given program in a S file.
+	
+	Inside the text file a program in the form of the latest language of that milestone.
+	The program has to be in brackets but without the quote.
+
+	Example: Milestone 4
+	(module (let ([x 50] [y 40]) (if (not (= x y)) (+ x y) (* x y))))
+
+create.sh has two arguments. 
+	The first: the location of a builder that creates an elf file from a S file.
+	The second: the location of an emulator that accepts this elf file.
+	
+	It creates four files:
+	1) compiler.sh (see above)
+	2) runProgram.sh 
+		Give same input as compiler.sh, but wil also create an elf file and run it in an emulator
+	3) verboseRunProgram.sh 
+		Same as runProgram but will also give the register state with each instruction step. 
+	4) tester.sh
+		Has two inputs, first the same as compiler.sh, second the wanted result of the program.
+		Will return test succeeded if the result of the program is the same as second input.
+
+tester.rkt
+	A racket program that uses tester.sh to test multiple programs at the same time.
+

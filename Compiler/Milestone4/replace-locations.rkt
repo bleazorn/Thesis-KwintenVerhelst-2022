@@ -22,12 +22,12 @@
 ;assign: list? '((aloc loc) ...)
 (define (replace-pred p assign)
   (match p
+    [`(begin ,e ... ,pred) `(begin ,@(map (lambda (eff) (replace-effect eff assign)) e) ,(replace-pred pred assign))]
+    [`(if ,p1 ,p2 ,p3) `(if ,(replace-pred p1 assign) ,(replace-pred p2 assign) ,(replace-pred p3 assign))]
     [`(,relop ,a ,b) `(,relop ,(replace-triv a assign) ,(replace-triv b assign))]
     ['(true) '(true)]
     ['(false) '(false)]
     [`(not ,pred) `(not ,(replace-pred pred assign))]
-    [`(begin ,e ... ,pred) `(begin ,@(map (lambda (eff) (replace-effect eff assign)) e) ,(replace-pred pred assign))]
-    [`(if ,p1 ,p2 ,p3) `(if ,(replace-pred p1 assign) ,(replace-pred p2 assign) ,(replace-pred p3 assign))]
     [_ #f]))
 
 ;
@@ -59,8 +59,8 @@
 (define (replace-locations p)
   (match p
     [`(module () ,pro) p]
-    [`(module ((locals ,loc) (assignment ,ass)) ,pro) (replace-tail pro ass)]
-    [`(module ((locals ,loc) (conflicts ,conf) (assignment ,ass)) ,pro) (replace-tail pro ass)]
+    [`(module ((locals ,loc) (assignment ,ass)) ,pro) `(module ,(replace-tail pro ass))]
+    [`(module ((locals ,loc) (conflicts ,conf) (assignment ,ass)) ,pro) `(module ,(replace-tail pro ass))]
     [_ #f]))
 
 (module+ test
@@ -71,6 +71,20 @@
   ;failure
   (check-equal? (replace-triv 'x.1 '((y.1 a0))) 'x.1 "replace-triv: failure-1: aloc not assigned")
   ;(check-equal? (replace-triv 'x.1 '(x.1 a0)) error "replace-triv: failure-2: assign wrong")
+;replace-pred
+  ;succes
+  (check-equal? (replace-pred '(= x.1 y.2) '((x.1 a0) (y.2 a1))) '(= a0 a1) "replace-pred: succes-01: relop")
+  (check-equal? (replace-pred '(true) '((x.1 a0) (y.2 a1))) '(true) "replace-pred: succes-02: true")
+  (check-equal? (replace-pred '(false) '((x.1 a0) (y.2 a1))) '(false) "replace-pred: succes-03: false")
+  (check-equal? (replace-pred '(not (= x.1 y.2)) '((x.1 a0) (y.2 a1))) '(not (= a0 a1)) "replace-pred: succes-04: not")
+
+  (check-equal? (replace-pred '(begin (set! x.1 x.1) (set! y.2 5) (set! x.1 (+ x.1 y.2)) (= x.1 y.2)) '((x.1 a0) (y.2 a1)))
+                '(begin (set! a0 a0) (set! a1 5) (set! a0 (+ a0 a1)) (= a0 a1))
+                "replace-pred: succes-05: begin")
+
+  (check-equal? (replace-pred '(if (= x.1 y.2) (= x.1 y.2) (= y.2 x.1)) '((x.1 a0) (y.2 a1)))
+                '(if (= a0 a1) (= a0 a1) (= a1 a0))
+                "replace-pred: succes-06: if")
 ;replace-effect
   ;succes
   (check-equal? (replace-effect '(set! x.1 y.2) '((x.1 a0) (y.2 a1))) '(set! a0 a1) "replace-effect: succes-1: set")
@@ -80,10 +94,24 @@
   (check-equal? (replace-effect '(set! x.1 (+ x.1 5)) '((x.1 a0) (y.2 a1))) '(set! a0 (+ a0 5)) "replace-effect: succes-4: binop same trivs")
 
   (check-equal? (replace-effect '(begin (set! x.1 x.1) (set! y.2 5) (set! x.1 (+ x.1 y.2))) '((x.1 a0) (y.2 a1))) '(begin (set! a0 a0) (set! a1 5) (set! a0 (+ a0 a1))) "replace-effect: succes-5: begin")
+
+  (check-equal? (replace-effect '(if (= x.1 y.2) (set! x.1 y.2) (set! y.2 x.1)) '((x.1 a0) (y.2 a1)))
+                '(if (= a0 a1) (set! a0 a1) (set! a1 a0))
+                "replace-effect: succes-06: if")
+  
 ;replace-tail
   ;succes
   (check-equal? (replace-tail '(halt y.2) '((x.1 a0) (y.2 a1))) '(halt a1) "replace-tail: succes-1: halt")
-  (check-equal? (replace-tail '(begin (set! x.1 x.1) (set! y.2 5) (set! x.1 (+ x.1 y.2)) (halt x.1)) '((x.1 a0) (y.2 a1))) '(begin (set! a0 a0) (set! a1 5) (set! a0 (+ a0 a1)) (halt a0)) "replace-tail: succes-2: begin")
+
+  (check-equal? (replace-tail '(begin (set! x.1 x.1) (set! y.2 5) (set! x.1 (+ x.1 y.2)) (halt x.1)) '((x.1 a0) (y.2 a1)))
+                '(begin (set! a0 a0) (set! a1 5) (set! a0 (+ a0 a1)) (halt a0))
+                "replace-tail: succes-2: begin")
+
+  (check-equal? (replace-tail '(if (= x.1 y.2) (halt x.1) (halt y.2)) '((x.1 a0) (y.2 a1)))
+                '(if (= a0 a1) (halt a0) (halt a1))
+                "replace-tail: succes-03: if")
+
+  
   ;failure
   (check-equal? (replace-tail '(begin (set! x.1 x.1) (set! y.2 5) (set! x.1 (+ x.1 y.2))) '((x.1 a0) (y.2 a1))) '(begin (set! a0 a0) (set! a1 5) #f) "replace-tail: failure-1: begin no halt")
 

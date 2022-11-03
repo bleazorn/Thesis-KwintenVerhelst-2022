@@ -111,6 +111,6 @@
 (module+ test
   (check-equal? #t #t "test"))
 
-(test testProgram)
+;(test testProgram)
 ;(write-program testProgram "ap.S")
 ;(compile-file "ap.txt")

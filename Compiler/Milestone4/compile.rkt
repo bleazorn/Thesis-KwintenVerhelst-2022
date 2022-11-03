@@ -9,7 +9,9 @@
          "conflict-analysis.rkt"
          "undead-analysis.rkt"
          "uncover-locals.rkt"
-         "flatten-begins.rkt"
+         "expose-basic-blocks.rkt"
+         "resolve-predicates.rkt"
+         "flatten-program.rkt"
          "patch-instructions.rkt"
          "implement-fvars.rkt"
          "generate-cheri-risc-v.rkt"
@@ -29,7 +31,9 @@
         generate-cheri-risc-v
         implement-fvars
         patch-instructions
-        flatten-begins
+        flatten-program  
+        resolve-predicates
+        expose-basic-blocks
         replace-locations
         assign-registers
         conflict-analysis
@@ -40,7 +44,7 @@
         sequentialize-let
         uniquify))
 
- (define (createList i j)
+  (define (createList i j)
    (if (>= i j)
        `(,j)
        (cons i (createList (add1 i) j))))
@@ -52,7 +56,7 @@
              ([i (reverse (createList start end))])
      (values (let* ([fun (list-ref steps i)]
                     [res (fun p)])
-               (display (format "~a:  ~a\n" fun res))
+               (display (format "~a:  ~a\n\n" fun res))
                res)))))
 
 (define (compileSteps start end program)
@@ -64,6 +68,7 @@
 
 (define (compile program)
   (println "Compiling Program")
+  (println program)
   (compileSteps 0 (sub1 (length steps)) program))
 
 (define (test program)
@@ -88,8 +93,8 @@
 ;compile a given program and write to the file "test.S"
 ;(write-program p) -> void
 ;p:
-(define (write-program p)
-  (write-program-to-file "test.S" p))
+(define (write-program p file)
+  (write-program-to-file file p))
 
 
 (define (read-program-from-file file)
@@ -98,19 +103,19 @@
       (println (format "File ~a does not exist" file))))
 
 (define (compile-program p)
-  (write-program p))
+  (write-program p "Test.S"))
 
 (define (compile-file file)
-  (write-program (read-program-from-file file)))
+  (write-program (read-program-from-file file) (format "~a.S" (car (string-split file ".")))))
 
 ;######################################################################
 
 (define testProgram
-  '(module (let ([y 10] [x 5]) (+ x y)))
+  '(module (let ([x 50] [y 60]) (let ([z (if (= x y) (+ x y) (* x y))]) z)))
   )
 (module+ test
   (check-equal? #t #t "test"))
 
 (test testProgram)
-;(write-program testProgram)
-;(compile-file "test.txt")
+;(write-program testProgram "ap.S")
+;(compile-file "ap.txt")
