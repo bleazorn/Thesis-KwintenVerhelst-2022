@@ -33,8 +33,9 @@
     [`(module ,b ...) `(begin ,@(foldl (lambda (beg l) (append l (flatten-b beg))) '() b))]
     [_ #f]))
 
+
 (module+ test
-;flatten-tail:
+  ;flatten-tail:
   ;succes
   (check-equal? (flatten-tail '(begin (set! a0 50) (halt a0)))
                 '((set! a0 50) (halt a0))
@@ -54,16 +55,16 @@
   (check-equal? (flatten-tail '(if (= a0 a1) (jump L1) (jump L2)))
                 `((jump-if L1 (= a0 a1)) (jump L2))
                 "flatten-tail: succes-5: if")
-;flatten-program
+  ;flatten-program
   ;succes
   (check-equal? (flatten-program '(module (define L0 (begin (set! a1 50) (set! a2 50) (begin (begin (set! a0 50) (jump L1)))))
-                                   (define L1 (begin (set! a1 50) (set! a2 50) (begin (begin (set! a0 50) (if (= a0 a1) (jump L0) (jump L2))))))
-                                   (define L2 (begin (set! a1 50) (set! a2 50) (begin (begin (set! a0 50) (halt a0)))))))
+                                    (define L1 (begin (set! a1 50) (set! a2 50) (begin (begin (set! a0 50) (if (= a0 a1) (jump L0) (jump L2))))))
+                                    (define L2 (begin (set! a1 50) (set! a2 50) (begin (begin (set! a0 50) (halt a0)))))))
                 '(begin (with-label L0 (set! a1 50)) (set! a2 50) (set! a0 50) (jump L1)
-                       (with-label L1 (set! a1 50)) (set! a2 50) (set! a0 50) (jump-if L0 (= a0 a1)) (jump L2)
-                       (with-label L2 (set! a1 50)) (set! a2 50) (set! a0 50) (halt a0))
+                        (with-label L1 (set! a1 50)) (set! a2 50) (set! a0 50) (jump-if L0 (= a0 a1)) (jump L2)
+                        (with-label L2 (set! a1 50)) (set! a2 50) (set! a0 50) (halt a0))
                 "flatten-program: succes-01: mul def")
- )
+  )
 
 
 

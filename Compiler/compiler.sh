@@ -9,5 +9,7 @@ else
 fi
 
 echo $varRacket
+
 echo "Compile from file"
 racket $varRacket $varFile
+

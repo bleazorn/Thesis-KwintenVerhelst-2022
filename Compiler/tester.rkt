@@ -1,6 +1,8 @@
 #lang racket
 
 (require racket/system)
+(require "Milestone4/generate-values-lang.rkt")
+(require "Milestone4/interp-values-lang.rkt")
 (module+ test
   (require rackunit))
 
@@ -19,7 +21,7 @@
   (write-string-to-file "tmpTest" program)
   (define output (check-program-file "tmpTest" result))
   (delete-file "tmpTest")
-  (pretty-display (format "~a\nResult: ~a" program output)) 
+  (pretty-display (format "~a\nResult: ~a - (~a)\n" program output (- (string->number (car (string-split output "\n"))) 2147483648))) 
   (second (string-split output "\n")))
 
 (define (write-string-to-file file program)
@@ -32,6 +34,16 @@
       (check-program-file program result)
       (check-program-p program result)))
 
+(define (check-random)
+  (let ([randomProgram (generate-values-lang)])
+    (check-program randomProgram (interp-values-lang randomProgram))))
+
+(define (randomTest n)
+  (for ([i (build-list n values)])
+    (check-random)))
+
+(randomTest 50)
+
 (module+ test
   (define (check-Program program result text)
     (check-equal? (check-program program result) "Test Succeed" text))
@@ -40,7 +52,7 @@
   
 ;Milestone 2 en 3
   ;succes
-  ; #|
+  #|
   (check-Program '(module 50) 50 "Program: succes-1: value integer")
   (check-Program '(module -50) -50 "Program: succes-2: value negative integer")
   (check-Program '(module (+ 50 1)) 51 "Program: succes-3: value binop")
@@ -58,7 +70,7 @@
 
   ;|#
 ;Milestone 4
-  ;#|
+  #|
   (check-Program '(module (if (true) 17 18)) 17 "Program: succes-12: if true")
   (check-Program '(module (if (false) 17 18)) 18 "Program: succes-13: if false")
   (check-Program '(module (let ([x 50] [y 40]) (if (= x y) (+ x y) (* x y)))) 2000 "Program: succes-14: if compare")  
@@ -68,4 +80,5 @@
   (check-Program '(module (let ([x 50] [y 40]) (if (let ([z 5]) (< z y)) (+ x y) (* x y)))) 90 "Program: succes-17: if let")
   (check-Program '(module (let ([x 50] [y 50]) (let ([z (if (= x y) (let ([k 40]) k) (* x y))]) z))) 40 "Program: succes-18: value if")
   ;|#
+  
   )

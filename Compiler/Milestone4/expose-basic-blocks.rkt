@@ -26,19 +26,21 @@
 ;e: effect?
 ;l: label?
 (define (expose-if-effect e l)
-  ;(println (format "if-effect: ~a - ~a" e l))
+  ;(println "if-effect")
+  ;(pretty-display e)
+  ;(println l)
   (match e
-    [`(begin ,e ...) (let-values ([(bP bD) (expose-begin-effect e)])
-                       (values (append bP `((jump ,l))) bD))]
+    [`(begin ,e ...) (expose-begin-effect (append e `((jump ,l))))]
     [`(if ,p ,e1 ,e2) (let ([l1 (newLabel)]
                             [l2 (newLabel)])
+                        ;(println (format "~a - ~a" l1 l2))
                         (let-values ([(pP pD) (expose-if-pred p l1 l2)]
-                                     [(e1P e1D) (expose-if-effect e1)]
-                                     [(e2P e2D) (expose-if-effect e2)])
-                             (values `(,pP)
-                                     (append `((define ,l1 ,(cons 'begin (cons e1P `((jump ,l)))))
-                                               (define ,l2 ,(cons 'begin (cons e2P `((jump ,l))))))
-                                             pD e1D e2D))))]
+                                     [(e1P e1D) (expose-if-effect e1 l)]
+                                     [(e2P e2D) (expose-if-effect e2 l)])
+                          (values `(,pP)
+                                  (append `((define ,l1 ,(cons 'begin `(,@e1P)));,(cons 'begin (cons e1P `((jump ,l)))))
+                                            (define ,l2 ,(cons 'begin `(,@e2P))));,(cons 'begin (cons e2P `((jump ,l))))))
+                                          pD e1D e2D))))]
     [`(set! ,a ,b) (values (cons e `((jump ,l))) '())]
     [_ #f]))
 
@@ -57,41 +59,49 @@
 ;(expose-begin-if e)-> '(list? list?) '(effect ...) '((define label? tail?) ...)
 ;e: list? '(effect? ...)
 (define (expose-begin-if e)
-  ;(println (format "begin-if: ~a" e))
+  ;(println "begin-if")
+  ;(pretty-display e)
   (match e
     ['() (values '() '())]
+    [`((jump ,l)) (values `((jump ,l)) '())]
     [`(,eff ,rest-eff ...) (match eff
-                               [`(set! ,a ,b) (let-values ([(rP rD) (expose-begin-if rest-eff)])
-                                                (values (cons eff rP) rD))]
-                               [`(if ,p ,e1 ,e2) (let ([l1 (newLabel)]
-                                                       [l2 (newLabel)]
-                                                       [l3 (newLabel)])
-                                                   (let-values ([(pP pD) (expose-if-pred p l1 l2)]
-                                                                [(e1P e1D) (expose-if-effect e1 l3)]
-                                                                [(e2P e2D) (expose-if-effect e2 l3)]
-                                                                [(rP rD) (expose-begin-if rest-eff)])
-                                                     (values `(,pP)
-                                                             (append `((define ,l1 ,(cons 'begin e1P))
-                                                                       (define ,l2 ,(cons 'begin e2P)))
-                                                                     pD e1D e2D
-                                                                     `((define ,l3 ,(cons 'begin rP)))
-                                                                     rD))))]
+                             [`(set! ,a ,b) (let-values ([(rP rD) (expose-begin-if rest-eff)])
+                                              (values (cons eff rP) rD))]
+                             [`(if ,p ,e1 ,e2) (let ([l1 (newLabel)]
+                                                     [l2 (newLabel)]
+                                                     [l3 (newLabel)])
+                                                 ;(println (format "~a - ~a - ~a" l1 l2 l3))
+                                                 (let-values ([(pP pD) (expose-if-pred p l1 l2)]
+                                                              [(e1P e1D) (expose-if-effect e1 l3)]
+                                                              [(e2P e2D) (expose-if-effect e2 l3)]
+                                                              [(rP rD) (expose-begin-if rest-eff)])
+                                                   (values `(,pP)
+                                                           (append `((define ,l1 ,(cons 'begin e1P))
+                                                                     (define ,l2 ,(cons 'begin e2P)))
+                                                                   pD e1D e2D
+                                                                   `((define ,l3 ,(cons 'begin rP)))
+                                                                   rD))))]
                              [_ #f])]))
 
 ;
 ;(expose-begin e)-> '(list? list?) '(effect ...) '((define label? tail?) ...)
 ;e: list? '(effect? ...)
 (define (expose-begin-effect e)
-    (let ([eff (expose-begin-flatten e)])
-      (expose-begin-if eff)))
+  ;(println "effect:")
+  ;(pretty-display e)
+  (let ([eff (expose-begin-flatten e)])
+    (expose-begin-if eff)))
 
 ;
 ;(expose-pred p curLabel)->(tail? list?) '(e/p/t ....) (curDefine  '(define ...))
 ;p: pred
 (define (expose-if-pred p curL1 curL2)
+  ;(println (format "pred: ~a - ~a" curL1 curL2))
+  ;(pretty-display p)
   (match p
     [`(if ,p1 ,p2 ,p3) (let ([l1 (newLabel)]
                              [l2 (newLabel)])
+                         ;(println (format "~a - ~a" l1 l2))
                          (let-values ([(p1P p1D) (expose-if-pred p1 l1 l2)]
                                       [(p2P p2D) (expose-if-pred p2 curL1 curL2)]
                                       [(p3P p3D) (expose-if-pred p3 curL1 curL2)])
@@ -108,8 +118,9 @@
     ['(true) (values `(jump ,curL1) '())]
     ['(false) (values `(jump ,curL2) '())]
     [`(not ,pred) (match pred
-                    [`(begin ,e ... ,pred) (expose-if-pred `(begin ,e ... (not ,pred)) curL1 curL2)]
+                    [`(begin ,e ... ,pred) (expose-if-pred `(begin ,@e (not ,pred)) curL1 curL2)]
                     [`(if ,p1 ,p2 ,p3) (expose-if-pred `(if ,p1 (not ,p2) (not ,p3)) curL1 curL2)]
+                    [`(not ,p1) (expose-if-pred p1 curL1 curL2)]
                     [a (values `(if (not ,pred) (jump ,curL1) (jump ,curL2)) '())])]
     [_ #f]))
     
@@ -121,10 +132,10 @@
   (match t
     [`(halt ,a) (values `(halt ,a) '())]
     [`(begin ,e ... ,tail) (let-values ([(eP eD) (expose-begin-effect e)]
-                                     [(tP tD) (expose-tail tail)])
+                                        [(tP tD) (expose-tail tail)])
                              (if (null? eD)
-                              (values (cons 'begin (append eP `(,tP))) tD)
-                              (values (cons 'begin eP) (append (drop-right eD 1) `(,(insert-define (last eD) tP)) tD))))]
+                                 (values (cons 'begin (append eP `(,tP))) tD)
+                                 (values (cons 'begin eP) (append (drop-right eD 1) `(,(insert-define (last eD) tP)) tD))))]
     [`(if ,pred ,t1 ,t2) (let ([l1 (newLabel)]
                                [l2 (newLabel)])
                            (let-values ([(pP pD) (expose-if-pred pred l1 l2)]
@@ -148,6 +159,79 @@
     [`(module ,t) (let-values ([(tP tD) (expose-tail t)])
                     `(module (define "L.tmp.0" ,tP) ,@tD))]
     [_ "blocks failed"]))
+
+
+#;(expose-basic-blocks '(module
+                            (begin
+                              (set! t0 -243)
+                              (begin
+                                (set! t0 281)
+                                (if (if (if (begin
+                                              (if (true)
+                                                  (if (begin (set! t1 -321) (set! t0 -436) (< t1 t0))
+                                                      (set! t0 -507)
+                                                      (set! t0 184))
+                                                  (set! t0 200))
+                                              (if (not (true))
+                                                  (if (begin
+                                                        (begin
+                                                          (set! t2 -172)
+                                                          (begin (set! t1 -117) (set! t0 (+ t1 t2))))
+                                                        (if (not (true))
+                                                            (begin (set! t0 -178) (set! t3 (+ t0 -371)))
+                                                            (if (true)
+                                                                (begin
+                                                                  (set! t1 -230)
+                                                                  (set! t0 -208)
+                                                                  (set! t3 (* t1 t0)))
+                                                                (begin (set! t0 496) (set! t3 (+ t0 -203)))))
+                                                        (begin
+                                                          (set! t2 -491)
+                                                          (set! t1 480)
+                                                          (set! t0 (* t2 t1)))
+                                                        (begin
+                                                          (begin
+                                                            (set! t2 -410)
+                                                            (set! t1 129)
+                                                            (set! t0 (* t2 t1)))
+                                                          (set! t0 -33)
+                                                          (set! t0 -369)
+                                                          (if (if (begin
+                                                                    (set! t1 -377)
+                                                                    (set! t0 55)
+                                                                    (<= t1 t0))
+                                                                  (not
+                                                                   (not
+                                                                    (begin
+                                                                      (set! t1 192)
+                                                                      (set! t0 -458)
+                                                                      (> t1 t0))))
+                                                                  (begin
+                                                                    (set! t1 -85)
+                                                                    (set! t0 495)
+                                                                    (>= t1 t0)))
+                                                              (begin (set! t1 288) (set! t0 (+ t1 -456)))
+                                                              (set! t0 111))
+                                                          (set! t0 -226))
+                                                        (begin (set! t0 440) (>= t0 t3)))
+                                                      (set! t0 60)
+                                                      (set! t0 -179))
+                                                  (set! t0 -350))
+                                              (begin (set! t2 -156) (set! t1 273) (set! t0 (* t2 t1)))
+                                              (set! t0 -505)
+                                              (true))
+                                            (false)
+                                            (begin (set! t1 391) (set! t0 59) (!= t1 t0)))
+                                        (true)
+                                        (begin (set! t1 308) (set! t0 -331) (< t1 t0)))
+                                    (begin (set! t1 -295) (set! t0 -211) (set! t2 (* t1 t0)))
+                                    (begin (set! t0 327) (set! t2 (+ t0 167))))
+                                (begin (set! t0 91) (set! t4 (* t0 t2))))
+                              (set! t0 428)
+                              (begin (set! t0 337) (set! t3 (+ t0 -268)))
+                              (begin (set! t2 -499) (set! t1 474) (set! t0 (* t2 t1)))
+                              (begin (set! t4 (+ t4 t3)) (halt t4)))))
+
 
 (module+ test
   (define (check-expose-func f a o m)
@@ -188,7 +272,7 @@
                 '(((set! a0 fv0) (set! a1 fv1) (set! a0 (+ a1 a0)) (set! a2 a0) (jump "L.tmp.1")) ((define "L.tmp.1" (begin (true)))))
                 "expose-pred: succes-6: nested begin")
  |#
-  ;#|
+  #|
 ;expose-tail
   ;succes
   (check-expose-func expose-tail '(halt a0) '((halt a0) ()) "expose-tail: succes-.1: halt instruction")
@@ -315,6 +399,118 @@
                    (define "L.tmp.10" (if (= a1 a0) (jump "L.tmp.6") (jump "L.tmp.7")))
                    (define "L.tmp.8" (begin (set! a9 r9) (halt a0))))
                 "expose-basic-blocks: succes-13: multiple if effects")
+  (check-expose (expose-basic-blocks '(module
+                            (if (false)
+                                (if (not
+                                     (if (not (false))
+                                         (begin (set! t1 419) (set! t0 -178) (< t1 t0))
+                                         (false)))
+                                    (begin
+                                      (begin
+                                        (begin (set! t2 -112) (set! t1 -316) (set! t0 (* t2 t1)))
+                                        (if (not (begin (set! t1 8) (set! t0 -16) (<= t1 t0)))
+                                            (set! t0 258)
+                                            (if (not
+                                                 (if (begin
+                                                       (begin (set! t1 367) (set! t0 (+ t1 -203)))
+                                                       (begin (set! t0 -236) (set! t4 (+ t0 -62)))
+                                                       (if (false)
+                                                           (begin
+                                                             (set! t2 -294)
+                                                             (set! t1 -146)
+                                                             (set! t0 (* t2 t1)))
+                                                           (set! t0 -425))
+                                                       (begin (set! t1 62) (set! t0 (* t1 t1)))
+                                                       (begin
+                                                         (begin (set! t0 -84) (set! t3 (+ t0 -24)))
+                                                         (begin
+                                                           (begin
+                                                             (begin (set! t1 201) (set! t0 (+ t1 289)))
+                                                             (begin (set! t1 -343) (set! t0 (+ t1 8)))
+                                                             (set! t2 -35)
+                                                             (set! t0 -22)
+                                                             (begin (set! t1 382) (set! t0 (+ t1 t2))))
+                                                           (begin
+                                                             (set! t2 -166)
+                                                             (set! t1 449)
+                                                             (set! t0 (* t2 t1)))
+                                                           (begin
+                                                             (set! t2 439)
+                                                             (set! t1 102)
+                                                             (set! t0 (* t2 t1)))
+                                                           (begin (set! t1 369) (set! t0 (+ t1 461)))
+                                                           (set! t0 -2)
+                                                           (begin
+                                                             (set! t2 215)
+                                                             (set! t1 430)
+                                                             (set! t0 (* t2 t1))))
+                                                         (begin (set! t1 -409) (set! t0 (* t1 t3))))
+                                                       (begin (set! t0 -62) (<= t4 t0)))
+                                                     (true)
+                                                     (false)))
+                                                (set! t0 -306)
+                                                (set! t0 90)))
+                                        (begin (set! t1 313) (set! t0 (+ t1 228)))
+                                        (begin (set! t1 3) (set! t0 (+ t1 110)))
+                                        (begin (set! t1 450) (set! t0 (+ t1 415)))
+                                        (set! t0 -358))
+                                      (begin (set! t1 -242) (set! t0 350) (set! t1 (* t1 t0)) (halt t1)))
+                                    (begin (set! t0 189) (set! t0 (+ t0 -501)) (halt t0)))
+                                (halt -462))))
+                '(module (define "L.tmp.0" (jump "L.tmp.2")) (define "L.tmp.1" (if (not (false)) (jump "L.tmp.5") (jump "L.tmp.6")))
+                   (define "L.tmp.2" (halt -462))
+                   (define "L.tmp.3" (begin (set! t2 -112) (set! t1 -316) (set! t0 (* t2 t1)) (begin (set! t1 8) (set! t0 -16) (if (not (<= t1 t0)) (jump "L.tmp.7") (jump "L.tmp.8")))))
+                   (define "L.tmp.4" (begin (set! t0 189) (set! t0 (+ t0 -501)) (halt t0)))
+                   (define "L.tmp.7" (begin (set! t0 258) (jump "L.tmp.9")))
+                   (define "L.tmp.8" (begin (begin (set! t1 367) (set! t0 (+ t1 -203)) (set! t0 -236) (set! t4 (+ t0 -62)) (jump "L.tmp.15"))))
+                   (define "L.tmp.10" (begin (set! t0 -306) (jump "L.tmp.9")))
+                   (define "L.tmp.11" (begin (set! t0 90) (jump "L.tmp.9")))
+                   (define "L.tmp.12" (if (not (true)) (jump "L.tmp.10") (jump "L.tmp.11")))
+                   (define "L.tmp.13" (if (not (false)) (jump "L.tmp.10") (jump "L.tmp.11")))
+                   (define "L.tmp.14" (begin (set! t2 -294) (set! t1 -146) (set! t0 (* t2 t1)) (jump "L.tmp.16")))
+                   (define "L.tmp.15" (begin (set! t0 -425) (jump "L.tmp.16")))
+                   (define "L.tmp.16"
+                     (begin
+                       (set! t1 62)
+                       (set! t0 (* t1 t1))
+                       (set! t0 -84)
+                       (set! t3 (+ t0 -24))
+                       (set! t1 201)
+                       (set! t0 (+ t1 289))
+                       (set! t1 -343)
+                       (set! t0 (+ t1 8))
+                       (set! t2 -35)
+                       (set! t0 -22)
+                       (set! t1 382)
+                       (set! t0 (+ t1 t2))
+                       (set! t2 -166)
+                       (set! t1 449)
+                       (set! t0 (* t2 t1))
+                       (set! t2 439)
+                       (set! t1 102)
+                       (set! t0 (* t2 t1))
+                       (set! t1 369)
+                       (set! t0 (+ t1 461))
+                       (set! t0 -2)
+                       (set! t2 215)
+                       (set! t1 430)
+                       (set! t0 (* t2 t1))
+                       (set! t1 -409)
+                       (set! t0 (* t1 t3))
+                       (begin (set! t0 -62) (if (<= t4 t0) (jump "L.tmp.12") (jump "L.tmp.13")))))
+                   (define "L.tmp.9"
+                     (begin
+                       (set! t1 313)
+                       (set! t0 (+ t1 228))
+                       (set! t1 3)
+                       (set! t0 (+ t1 110))
+                       (set! t1 450)
+                       (set! t0 (+ t1 415))
+                       (set! t0 -358)
+                       (begin (set! t1 -242) (set! t0 350) (set! t1 (* t1 t0)) (halt t1))))
+                   (define "L.tmp.5" (begin (set! t1 419) (set! t0 -178) (if (not (< t1 t0)) (jump "L.tmp.3") (jump "L.tmp.4"))))
+                   (define "L.tmp.6" (if (not (false)) (jump "L.tmp.3") (jump "L.tmp.4"))))
+                "expose-basic-blocks: succes-14: complex if effects")
   ;|#
   )
 
