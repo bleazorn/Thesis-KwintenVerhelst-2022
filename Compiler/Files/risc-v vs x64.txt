@@ -1,0 +1,96 @@
+(imm 12 bit)
+(symbol 32 bit)
+(offset 20bit)
+
+Registers
+x0		zero						Null pointer
+x1		ra						Return address
+x2		sp		rsp				Stack pointer
+x3		gp						Global pointer
+x4		tp						Thread pointer
+x5		t0						Tempory/alternate link register
+x6-7		t1-2						Tempories
+x8		s0/cfp						Saved register/frame pointer
+x9		s1						Saved register
+x10-x11		a0-1		rax				Function argument/return values
+x12-x17		a2-7		rdi rsi rdx rcx r8 r9		Function arguments
+x18-x27		s2-11		rbx rbp r12-r15			Saved registers
+x28-x31		t2-6						Tempories
+
+Milestone 1
+
+move register      	addi rd, rs,   0   			mov rd, rs 
+insert int12bit     	addi rd, zero, imm 
+addition reg       	add  rd, rs1,  rs2 			add rd, rs 
+addition int12bit 	addi rd, rs,   imm 
+multiplication  	mul  rd, rs1,  rs2 			imul rd, rs
+
+return			ret					ret
+nop			addi x0, x0, 0				nop
+
+Milestone 2
+
+Load address 		la rd, symbol				lea addr, rd				
+Load 32 bit		lw rd, symbol				mov rd, addr
+Store 32 bit		sw rs, symbol				mov addr, rs
+insert integer32bit	li rd, symbol				mov rd, integer			
+
+load upper 20bit	lui rd,   offset
+get address rel from pc	auipc rd, offset
+
+(symbol 32 bit)
+
+Milestone 4
+
+label 			foo:					foo:
+jump and link		jal  rd, label
+indirect jump 		jalr rd, rs, label
+(store addres pc+4
+  in rd, then jump)
+
+unconditional jump	jal  zero, label			jmp label
+
+conditional jump				(jump to label if flag compare is set to relop)
+	=		beq rs1, rs2, label			je  label		
+	!=		bne rs1, rs2, label			jne label
+	<		blt rs1, rs2, label			jl  label
+	>		bgt rs1, rs2, label			jg  label
+	<=		ble rs1, rs2, label			jle label
+	>=		bge rs1, rs2, label			jge label
+
+
+conditional					(compares and sets flags)
+  < 			slt   rd, rs1, rs2			cmp rs1, rs2 
+  < intergerxxbit	slti  rd, rs1, imm
+  < unsigned		sltu  rd, rs1, rs2
+  < unsigned intxxbit	sltiu rd, rs1, imm
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

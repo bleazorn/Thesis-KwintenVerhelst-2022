@@ -1,0 +1,100 @@
+(imm 12 bit)
+(symbol 32 bit)
+(offset 20bit)
+
+Registers
+x0		zero		c0		cnull		Null pointer
+x1		ra		c1		cra		Return address
+x2		sp		c2		csp		Stack pointer
+x3		gp		c3		cgp		Global pointer
+x4		tp		c4		ctp		Thread pointer
+x5		t0		c5		ct0		Tempory/alternate link register
+x6-7		t1-2		c6-7		ct1-2		Tempories
+x8		s0/cfp		c8		cs0/cfp		Saved register/frame pointer
+x9		s1		c9		cs1		Saved register
+x10-x11		a0-1		c10-c11		ca0-1		Function argument/return values
+x12-x17		a2-7		c12-c17		ca2-7		Function arguments
+x18-x27		s2-11		c18-c27		cs2-11		Saved registers
+x28-x31		t2-6		c28-c31		ct2-6		Tempories
+
+Milestone 1
+
+move register      	addi rd, rs,   0   			CIncOffsetImm cd, cs1, 0			
+insert int12bit     	addi rd, zero, imm 			CIncOffsetImm cd, zero, imm
+addition reg       	add  rd, rs1,  rs2 			CIncOffset    cd, cs1, rs2			
+addition int12bit 	addi rd, rs,   imm 
+multiplication  	mul  rd, rs1,  rs2 			
+
+return			ret					cret			
+nop			addi zero, zero, 0			CIncOffsetImm cnull, cnull, 0		
+
+Milestone 2
+
+Load address 		la rd, symbol				cllc rd, symbol							
+Load 32 bit		lw rd, symbol				clw  rd, symbol			
+Store 32 bit		sw rs, symbol				csw  rs, symbol			
+insert integer32bit	li rd, symbol							
+
+load upper 20bit	lui   rd, offset
+get address rel from pc	auipc rd, offset			auipcc rd, offset
+
+(symbol 32 bit)
+
+Milestone 4
+
+label 			foo:					
+jump and link		jal  rd, label				cjr   crd
+indirect jump 		jalr rd, rs, label			cjalr crd, crs
+(store addres pc+4
+  in rd, then jump)
+
+unconditional jump	jal  zero, label			jal  cnull, label			
+
+(jump to label if flag compare is set to relop)
+	=		beq rs1, rs2, label					
+	!=		bne rs1, rs2, label			
+	<		blt rs1, rs2, label			
+	>		bgt rs1, rs2, label			
+	<=		ble rs1, rs2, label			
+	>=		bge rs1, rs2, label			
+
+
+conditional					
+  < 			slt   rd, rs1, rs2			
+  < intergerxxbit	slti  rd, rs1, imm
+  < unsigned		sltu  rd, rs1, rs2
+  < unsigned intxxbit	sltiu rd, rs1, imm
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -9,9 +9,7 @@ calling conventions
 	bescherment data
 object capabilities
 
-tester 16 not if -> expose blocks
-tester 17 something overwritten
-tester 18 if value
+
 
 Milestone 4
 

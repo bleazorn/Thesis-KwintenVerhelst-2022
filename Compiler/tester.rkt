@@ -6,23 +6,30 @@
 (module+ test
   (require rackunit))
 
+(define emulatorLoc "T/sail-cheri-riscv/c_emulator/cheri_riscv_sim_RV64")
+
 (define (check-program-file program result)
   (define-values (sp out in err)
-    (subprocess #f #f #f "/bin/bash" "./tester.sh" program (number->string result)))
+    (subprocess #f #f #f "/bin/bash" "./tester.sh" program (number->string result) emulatorLoc))
   (define output (port->string out))
+  (define error (port->string err))
   (close-input-port out)
   (close-output-port in)
   (close-input-port err)
   (subprocess-wait sp)
-  output
+  (values output error)
   )
 
 (define (check-program-p program result)
-  (write-string-to-file "tmpTest" program)
-  (define output (check-program-file "tmpTest" result))
-  (delete-file "tmpTest")
-  (pretty-display (format "~a\nResult: ~a - (~a)\n" program output (- (string->number (car (string-split output "\n"))) 2147483648))) 
-  (second (string-split output "\n")))
+  (write-string-to-file "tmpTest.txt" program)
+  (define-values (output error) (check-program-file "tmpTest.elf" result))
+  (let* ([res (string-split output "\n")]
+         [num (list-ref res (- (length res) 2))]
+         [neg (if (string->number num)
+                  (- (string->number num) 2147483648)
+                  (format "No result - Something went wrong:\n~a" error))])
+    (pretty-display (format "~a\nResult: ~a - (~a)\n~a\n" program num neg (last res))) 
+    (last res)))
 
 (define (write-string-to-file file program)
   (cond [(file-exists? file) (delete-file file)])
@@ -42,13 +49,19 @@
   (for ([i (build-list n values)])
     (check-random)))
 
-(randomTest 50)
+;(randomTest 1)
 
 (module+ test
   (define (check-Program program result text)
     (check-equal? (check-program program result) "Test Succeed" text))
   (define (check-Program-failed program result text)
     (check-equal? (check-program program result) "Test Failed" text))
+  (define (randomTesting n)
+    (for ([i (build-list n values)])
+      (check-equal? (check-random) "Test Succeed" (format "RandomTest ~a" i))))
+
+;RandomTest
+  (randomTesting 10)
   
 ;Milestone 2 en 3
   ;succes
