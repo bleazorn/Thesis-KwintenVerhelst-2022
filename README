@@ -3,32 +3,57 @@ This is the code for the thesis "A nanopass compiler for CHERI-RISC-V"
 Each Milestone map contains a previous version of the compiler.
 Current version: 4 in the map Milestone4.
 
-Makefile creates binaries for the racket files of the Program via the make command.
-	Also has the clean command to remove those binaries.
 
-compile.sh has a text file as input. If no argument is given, it wil default to test.txt.
-	It wil create cheri-risc-v code for the given program in a S file.
+Makefile commands:
+
+make    
+	Will create an assembly and elf file for the example.txt program
 	
-	Inside the text file a program in the form of the latest language of that milestone.
-	The program has to be in brackets but without the quote.
+make <file>.S
+	Compiles the program in an assembly file. With program in <file>.txt with <file> pattern matched
 
-	Example: Milestone 4
-	(module (let ([x 50] [y 40]) (if (not (= x y)) (+ x y) (* x y))))
+make <file>.elf
+	Will create an assembly file and elf file for program in <file>.txt with <file> pattern matched
 
-create.sh has two arguments. 
-	The first: the location of a builder that creates an elf file from a S file.
-	The second: the location of an emulator that accepts this elf file.
+make <file>.elf MEmulator="<Location of emulator>"
+	Will create an assembly file and elf file for program in <file>.txt with <file> pattern matched
+	And run it through an emulator on location <Location of emulator>.
+
+	it's run with ~/$(MEmulator) command.
 	
-	It creates four files:
-	1) compiler.sh (see above)
-	2) runProgram.sh 
-		Give same input as compiler.sh, but wil also create an elf file and run it in an emulator
-	3) verboseRunProgram.sh 
-		Same as runProgram but will also give the register state with each instruction step. 
-	4) tester.sh
-		Has two inputs, first the same as compiler.sh, second the wanted result of the program.
-		Will return test succeeded if the result of the program is the same as second input.
+make <file>.elf MEmulator="<Location of emulator>" MVerbose="on"
+	Will create an assembly file and elf file for program in <file>.txt with <file> pattern matched
+	And run it through an emulator on location <Location of emulator> in verbose mode.
+
+make generate
+	Creates the binaries for all the milestones.
+	Will make the compiling faster.
+
+make cleanbin
+	deletes the binaries for the milestones.
+
+make cleanS
+	Deletes all .S files in the dir of the makefile.
+
+make cleanE
+	Deletes all .elf files in the dir of the makefile.
+
+make cleanFiles
+	Deletes all .S and .elf files in the dir of the makefile.
+
+make cleanTest
+	Used in the tester.rkt file
+
+make clean
+	Deletes all .S and .elf files in the dir of the makefile and the binaries from the milestones.
+
 
 tester.rkt
-	A racket program that uses tester.sh to test multiple programs at the same time.
+	Racket file that contains methods to test programs. Uses tester.sh
+	To use it, you need to change the variable emulatorLoc to the location of your emulator.
+
+
+Builder is used to make elf files
+
+
 
