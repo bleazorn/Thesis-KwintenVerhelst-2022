@@ -1,0 +1,39 @@
+conflict-analysis
+
+p	::=	(module info tail)
+
+info	::= 	(#:from-contract (info/c (locals (aloc ...)) (undead-out undead-set-tree?)))
+
+pred	::=	(relop aloc aloc)
+	|	(true)
+	|	(false)
+	|	(not pred)
+	|	(begin effect ... pred)
+	|	(if pred pred pred)
+
+tail 	::= 	(begin effect ... tail)
+	|   	(halt triv)
+	|	(if pred tail tail)
+ 	 	 	 	 
+effect	::=	(set! aloc triv)
+	|	(set! aloc (binop aloc aloc))
+	|	(set! aloc (+ aloc integer))
+	|	(begin effect ... effect)
+	|	(if pred effect effect)
+ 	 	 
+triv	::= 	integer
+	|	aloc
+	 	 
+aloc	::= 	aloc?
+ 	 		 	 
+binop	::=	+
+ 	|	*
+
+relop	::=	 <
+ 	 |	 <=
+ 	 |	 =
+ 	 |	 >=
+ 	 |	 >
+ 	 |	 !=
+	 	 	 		 	 	 	 
+integer	::=	int32?

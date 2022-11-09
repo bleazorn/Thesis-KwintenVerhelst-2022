@@ -1,0 +1,40 @@
+normalize-bind
+
+p	::=	(module tail)
+
+pred	::=	(relop triv triv)
+	|	(true)
+	|	(false)
+	|	(not pred)
+	|	(begin effect ... pred)
+	|	(if pred pred pred)
+
+tail  	::= 	value
+	|	(begin effect ... tail)	
+	|	(if pred tail tail)
+
+value	::= 	triv
+	|   	(binop triv triv)
+	|	(if pred value value)
+	|	(begin effect ... value)
+ 	 	 	 	 
+effect	::=	(set! aloc value)
+	|	(if pred effect effect)
+	|	(begin effect ... effect)
+ 	 	 
+triv	::= 	integer
+	|	aloc
+	 	 
+aloc	::= 	aloc?
+ 	 		 	 
+binop	::=	+
+ 	|	*
+
+relop	::=	 <
+ 	 |	 <=
+ 	 |	 =
+ 	 |	 >=
+ 	 |	 >
+ 	 |	 !=
+ 	 	 	 	 
+integer	::=	int32?

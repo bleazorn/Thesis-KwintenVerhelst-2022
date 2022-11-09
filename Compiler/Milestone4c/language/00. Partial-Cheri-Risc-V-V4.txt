@@ -1,0 +1,78 @@
+p	::=	(info s ...)
+
+info	::=	info?
+ 	 	 	 	 
+s	::=	sw reg, addr			store in memory on address symbol
+	|	lw reg, addr			loads what is in memory on address symbol
+
+	|	addi reg, reg, 0    		move register	
+	|	li rd, int32			insert integer 32bits
+	|	addi rd, x0, int12		insert integer 12bits
+
+	|	add reg, reg, reg  		addition reg 
+	|	addi reg, reg, int12 		addition int 12bits
+	|	sub reg, reg, reg		substraction reg
+ 	|	mul  reg, reg, reg		multiplication
+
+	|	jal reg, offset			jump naar offset (20bits) (reg=pc+4)
+	|	beq reg, reg, label		jump =
+	|	bne reg, reg, label		jump !=
+	|	blt reg, reg, label		jump <
+	|	bgt reg, reg, label		jump >
+	|	ble reg, reg, label		jump <=
+	|	bge reg, reg, label		jump >=
+
+	|	slt reg, reg, reg		compares < and result in first reg 0 false | 1 true
+	|	slti reg reg, int12		compares < with 12bit int
+	|	sltu reg, reg, reg		compares < unsigned
+	| 	sltiu reg, reg, int12		compares < unsigned 12 bit integer
+ 	 	 	 	 
+loc 	::=	reg
+	|	addr
+ 	 	
+ 	 	 	 	 
+reg	::=	zero
+ 	|	ra
+ 	|	sp
+ 	|	gp
+ 	|	tp
+ 	|	fp
+ 	|	pc
+ 	|	a0
+ 	|	a1
+ 	|	a2
+ 	|	a3
+ 	|	a4
+ 	|	a5
+ 	|	a6
+ 	|	a7
+ 	|	s0
+ 	|	s1
+ 	|	s2
+ 	|	s3
+ 	|	s4
+ 	|	s5
+ 	|	s6
+ 	|	s7
+ 	|	s8
+ 	|	s9
+ 	|	s10
+ 	|	s11
+ 	|	t0
+ 	|	t1
+ 	|	t2
+ 	|	t3
+ 	|	t4
+ 	|	t5
+ 	|	t6
+
+addr	::= 	dispoff(fbp)			(32 bit)
+
+fbp	::=	fp
+
+dispoff	::=	dispoffset?
+
+label	::= 	label?
+ 	 	 	 	 
+int32	::=	integer32?
+int12	::=	int12?

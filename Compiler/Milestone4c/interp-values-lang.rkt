@@ -201,15 +201,15 @@
                 6
                 "interp-values-lang: succes-2: complex program")
   ;failure
-  (check-equal? (interp-values-lang
+  #;(check-equal? (interp-values-lang
                  '(module x))
                 'x
                 "interp-values-lang: failure-1: name without value")
-  (check-equal? (interp-values-lang
+  #;(check-equal? (interp-values-lang
                  '(module (+ y 3)))
                 '(+ y 3)
                 "interp-values-lang: failure-2: not all names have a value in binop")
-  (check-equal? (interp-values-lang
+  #;(check-equal? (interp-values-lang
                  '(module (let ([x 2])
                         (+ y x))))
                 '(+ y 2)

@@ -1,8 +1,8 @@
 #lang racket
 
 (require racket/system)
-(require "Milestone4/generate-values-lang.rkt")
-(require "Milestone4/interp-values-lang.rkt")
+(require "Milestone4c/generate-values-lang.rkt")
+(require "Milestone4c/interp-values-lang.rkt")
 (module+ test
   (require rackunit))
 

@@ -1,0 +1,38 @@
+select-instructions
+
+p	::=	(module tail)
+
+pred	::=	(relop triv triv)
+	|	(true)
+	|	(false)
+	|	(not pred)
+	|	(begin effect ... pred)
+	|	(if pred pred pred)
+
+tail  	::= 	value
+	|	(begin effect ... tail)
+	|	(if pred tail tail)
+
+value	::= 	triv
+	|   	(binop triv triv)
+ 	 	 	 	 
+effect	::=	(set! aloc value)
+	|	(begin effect ... effect)
+	|	(if pred effect effect)
+ 	 	 
+triv	::= 	integer
+	|	aloc
+	 	 
+aloc	::= 	aloc?
+ 	 		 	 
+binop	::=	+
+ 	|	*
+
+relop	::=	 <
+ 	 |	 <=
+ 	 |	 =
+ 	 |	 >=
+ 	 |	 >
+ 	 |	 !=
+ 	 	 	 	 
+integer	::=	int32?

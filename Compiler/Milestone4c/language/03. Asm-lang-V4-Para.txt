@@ -1,0 +1,132 @@
+patch-instructions
+
+p	::=	(begin s ...)
+ 	 	 	 	 
+s	::=	(halt opand)
+	|	(set! loc triv)
+	|	(set! loc (binop loc loc))
+	|	(set! loc (+ loc integer))
+	| 	(with-label label s)
+	|	(jump label)
+	| 	(compare loc (relop loc loc))
+	|	(jump-if label (relop loc loc))
+ 	 	 
+trg	::=	loc		reg fvar label
+	|	label
+
+triv	::= 	opand           integer reg fvar label
+	| 	label
+
+opand	::= 	integer		integer reg fvar
+	|	loc
+	 	 
+loc 	::=	reg
+	|	fvar
+ 	 		 	 
+binop	::=	+
+ 	|	*
+
+relop	::=	 <
+ 	 |	 <=
+ 	 |	 =
+ 	 |	 >=
+ 	 |	 >
+ 	 |	 !=
+ 	 	 	 	 
+reg	::=	zero
+ 	|	ra
+ 	|	sp
+ 	|	gp
+ 	|	tp
+ 	|	fp
+ 	|	pc
+ 	|	a0
+ 	|	a1
+ 	|	a2
+ 	|	a3
+ 	|	a4
+ 	|	a5
+ 	|	a6
+ 	|	a7
+ 	|	s0
+ 	|	s1
+ 	|	s2
+ 	|	s3
+ 	|	s4
+ 	|	s5
+ 	|	s6
+ 	|	s7
+ 	|	s8
+ 	|	s9
+ 	|	s10
+ 	|	s11
+ 	|	t0
+ 	|	t1
+ 	|	t2
+ 	|	t3			
+ 	|	t4			
+ 	|	t5			| claimed voor nu.
+ 	|	t6			| claimed voor nu.
+
+fvar 	::= 	fvar?
+
+label	::=	label?
+ 	 	 	 	 
+integer	::=	int32?
+
+#|
+trg	::=	loc		reg fvar label
+	|	label
+
+triv	::= 	opand           integer reg fvar label
+	| 	label
+
+opand	::= 	integer		integer reg fvar
+	|	loc
+	 	 
+loc 	::=	reg
+	|	fvar
+
+
+(halt opand)				(set! a0 opand)
+(set! loc triv)				if loc fvar
+						extra set if triv is integer fvar label						
+(set! loc (binop loc loc))		hetzelfde
+(set! loc (+ loc integer))		hetzelfde	
+(with-label label s)			patch s
+(jump trg)				if fvar in trg extra set
+(compare reg opand)			if fvar in opand extra set
+(jump-if relop label)			zichzelf
+|#
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
