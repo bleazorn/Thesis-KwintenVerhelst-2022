@@ -13,9 +13,10 @@
 ;
 ;(sequentialize-pred p)->pred?
 ;p: pred?
+;; SAND: I've rewritten the `let` cases, you can use quasiquoting with splicing when you write `append` (the @ symbol)
 (define (sequentialize-pred p)
   (match p
-    [`(let ,a ,pred) (append '(begin) (sequentialize-alocs a) `(,(sequentialize-pred pred)))]
+    [`(let ,a ,pred) `(begin ,@(sequentialize-alocs a) ,(sequentialize-pred pred))]
     [`(if ,p1 ,p2 ,p3) `(if ,(sequentialize-pred p1) ,(sequentialize-pred p2) ,(sequentialize-pred p3))]
     [`(,relop ,a ,b) `(,relop ,a ,b)]
     ['(true) '(true)]
@@ -28,7 +29,7 @@
 ;v: value?
 (define (sequentialize-value v)
   (match v
-    [`(let ,a ,val) (append '(begin) (sequentialize-alocs a) `(,(sequentialize-value val)))]
+    [`(let ,a ,val) `(begin ,@(sequentialize-alocs a) ,(sequentialize-value val))]
     [`(if ,p ,v1 ,v2) `(if ,(sequentialize-pred p) ,(sequentialize-value v1) ,(sequentialize-value v2))]
     [t t]))
 
@@ -44,6 +45,7 @@
 ;Combination of sequentialize-tail en sequentialize-value
 ;
 ;
+;; SAND: Dead code?
 (define (sequentialize-tailval tv)
   (match tv
     [`(let ,a ,tail) `(begin ,@(sequentialize-alocs a) ,(sequentialize-tailval tail))]

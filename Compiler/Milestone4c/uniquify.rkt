@@ -10,15 +10,11 @@
 ;(uniquify-triv t loc)->triv (integer?/aloc?)
 ;t: triv? (integer?/name?)
 ;locs: list? '((name? aloc?) ...)
+;; SAND: can be written more concisely, you could also use `match` (<= with (? integer?), ... as pattern) or `cond` (<= syntactic sugar for nested if exprs)
 (define (uniquify-triv t loc)
-  (if (name? t)
-      (let ([na (assoc t loc)])
-        (if na
-            (second na)
-            #f))
-      (if (integer? t)
-          t
-          #f)))
+  (define na (assoc t loc))
+  (or (and na (second na))
+      (and (integer? t) t)))
 
 ;changes the names in the let naming to alocs and also gives an updated locs
 ;(uniquify-letNames n locs)->list? '('((aloc value)...) locs) car->'((aloc value)...) en cdr ->locs-updated

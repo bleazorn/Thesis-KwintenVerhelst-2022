@@ -5,11 +5,12 @@
 (module+ test
   (require rackunit))
 
+;; SAND: the extra parentheses were redundant here, I removed them and updated the call sites accordingly
 (define (normalize-set a v)
   (match v
-    [`(begin ,e ...) `(,(normalize-effect `(set! ,a ,v)))]
-    [`(if ,p ,v1 ,v2) `(,(normalize-effect `(set! ,a ,v)))]
-    [_ `((set! ,a ,v))]))
+    [`(begin ,e ...) (normalize-effect `(set! ,a ,v))]
+    [`(if ,p ,v1 ,v2) (normalize-effect `(set! ,a ,v))]
+    [_ `(set! ,a ,v)]))
 
 ;
 ;(normalize-effect e)->effect?
@@ -18,11 +19,10 @@
   ;(println "effect:")
   ;(pretty-display e)
   (match e
-    [`(set! ,a (begin ,e ... ,v)) (append '(begin) (map (lambda (eff) (normalize-effect eff)) e) (normalize-set a v))]
-    [`(set! ,a (if ,p ,v1 ,v2)) `(if ,(normalize-pred p) ,@(normalize-set a v1) ,@(normalize-set a v2))]
+    [`(set! ,a (begin ,e ... ,v)) `(begin ,@(map normalize-effect e) ,(normalize-set a v))] ;; SAND: rewritten with quasiquoting, also note that you can just pass the procedure as is, no need to wrap it in a lambda (change pushed through in other places too)
+    [`(set! ,a (if ,p ,v1 ,v2)) `(if ,(normalize-pred p) ,(normalize-set a v1) ,(normalize-set a v2))]
     [`(set! ,a ,b) e]
-    [`(begin ,e ...) `(begin ,@(map (lambda (eff) (normalize-effect eff)) e))]))
-
+    [`(begin ,e ...) `(begin ,@(map normalize-effect e))]))
 
 ;
 ;(normalize-pred p)->pred?
@@ -31,13 +31,14 @@
   ;(println "pred:")
   ;(pretty-display p)
   (match p
-    [`(begin ,e ... ,pred) `(begin ,@(map (lambda (eff) (normalize-effect eff)) e) ,(normalize-pred pred))]
+    [`(begin ,e ... ,pred) `(begin ,@(map normalize-effect e) ,(normalize-pred pred))]
     [`(if ,p1 ,p2 ,p3) `(if ,(normalize-pred p1) ,(normalize-pred p2) ,(normalize-pred p3))]
     [`(,relop ,a ,b) `(,relop ,a ,b)]
     ['(true) '(true)]
     ['(false) '(false)]
     [`(not ,pred) `(not ,(normalize-pred pred))]
     [_ #f]))
+
 ;
 ;(normalize-value v)->value?
 ;v: value?
@@ -45,7 +46,7 @@
   ;(println "value:")
   ;(pretty-display v)
   (match v
-    [`(begin ,e ... ,val) `(begin ,@(map (lambda (eff) (normalize-effect eff)) e) ,(normalize-value val))]
+    [`(begin ,e ... ,val) `(begin ,@(map normalize-effect e) ,(normalize-value val))]
     [`(if ,p ,v1 ,v2) `(if ,(normalize-pred p) ,(normalize-value v1) ,(normalize-value v2))]
     [v v]))
 
@@ -56,7 +57,7 @@
   ;(println "tail:")
   ;(pretty-display t)
   (match t
-    [`(begin ,e ... ,tail) `(begin ,@(map (lambda (eff) (normalize-effect eff)) e) ,(normalize-tail tail))]
+    [`(begin ,e ... ,tail) `(begin ,@(map normalize-effect e) ,(normalize-tail tail))]
     [`(if ,p ,t1 ,t2) `(if ,(normalize-pred p) ,(normalize-tail t1) ,(normalize-tail t2))]
     [t (normalize-value t)]))
 

@@ -45,16 +45,12 @@
         sequentialize-let
         uniquify))
 
-(define (createList i j)
-  (if (>= i j)
-      `(,j)
-      (cons i (createList (add1 i) j))))
-  
+;; SAND: createList already exists, it's called inclusive-range
 
 (define (compileStepsDis start end program)
   (pretty-display 
    (for/fold ([p program])
-             ([i (reverse (createList start end))])
+             ([i (reverse (inclusive-range start end))])
      
      (values (let ([fun (list-ref steps i)])
                (println (format "~a:" fun))
@@ -65,7 +61,7 @@
 
 (define (compileSteps start end program)
   (for/fold ([p program])
-            ([i (reverse (createList start end))])
+            ([i (reverse (inclusive-range start end))])
     (values (let* ([fun (list-ref steps i)]
                    [res (fun p)])
               res))))

@@ -77,7 +77,7 @@
 ;(select-begin e)->list? '(effect? ...)
 ;e; list? '(effect ...)
 (define (select-begin e)
-  (map (lambda (eff) (select-effect eff)) e))
+  (map select-effect e))
 
 ;
 ;(select-pred p)->pred?

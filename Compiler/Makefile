@@ -54,6 +54,8 @@ else
 endif
 endif
 
+test:
+	raco test Milestone$(MVersion)/*.rkt
 
 generate:
 	raco make tester.rkt
