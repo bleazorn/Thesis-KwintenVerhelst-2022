@@ -4,8 +4,8 @@
 
 #Variables
 #arguments
-MVersion=4c
-MEmulator="off"
+MVersion=5
+MEmulator=Emulator/cheri_riscv_sim_RV64
 MVerbose="off"
 
 #local variables
@@ -42,7 +42,7 @@ ifeq ($(MVerbose), "off")
 	@echo "\nMake elf for " $(varCurLoc)/$(varCurLoc)
 	make -C $(varBuilder) $(varCurLoc)/$@
 	@echo "Run program: " $(varCurLoc)/$(varCurLoc)
-	~/$(MEmulator) $(varCurLoc)/$@ -V
+	./$(MEmulator) $(varCurLoc)/$@ -V
 else
 %.elf: %.txt
 	@echo "Compile program in: " $(varCurLoc)/$(varCurLoc)
@@ -50,7 +50,7 @@ else
 	@echo "Make elf for " $(varCurLoc)/$(varCurLoc)
 	make -C $(varBuilder) $(varCurLoc)/$@
 	@echo "Run program: " $(varCurLoc)/$(varCurLoc)
-	~/$(MEmulator) $(varCurLoc)/$@
+	./$(MEmulator) $(varCurLoc)/$@
 endif
 endif
 

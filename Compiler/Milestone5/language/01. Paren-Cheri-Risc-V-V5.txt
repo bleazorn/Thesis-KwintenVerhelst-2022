@@ -1,0 +1,84 @@
+generate-cheri-risc-v
+
+p	::=	(begin s ...)
+ 	 	 	 	 
+s	::=	(set! addr reg)			| Move in memory	
+	|	(set! reg triv)			| get in register (geheugen, register, integer)
+ 	|	(set! reg (binop reg reg))	| add en mul
+	|	(set! reg (+ reg int12))	| add 
+	| 	(with-label label s)		| label 
+	|	(jump trg)			| unconditional jump
+	| 	(compare reg (relop reg reg))	| compare
+	|	(jump-if label (relop reg reg))	| conditional jump
+
+trg	::=	reg
+	|	label
+
+triv	::= 	trg
+	| 	integer
+
+opand	::= 	integer
+	|	reg
+	 	 	 	 
+loc 	::=	reg
+	|	addr
+
+binop	::=	+
+ 	|	*
+
+relop	::=	 <
+ 	 |	 <=
+ 	 |	 =
+ 	 |	 >=
+ 	 |	 >
+ 	 |	 !=
+ 	 		 		 	 	 	 
+reg	::=	cnull
+ 	|	cra
+ 	|	csp
+ 	|	cgp
+ 	|	ctp
+ 	|	cfp
+ 	|	cpc
+ 	|	ca0
+ 	|	ca1
+ 	|	ca2
+ 	|	ca3
+ 	|	ca4
+ 	|	ca5
+ 	|	ca6
+ 	|	ca7
+ 	|	cs0
+ 	|	cs1
+ 	|	cs2
+ 	|	cs3
+ 	|	cs4
+ 	|	cs5
+ 	|	cs6
+ 	|	cs7
+ 	|	cs8
+ 	|	cs9
+ 	|	cs10
+ 	|	cs11
+ 	|	ct0
+ 	|	ct1
+ 	|	ct2
+ 	|	ct3			
+ 	|	ct4			
+ 	|	ct5			
+ 	|	ct6
+
+addr	::= 	(fbp - dispoff)
+
+fbp	::=	frame-base-pointer-register?
+
+dispoff	::=	dispoffset?
+
+label	::= 	label?
+ 	 	 	 	 
+integer	::=	int32
+	|	int12
+
+int32	::=	int32?
+int12	::=	int12?
+

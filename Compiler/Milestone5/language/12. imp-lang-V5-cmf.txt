@@ -1,0 +1,53 @@
+select-instructions
+
+p	::=	(module (define label tail) ... tail)
+
+pred 	::= 	(relop opand opand)
+	|	(true)
+	|	(false)
+	|	(not pred)
+	| 	(begin effect ... pred)
+	|	(if pred pred pred)
+
+tail  	::= 	value
+	|	(jump trg loc ...)
+	|	(begin effect ... tail)
+	|	(if pred tail tail)	
+
+value	::= 	triv
+	|   	(binop opand opand)
+
+effect	::=	(set! loc value)
+	|	(if pred effect effect)
+	|	(begin effect ... effect)
+ 	 	 
+trg	::=	loc
+	|	label
+
+triv	::= 	trg			
+	| 	integer
+
+opand	::= 	integer
+	|	loc
+
+loc 	::=	rloc
+	|	aloc
+ 	 		 	 
+binop	::=	+
+ 	|	*
+
+relop	::= 	<
+	|	<=
+	|	=
+	|	>=
+	|	>
+	|	!=
+
+aloc	::= 	aloc?
+
+rloc	::= 	register?
+	|	fvar?
+
+label	::= 	label?
+ 	 	 	 	 
+integer	::=	int32?

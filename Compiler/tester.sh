@@ -1,6 +1,6 @@
 #!/bin/bash
 
-output=$(make $1 MEmulator=$3| awk '/FAILURE/ || /SUCCES/')
+output=$(make $1| awk '/FAILURE/ || /SUCCES/')
 make cleanTest
 
 if [ $2 -lt 0 ]

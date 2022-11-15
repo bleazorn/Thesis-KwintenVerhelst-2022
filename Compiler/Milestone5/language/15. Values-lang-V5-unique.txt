@@ -1,0 +1,45 @@
+sequentialize-let
+
+p	::=	(module (define label (lambda (aloc ...) tail)) ... tail)
+
+pred 	::= 	(relop opand opand)
+	|	(true)
+	|	(false)
+	|	(not pred)
+	| 	(let ([aloc value] ...) pred)
+	|	(if pred pred pred)
+
+tail  	::= 	value
+	|	(call triv opand ...)	
+	|	(let ([aloc value] ...) tail)
+	|	(if pred tail tail)
+
+value	::= 	triv
+	|   	(binop opand opand)
+	|	(let ([aloc value] ...) value)
+	|	(if pred value value)
+
+trg	::=	aloc
+	|	label
+
+triv	::= 	trg			
+	| 	integer
+
+opand	::= 	integer
+	|	aloc
+	 	 	 		 	 
+binop	::=	+
+ 	|	*
+
+relop	::= 	<
+	|	<=
+	|	=
+	|	>=
+	|	>
+	|	!=
+
+aloc	::= 	aloc?
+
+label	::= 	label?
+ 	 	 	 	 
+integer	::=	int32?

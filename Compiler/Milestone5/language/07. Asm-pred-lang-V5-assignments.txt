@@ -1,0 +1,54 @@
+replace-locations
+
+p	::=	(module info (define label info tail) ... tail)
+
+info	::= 	(#:from-contract (info/c (locals (aloc ...)) (assignment ((aloc rloc) ...))))
+
+pred 	::= 	(relop loc loc)
+	|	(true)
+	|	(false)
+	|	(not pred)
+	| 	(begin effect ... pred)
+	|	(if pred pred pred)
+
+tail  	::= 	(halt opand)
+	|	(jump trg loc ...)
+	|	(begin effect ... tail)
+	|	(if pred tail tail)	
+
+effect	::=	(set! loc triv)
+	|	(set! loc (binop loc loc))
+	|	(set! loc (+ loc integer))
+	|	(begin effect ... effect)
+	|	(if pred effect effect)
+ 	 	 
+trg	::=	loc
+	|	label
+
+triv	::= 	trg			
+	| 	integer
+
+opand	::= 	integer
+	|	loc
+	 	 
+loc 	::=	rloc
+	|	aloc
+ 	 		 	 
+binop	::=	+
+ 	|	*
+
+relop	::= 	<
+	|	<=
+	|	=
+	|	>=
+	|	>
+	|	!=
+
+aloc	::= 	aloc?
+
+rloc	::= 	register?
+	|	fvar?
+
+label	::= 	label?
+ 	 	 	 	 
+integer	::=	int32?

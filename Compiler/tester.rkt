@@ -1,16 +1,14 @@
 #lang racket
 
 (require racket/system)
-(require "Milestone4c/generate-values-lang.rkt")
-(require "Milestone4c/interp-values-lang.rkt")
+(require "Milestone5/generate-values-lang.rkt")
+(require "Milestone5/interp-values-lang.rkt")
 (module+ test
   (require rackunit))
 
-(define emulatorLoc "T/sail-cheri-riscv/c_emulator/cheri_riscv_sim_RV64")
-
 (define (check-program-file program result)
   (define-values (sp out in err)
-    (subprocess #f #f #f "/bin/bash" "./tester.sh" program (number->string result) emulatorLoc))
+    (subprocess #f #f #f "/bin/bash" "./tester.sh" program (number->string result)))
   (define output (port->string out))
   (define error (port->string err))
   (close-input-port out)
@@ -21,6 +19,7 @@
   )
 
 (define (check-program-p program result)
+  (pretty-display (format "~a" program))
   (write-string-to-file "tmpTest.txt" program)
   (define-values (output error) (check-program-file "tmpTest.elf" result))
   (let* ([res (string-split output "\n")]
@@ -28,7 +27,7 @@
          [neg (if (string->number num)
                   (- (string->number num) 2147483648)
                   (format "No result - Something went wrong:\n~a" error))])
-    (pretty-display (format "~a\nResult: ~a - (~a)\n~a\n" program num neg (last res))) 
+    (pretty-display (format "Result: ~a - (~a)\n~a\n" num neg (last res))) 
     (last res)))
 
 (define (write-string-to-file file program)
@@ -42,8 +41,10 @@
       (check-program-p program result)))
 
 (define (check-random)
-  (let ([randomProgram (generate-values-lang)])
-    (check-program randomProgram (interp-values-lang randomProgram))))
+  (let* ([randomProgram (generate-values-lang)]
+         [result (interp-values-lang randomProgram)])
+    (cond [(integer? result) (check-program randomProgram result)]
+          [else (pretty-display (format "Created non finishing program\n")) "Test Succeed"])))
 
 (define (randomTest n)
   (for ([i (build-list n values)])
@@ -93,5 +94,22 @@
   (check-Program '(module (let ([x 50] [y 40]) (if (let ([z 5]) (< z y)) (+ x y) (* x y)))) 90 "Program: succes-17: if let")
   (check-Program '(module (let ([x 50] [y 50]) (let ([z (if (= x y) (let ([k 40]) k) (* x y))]) z))) 40 "Program: succes-18: value if")
   ;|#
-  
-  )
+;Milestone 5
+  ;#|
+  (check-Program '(module
+                      (define odd?
+                        (lambda (x)
+                          (if (= x 0)
+                              0
+                              (let ([y (+ x -1)])
+                                (call even? y)))))
+                    (define even?
+                      (lambda (x)
+                        (if (= x 0)
+                            1
+                            (let ([y (+ x -1)])
+                              (call odd? y)))))
+                    (call even? 5))
+                 0 "Program: succes-19: tail call")
+  ;|#
+)
