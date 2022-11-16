@@ -1,6 +1,7 @@
 #lang racket
 
-(require "check-values-lang.rkt"
+(require "common.rkt"
+         "check-values-lang.rkt"
          "uniquify.rkt"
          "sequentialize-let.rkt"
          "normalize-bind.rkt"
@@ -52,6 +53,7 @@
 ;; SAND: createList already exists, it's called inclusive-range
 
 (define (compileStepsDis start end program)
+  (resetfvar)
   (pretty-display 
    (for/fold ([p program])
              ([i (reverse (inclusive-range start end))])
@@ -64,6 +66,7 @@
                  res))))))
 
 (define (compileSteps start end program)
+  (resetfvar)
   (for/fold ([p program])
             ([i (reverse (inclusive-range start end))])
     (values (let* ([fun (list-ref steps i)]
@@ -116,24 +119,13 @@
 
 (define simpleProgram '(module 50))
 (define testProgram
-  '(module (define "fun4" (lambda ("x1" "x2")
-                            (if (not (if (> "x2" -96)
-                                         (false)
-                                         (let (("x2" (if (if (= "x2" "x1")
-                                                             (not (if (false)
-                                                                      (let (("x4" (let (("x8" (+ "x1" 462))
-                                                                                        ("x9" (if (true)
-                                                                                                  (let (("x10" "x1"))
-                                                                                                    (let (("x11" "x10")
-                                                                                                          ("x12" (if (not (false)) (let (("x13" (* "x10" "x10")) ("x14" (let (("x17" "x10") ("x18" (if (let (("x21" "x10") ("x22" (let (("x24" -503)) 320)) ("x23" (+ "x10" "x10"))) (false)) (+ 297 "x10") (* "x10" "x10"))) ("x19" (if (not (<= "x10" -148)) (let (("x25" (* "x10" "x10"))) "x25") (* 33 "x10"))) ("x20" (if (< "x10" "x10") (+ "x10" "x10") (let (("x26" (if (if (not (false)) (if (let (("x30" 286) ("x31" (+ "x10" "x10")) ("x32" -244) ("x33" (if (true) (* "x10" 57) (+ "x10" 338))) ("x34" (* -428 "x10"))) (let (("x35" (if (let (("x38" (if (false) "x31" (let (("x41" "x33") ("x42" "x30")) (if (false) (let (("x43" (* -353 392)) ("x44" (* "x41" "x42")) ("x45" (* 416 "x41")) ("x46" (+ 311 "x41"))) "x46") 148)))) ("x39" (* -399 -252)) ("x40" (+ "x31" "x31"))) (true)) "x34" 459)) ("x36" 316) ("x37" 12)) (<= "x35" 316))) (< -118 "x10") (true)) (false)) (+ -29 "x10") (* 17 "x10"))) ("x27" (* "x10" -410)) ("x28" (* "x10" 311)) ("x29" "x10")) (* "x29" -107))))) (* "x19" "x20"))) ("x15" (* -497 "x10")) ("x16" -11)) (* 101 "x16")) 372))) (+ 163 423))) "x2"))) 481)) ("x5" (* "x2" -161)) ("x6" (+ "x1" "x2")) ("x7" (+ "x1" "x2"))) (>= 462 65)) (false))) (false)) (* "x2" -179) (* "x1" -339))) ("x3" (+ "x1" "x2"))) (>= "x3" "x2")))) (let (("x3" (+ "x1" 179))) (call "fun4" -8 "x3")) (call "fun3" "x2"))))
-     (define "fun3" (lambda ("x1") (call "fun4" "x1" "x1")))
-     (if (false) (call "fun4" -334 -298) 510))
+  '(module (define fun2 (lambda (x1 x2 x1 x1 x1) (call fun5 x2))) (define fun5 (lambda (x1) (call fun1 x1))) (define fun1 (lambda (x1) (call fun3 x1 175 x1 x1))) (define fun3 (lambda (x1 x2 x3 x4) x4)) (call fun2 445 500 100 200 300))
   )
 (module+ test
   (check-equal? #t #t "test"))
 
 ;(interp-values-lang testProgram)
-(test testProgram)
+;(test testProgram)
 ;(write-program testProgram "ap.S")
 ;(compile-file "ap.txt")
 ;(test simpleProgram)

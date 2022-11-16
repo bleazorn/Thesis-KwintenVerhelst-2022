@@ -22,6 +22,17 @@
   (resetfvar))
 
 ;
+;clear-registers->effect?
+(define clear-registers
+  '(begin (set! t0 0)
+          (set! t1 0)
+          (set! t2 0)
+          (set! t3 0)
+          (set! t4 0)
+          (set! t5 0)
+          (set! t6 0)))
+
+;
 ;(impose-args args)->list? '(aloc? ...)
 ;args: list? '(opand? ...)
 (define (impose-args args isCall?)
@@ -64,7 +75,7 @@
   (match t
     [`(begin ,e ... ,tail) `(begin ,@e ,(impose-tail tail))]
     [`(if ,p ,t1 ,t2) `(if ,p ,(impose-tail t1) ,(impose-tail t2))]
-    [`(call ,n ,a ...) (cond [(or (label? n) (aloc? n)) `(begin ,@(impose-args a #t) (jump ,n ,fbp ,@(impose-argsCall a)))]              
+    [`(call ,n ,a ...) (cond [(or (label? n) (aloc? n)) `(begin ,@(impose-args a #t) ,clear-registers (jump ,n ,fbp ,@(impose-argsCall a)))]              
                              [(integer? n) n]
                              [else #f])]
     [t t]))
@@ -115,19 +126,47 @@
                               (if (= x.3 0)
                                   0
                                   (begin (set! y.4 (+ x.3 -1)) 
-                                         (begin (set! a0 y.4) (jump L.even?.2 cfp a0))))))
+                                         (begin (set! a0 y.4) (begin (set! t0 0)
+                                                                     (set! t1 0)
+                                                                     (set! t2 0)
+                                                                     (set! t3 0)
+                                                                     (set! t4 0)
+                                                                     (set! t5 0)
+                                                                     (set! t6 0))
+                                                (jump L.even?.2 cfp a0))))))
                    (define L.even?.2
                      (begin
                        (set! x.5 a0)
                        (if (= x.5 0)
                            1
                            (begin (set! y.6 (+ x.5 -1)) 
-                                  (begin (set! a0 y.6) (jump L.odd?.1 cfp a0))))))
-                   (begin (set! a0 5) (jump L.even?.2 cfp a0)))
+                                  (begin (set! a0 y.6) (begin (set! t0 0)
+                                                              (set! t1 0)
+                                                              (set! t2 0)
+                                                              (set! t3 0)
+                                                              (set! t4 0)
+                                                              (set! t5 0)
+                                                              (set! t6 0))
+                                         (jump L.odd?.1 cfp a0))))))
+                   (begin (set! a0 5) (begin (set! t0 0)
+                                             (set! t1 0)
+                                             (set! t2 0)
+                                             (set! t3 0)
+                                             (set! t4 0)
+                                             (set! t5 0)
+                                             (set! t6 0))
+                          (jump L.even?.2 cfp a0)))
                 "sequentialize-let: succes-02: tail calls")
   (check-impose '(module (define L.test.1 (lambda (x.1 x.2 x.3) (begin (set! y.4 (+ x.1 x.2)) (+ x.3 y.4)))) (call L.test.1 1 2 3))
                 '(module (define L.test.1 (begin  (set! x.2 fv0) (set! x.3 fv1) (set! x.1 a0) (begin (set! y.4 (+ x.1 x.2)) (+ x.3 y.4))))
-                   (begin (set! fv0 2) (set! fv1 3) (set! a0 1) (jump L.test.1 cfp a0 fv0 fv1)))
+                   (begin (set! fv0 2) (set! fv1 3) (set! a0 1) (begin (set! t0 0)
+                                                                       (set! t1 0)
+                                                                       (set! t2 0)
+                                                                       (set! t3 0)
+                                                                       (set! t4 0)
+                                                                       (set! t5 0)
+                                                                       (set! t6 0))
+                          (jump L.test.1 cfp a0 fv0 fv1)))
                 "impose-calling-conventions: succes-03: tail calls with fvar args"
                 1)
   ;|#
