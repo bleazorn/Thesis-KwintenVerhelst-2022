@@ -14,10 +14,9 @@
   (match p
     [`(,info . ,s)  (string-append "main:" "\n"
                                  (indent-instr "cspecialr cfp, pcc")
-                                 (indent-instr "auipcc ct0, %pcrel_hi(0x81f00000)")
-                                 (indent-instr "CSetAddr cfp, cfp, t0")
-                                 (indent-instr (format "CSetBoundsImm cfp, cfp, ~a" info))
-                                 (indent-instr "CIncOffsetImm csp, cfp, 0")
+                                 (indent-instr "auipcc cfp, %pcrel_hi(0x81f00000)")
+                                 (indent-instr (format "CIncOffsetImm csp, cfp, -~a" info))
+                                 (indent-instr (format "CSetBoundsImm cfp, csp, ~a" info))
                                  s
                                  "end:\n"
                                  (indent-instr "cret"))]

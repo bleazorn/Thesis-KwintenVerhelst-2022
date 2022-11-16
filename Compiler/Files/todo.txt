@@ -1,7 +1,10 @@
-optimize-let-bindings interpreters en checkers 
-	niet geimplementeerd???
-
-tester.rkt aangeven waarom faalde
+Optimizing
+	- optimize-let-bindings 
+	- optimize-predicates
+Interpreter
+	paren-cheri-risc-v
+Checker
+	paren-cheri-risc-v
 
 calling conventions
 	array overflow
@@ -9,9 +12,14 @@ calling conventions
 	bescherment data
 object capabilities
 
+Check implementation of c-compiler for security
 
 
-Milestone 4
+Vandaag
+	Checker
+	Papers
+
+
 
 --Compiler Steps
 	
@@ -20,6 +28,8 @@ uniquify
 sequentialize-let
 	ok
 normalize-bind
+	ok
+impose-calling-conventions
 	ok
 select-instructions
 	ok -- check voor optimalisatie
@@ -34,7 +44,7 @@ assign-registers
 replace-locations
 	ok
 expose-basic-blocks
-	-- - herschrijven
+	ok
 resolve-predicates
 	ok 
 flatten-program

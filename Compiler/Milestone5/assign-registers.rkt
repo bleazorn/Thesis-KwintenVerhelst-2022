@@ -6,7 +6,7 @@
 (module+ test
   (require rackunit))
 
-(define availableReg '(t0 t1 t2 t3 t4))
+(define availableReg '(t0)) ;'(t0 t1 t2 t3 t4)
 
 ;Returns the index of the location with the least conflicts
 ;(index-of-lowest-conf conf)->integer?

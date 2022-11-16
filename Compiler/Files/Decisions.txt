@@ -1,17 +1,27 @@
 --Decisions
-	select-instructions
-		zie laatste 2 tests
-	assign-fvars
-		use t0, t1, t2, t3 dan pas memory
+	assign-registers
+		claim t0, t1, t2, t3, t4			tempory registers
 	patch-instructions
-		claims t4, t5, t6
+		claim t5, t6					tempory registers
+	impose-calling-conventions
+		claim a0 a1 a2 a3 a4 a5 a6 a7			argument registers
+	generate-cheri-risc-v
+		claim s11 					voor security storage
+		claim s10					voor security jump
 	implement-fvars
-		fv1 = (fp - 0) fp is frame pointer and frame size is 8
+		fv0 = (cfp - 0) cfp is frame pointer and frame size is 8
 
 	sp en fp initialisatie
-		auipc fp, %pcrel_hi(0x81f00000)
-    		addi sp, fp, 0
+		auipcc cfp, %pcrel_hi(0x81f00000)
+		CIncOffsetImm csp, cfp, 0
+    		CIncOffsetImm cfp, cfp, -bound
+		CSetBoundsImm cfp, cfp, bound
+		
+		CIncOffsetImm cs11, cfp, 8
+    		sw.cap t5, 0(cs11)
+		
 
 	Shell
 		signed 32bit int [-2147483648 to 2147483647]
+
 
