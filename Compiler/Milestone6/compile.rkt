@@ -1,6 +1,7 @@
 #lang racket
 
-(require "common.rkt"
+(require "common/fvar.rkt"
+         "common/register.rkt"
          "check-values-lang.rkt"
          "uniquify.rkt"
          "sequentialize-let.rkt"
@@ -133,16 +134,18 @@
       (define swap
         (lambda (x y)
           (if (< y x)
-              x
+              y
               (let ([z (call swap y x)])
-                (+ x y)))))
+                z))))
       (call swap 50 200))
   )
 
 (module+ test
   (check-equal? #t #t "test"))
 
-;(test simpleProgram)
+#;(parameterize ([current-assignable-registers '()]) 
+  (append (current-parameter-registers) (current-assignable-registers))
+  (test testProgram))
 ;(compileStepsDis 2 (sub1 (length steps)) testProgram)
 ;(interp-values-lang testProgram)
 ;(write-program testProgram "ap.S")

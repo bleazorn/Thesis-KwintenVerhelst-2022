@@ -5,7 +5,7 @@
 (module+ test
   (require rackunit))
 
-(define maxsteps 100000)
+(define maxsteps 10000)
 (define step 0)
 (define (stepping)
   (set! step (add1 step)))

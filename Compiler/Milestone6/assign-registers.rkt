@@ -34,7 +34,7 @@
 ;(getARegister conflictedRegisters)->loc
 ;conflictedRegisters: list? '(loc ...)
 (define (getARegister conflictedRegisters)
-  (let ([available (remove* conflictedRegisters '(t0))]);(current-assignable-registers))])
+  (let ([available (remove* conflictedRegisters (current-assignable-registers))])
     (if (null? available)
         (newNonAssFrameVar)                           
         (car available))))        

@@ -2,7 +2,8 @@
 
 (require racket/system)
 (require "Milestone6/generate-values-lang.rkt")
-(require "Milestone6/interp-values-lang.rkt")
+(require "Milestone6/interp-values-lang.rkt"
+         "Milestone6/common/register.rkt")
 (module+ test
   (require rackunit))
 
@@ -64,7 +65,10 @@
       (check-equal? (check-random) "Test Succeed" (format "RandomTest ~a" i))))
 
 ;RandomTest
-  (randomTesting 20)
+  (parameterize ()
+                 ;[current-parameter-registers '()]
+                 ;[current-assignable-registers '()]) 
+    (randomTesting 100))
   
 ;Milestone 2 en 3
   ;succes

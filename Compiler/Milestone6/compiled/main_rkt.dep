@@ -1,1 +1,0 @@
-("8.6" ta6le ("7b77a79ba40bfb947eb0645865dbae7f2cc5ed16" . "f4c62b589873389ee9535879242f731ab6055bea") #"/media/kwinten/Data1/Thesis/New/Compiler/Milestone6/compile.rkt" (collects #"racket" #"main.rkt") (collects #"racket" #"runtime-config.rkt") (collects #"rackunit" #"main.rkt"))

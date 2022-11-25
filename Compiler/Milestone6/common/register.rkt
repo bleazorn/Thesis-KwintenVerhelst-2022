@@ -38,35 +38,35 @@
           ,@(build-list 7 (lambda (a) (string->symbol (format "t~a" a))))
           ,@(build-list 32 (lambda (a) (string->symbol (format "x~a" a))))))
 
-(define (current-register-set)
-  (append (current-capReg-set) (current-intReg-set)))
+(define current-register-set
+  (make-parameter (append (current-capReg-set) (current-intReg-set))))
 
-(define (current-frame-base-pointer-register)
-  'cfp)
+(define current-frame-base-pointer-register
+  (make-parameter 'cfp))
 
 (define (frame-base-pointer-register? v)
   (equal? v (current-frame-base-pointer-register)))
 
-(define (current-auxiliary-registers)
-  '(t5 t6))
+(define current-auxiliary-registers
+  (make-parameter '(t5 t6)))
 
-(define (current-return-value-register)
-  'a0)
+(define current-return-value-register
+  (make-parameter 'a0))
 
-(define (current-assignable-registers)
-  (build-list 5 (lambda (a) (string->symbol (format "t~a" a)))))
+(define current-assignable-registers
+  (make-parameter (build-list 5 (lambda (a) (string->symbol (format "t~a" a))))))
 
-(define (current-parameter-registers)
-  '());(build-list 8 (lambda (a) (string->symbol (format "a~a" a)))))
+(define current-parameter-registers
+  (make-parameter (build-list 8 (lambda (a) (string->symbol (format "a~a" a))))))
 
-(define (current-return-address-register)
-  'ra)
+(define current-return-address-register
+  (make-parameter 'ra))
 
-(define (current-jump-register)
-  'cs11)
+(define current-jump-register
+  (make-parameter 'cs11))
 
-(define (current-stack-register)
-  'cs10)
+(define current-stack-register
+  (make-parameter 'cs10))
 
 ;Returns given symbol if it is a name for a register in paren-cheri-risc-v, otherwise returns false
 ;(check-reg res) -> symbol?/boolean?

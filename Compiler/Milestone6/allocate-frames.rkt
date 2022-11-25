@@ -26,7 +26,8 @@
           [bs (string->number (second (string-split (symbol->string b) ".")))])
       (< as bs)))
   ;get frame and gets the biggest fvar from the already assigned
-  (let* ([frame (second (assoc l frames))]
+  (let* ([frame (cond [(null? frames) '()]
+                      [else (second (assoc l frames))])]
          [callAss (map (lambda (c) (second (assoc c ass))) calls)]    
          [maxFvarCall (foldl (lambda (c m) (let ([cM (getFvarNumber c)])
                                              (cond [(and (fvar? c) (> cM m)) cM]
