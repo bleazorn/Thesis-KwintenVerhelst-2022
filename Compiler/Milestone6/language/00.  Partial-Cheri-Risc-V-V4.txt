@@ -1,0 +1,98 @@
+p	::=	(s ...)
+ 	 	 	 	 
+s	::=	sw reg, addr			store in memory on address symbol
+	|	lw reg, addr			loads what is in memory on address symbol
+
+	|	addi reg, reg, 0    		move register	
+	|	li rd, int32			insert integer 32bits
+	|	addi rd, x0, int12		insert integer 12bits
+
+	|	add reg, reg, reg  		addition reg 
+	|	addi reg, reg, int12 		addition int 12bits
+	|	sub reg, reg, reg		substraction reg
+ 	|	mul  reg, reg, reg		multiplication
+
+	|	jal reg, offset			jump naar offset (20bits) (reg=pc+4)
+	|	beq reg, reg, label		jump =
+	|	bne reg, reg, label		jump !=
+	|	blt reg, reg, label		jump <
+	|	bgt reg, reg, label		jump >
+	|	ble reg, reg, label		jump <=
+	|	bge reg, reg, label		jump >=
+
+	|	slt reg, reg, reg		compares < and result in first reg 0 false | 1 true
+	|	slti reg reg, int12		compares < with 12bit int
+	|	sltu reg, reg, reg		compares < unsigned
+	| 	sltiu reg, reg, int12		compares < unsigned 12 bit integer
+ 	 	 	 	 
+loc 	::=	reg
+	|	addr
+ 	 	
+ 	 	 	 	 
+reg	::=	zero
+ 	|	ra
+ 	|	sp
+ 	|	gp
+ 	|	tp
+ 	|	fp
+ 	|	pc
+ 	|	a0
+ 	|	a1
+ 	|	a2
+ 	|	a3
+ 	|	a4
+ 	|	a5
+ 	|	a6
+ 	|	a7
+ 	|	s0
+ 	|	s1
+ 	|	s2
+ 	|	s3
+ 	|	s4
+ 	|	s5
+ 	|	s6
+ 	|	s7
+ 	|	s8
+ 	|	s9
+ 	|	s10
+ 	|	s11
+ 	|	t0
+ 	|	t1
+ 	|	t2
+ 	|	t3
+ 	|	t4
+ 	|	t5
+ 	|	t6
+
+addr	::= 	dispoff(fbp)			(32 bit)
+
+fbp	::=	fp
+
+dispoff	::=	dispoffset?
+
+label	::= 	label?
+ 	 	 	 	 
+int32	::=	integer32?
+int12	::=	int12?
+
+#|
+label 						foo:
+						    inst
+unconditonal jump				jal zero, offset (20bit) rd = pc + 4
+conditional jump
+	=	BEQ rs1  = rs2			rs1, rs2, label
+	!=	BNE rs1 != rs2
+	<	BLT rs1  < rs2
+	>	BGT rs1  > rs2
+	<=	BLE rs1 <= rs2
+	>=	BGE rs1 >= rs2
+conditional
+	< 	SLT rs1 < rs2 			rd, rs1, rs2   rd = 0 |1 (slti rs2 -> int12)
+	> 	vorige maar reg omdraaien	
+	=	SUB rd1, rs1, rs2  SLTIU rd, rd1, 1			0 false 1 true
+	!= 	SUB rd1, rs1, rs2  SLTU rd, x0, rs
+	<=	SUB rd1, rs1, rs2  SLTI  rd, rd1, 1
+	=>	vorige maar reg omdraaien
+
+Kan label in address gestoken worden? Neen
+|#

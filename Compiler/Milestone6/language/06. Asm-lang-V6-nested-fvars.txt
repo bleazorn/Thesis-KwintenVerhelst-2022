@@ -1,0 +1,83 @@
+implement-fvars
+
+p	::=	(module (define label tail) ... tail)
+
+pred	::=	(relop loc loc)
+	|	(true)
+	|	(false)
+	|	(not pred)
+	|	(begin effect ... pred)
+	|	(if pred pred pred)
+
+tail 	::= 	(jump trg)
+	|	(begin effect ... tail)
+	|	(if pred tail tail)
+ 	 	 	 	 
+effect	::=	(set! loc triv)
+	|	(set! loc (binop loc loc))
+	|	(set! loc (+ loc integer))
+	|	(begin effect ... effect)
+	|	(if pred effect effect)
+	| 	(return-point label tail)
+ 	 	 
+trg	::=	loc
+	|	label
+
+triv	::= 	trg			
+	| 	integer
+
+opand	::= 	integer
+	|	loc
+	 	 
+loc 	::=	reg
+	|	fvar
+ 	 		 	 
+binop	::=	+
+ 	|	*
+ 	|	-
+
+relop	::=	 <
+ 	 |	 <=
+ 	 |	 =
+ 	 |	 >=
+ 	 |	 >
+ 	 |	 !=
+	 	 	 	 
+reg	::=	cnull
+ 	|	cra
+ 	|	csp
+ 	|	cgp
+ 	|	ctp
+ 	|	cfp
+ 	|	cpc
+ 	|	ca0
+ 	|	ca1
+ 	|	ca2
+ 	|	ca3
+ 	|	ca4
+ 	|	ca5
+ 	|	ca6
+ 	|	ca7
+ 	|	cs0
+ 	|	cs1
+ 	|	cs2
+ 	|	cs3
+ 	|	cs4
+ 	|	cs5
+ 	|	cs6
+ 	|	cs7
+ 	|	cs8
+ 	|	cs9
+ 	|	cs10
+ 	|	cs11
+ 	|	ct0
+ 	|	ct1
+ 	|	ct2
+ 	|	ct3			
+ 	|	ct4			
+
+fvar 	::= 	fvar?
+
+label	::=	label?
+ 	 	 	 	 
+integer	::=	int32?

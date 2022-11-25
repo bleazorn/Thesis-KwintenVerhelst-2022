@@ -1,0 +1,136 @@
+patch-instructions
+
+p	::=	(begin s ...)
+ 	 	 	 	 
+s	::=	(set! loc triv)
+	|	(set! loc (binop loc loc))
+	|	(set! loc (+ loc integer))
+	| 	(with-label label s)
+	|	(jump trg)
+	| 	(compare loc (relop loc loc))
+	|	(jump-if label (relop loc loc))
+ 	 	 
+trg	::=	loc		reg fvar label
+	|	label
+
+triv	::= 	trg           	integer reg fvar label
+	| 	integer
+
+opand	::= 	integer		integer reg fvar
+	|	loc
+	 	 
+loc 	::=	reg		reg fvar
+	|	addr
+ 	 		 	 
+binop	::=	+
+ 	|	*
+	|	-
+
+relop	::=	 <
+ 	 |	 <=
+ 	 |	 =
+ 	 |	 >=
+ 	 |	 >
+ 	 |	 !=
+ 	 	 	 	 
+reg	::=	cnull
+ 	|	cra
+ 	|	csp
+ 	|	cgp
+ 	|	ctp
+ 	|	cfp
+ 	|	cpc
+ 	|	ca0
+ 	|	ca1
+ 	|	ca2
+ 	|	ca3
+ 	|	ca4
+ 	|	ca5
+ 	|	ca6
+ 	|	ca7
+ 	|	cs0
+ 	|	cs1
+ 	|	cs2
+ 	|	cs3
+ 	|	cs4
+ 	|	cs5
+ 	|	cs6
+ 	|	cs7
+ 	|	cs8
+ 	|	cs9
+ 	|	cs10
+ 	|	cs11
+ 	|	ct0
+ 	|	ct1
+ 	|	ct2
+ 	|	ct3			
+ 	|	ct4			
+ 	|	ct5			
+ 	|	ct6		
+
+addr	::= 	(fbp - dispoff)
+
+fbp	::=	frame-base-pointer-register?
+
+dispoff	::=	dispoffset?
+
+label	::=	label?
+ 	 	 	 	 
+integer	::=	int32?
+
+#|
+trg	::=	loc		reg fvar label
+	|	label
+
+triv	::= 	opand           integer reg fvar label
+	| 	label
+
+opand	::= 	integer		integer reg fvar
+	|	loc
+	 	 
+loc 	::=	reg
+	|	fvar
+
+
+(halt opand)				(set! a0 opand)
+(set! loc triv)				if loc fvar
+						extra set if triv is integer fvar label						
+(set! loc (binop loc loc))		hetzelfde
+(set! loc (+ loc integer))		hetzelfde	
+(with-label label s)			patch s
+(jump trg)				if fvar in trg extra set
+(compare reg opand)			if fvar in opand extra set
+(jump-if relop label)			zichzelf
+|#
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
