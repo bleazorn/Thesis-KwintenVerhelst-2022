@@ -4,8 +4,8 @@
 
 #Variables
 #arguments
-MVersion=5
-MEmulator=Emulator/cheri_riscv_sim_RV64
+MVersion=6
+MEmulator="off"
 MVerbose="off"
 
 #local variables
@@ -42,7 +42,7 @@ ifeq ($(MVerbose), "off")
 	@echo "\nMake elf for " $(varCurLoc)/$(varCurLoc)
 	make -C $(varBuilder) $(varCurLoc)/$@
 	@echo "Run program: " $(varCurLoc)/$(varCurLoc)
-	./$(MEmulator) $(varCurLoc)/$@ -V
+	~/$(MEmulator) $(varCurLoc)/$@ -V
 else
 %.elf: %.txt
 	@echo "Compile program in: " $(varCurLoc)/$(varCurLoc)
@@ -50,9 +50,25 @@ else
 	@echo "Make elf for " $(varCurLoc)/$(varCurLoc)
 	make -C $(varBuilder) $(varCurLoc)/$@
 	@echo "Run program: " $(varCurLoc)/$(varCurLoc)
-	./$(MEmulator) $(varCurLoc)/$@
+	~/$(MEmulator) $(varCurLoc)/$@
 endif
 endif
+
+exam:
+	MEmulator="T/sail-cheri-riscv/c_emulator/cheri_riscv_sim_RV64"
+	@echo "\nMake elf for " $(varCurLoc)
+	make -C $(varBuilder) $(varCurLoc)/example.elf
+	@echo "Run program: " $(varCurLoc)
+	~/T/sail-cheri-riscv/c_emulator/cheri_riscv_sim_RV64 $(varCurLoc)/example.elf
+
+examp:
+	MEmulator="T/sail-cheri-riscv/c_emulator/cheri_riscv_sim_RV64"
+	@echo "Compile program in: " $(varCurLoc)/$(varCurLoc)
+	racket $(varCompile) example.txt
+	@echo "\nMake elf for " $(varCurLoc)
+	make -C $(varBuilder) $(varCurLoc)/example.elf
+	@echo "Run program: " $(varCurLoc)
+	~/T/sail-cheri-riscv/c_emulator/cheri_riscv_sim_RV64 $(varCurLoc)/example.elf
 
 test:
 	raco test Milestone$(MVersion)/*.rkt
@@ -62,11 +78,17 @@ generate:
 	raco make Milestone2/main.rkt
 	raco make Milestone3/main.rkt
 	raco make Milestone4/main.rkt
+	raco make Milestone4c/main.rkt
+	raco make Milestone5/main.rkt
+	raco make Milestone6/main.rkt
 cleanbin:
 	rm -rvf compiled/ 
 	rm -rvf Milestone2/compiled/ 
 	rm -rvf Milestone3/compiled/ 
 	rm -rvf Milestone4/compiled/ 
+	rm -rvf Milestone4c/compiled/ 
+	rm -rvf Milestone5/compiled/ 
+	rm -rvf Milestone6/compiled/ 
 
 cleanS:
 	rm -v *.S

@@ -1,14 +1,16 @@
 #lang racket
 
 (require racket/system)
-(require "Milestone5/generate-values-lang.rkt")
-(require "Milestone5/interp-values-lang.rkt")
+(require "Milestone6/generate-values-lang.rkt")
+(require "Milestone6/interp-values-lang.rkt")
 (module+ test
   (require rackunit))
 
+(define emulatorLoc "T/sail-cheri-riscv/c_emulator/cheri_riscv_sim_RV64")
+
 (define (check-program-file program result)
   (define-values (sp out in err)
-    (subprocess #f #f #f "/bin/bash" "./tester.sh" program (number->string result)))
+    (subprocess #f #f #f "/bin/bash" "./tester.sh" program (number->string result) emulatorLoc))
   (define output (port->string out))
   (define error (port->string err))
   (close-input-port out)
@@ -62,7 +64,7 @@
       (check-equal? (check-random) "Test Succeed" (format "RandomTest ~a" i))))
 
 ;RandomTest
-  (randomTesting 10)
+  (randomTesting 20)
   
 ;Milestone 2 en 3
   ;succes
