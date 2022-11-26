@@ -83,6 +83,7 @@
 (define (undead-pred p undead-outs)
   (let ([undead-out (if (null? undead-outs) '() (car undead-outs))]
         [undead-rest (if (null? undead-outs) '() (cdr undead-outs))])
+  ;(println (format "pred: ~a" p))
     (match p
       [`(begin ,e ... ,pred) (let ([pU (undead-pred pred `(,undead-out))])
                                (undead-begin e pU undead-rest))]
@@ -102,6 +103,7 @@
 (define (undead-effect e undead-outs)
   (let ([undead-out (if (null? undead-outs) '() (car undead-outs))]
         [undead-rest (if (null? undead-outs) '() (cdr undead-outs))])
+  ;(println (format "effect: ~a - ~a" e undead-out))
     (match e
       [`(set! ,a (,binop ,b ,c)) (cons (undead-cons b (undead-cons c (undead-remove a undead-out))) undead-outs)]
       [`(set! ,a ,b) (cons (undead-cons b (undead-remove a undead-out)) undead-outs)]
@@ -110,9 +112,9 @@
                                [u2 (undead-effect e2 `(,undead-out))])
                           (undead-if p u1 u2 undead-rest))]
       [`(return-point ,l ,t) (let* ([uTail (undead-tail t '(()))]
-                                    [nextUndead (cons l (car uTail))])
+                                    [nextUndead (undead-remove (current-return-value-register) (remove-duplicates (append undead-out (car uTail))))])
                                (addCallReturn nextUndead undead-out)
-                               (cons  nextUndead (cons (list-set uTail 0 undead-out) undead-rest)))]
+                               (cons nextUndead (cons (list-set uTail 0 undead-out) undead-rest)))]
       [_ "effect"])))
 
 ;
@@ -122,6 +124,7 @@
 (define (undead-tail t undead-outs)
   (let ([undead-out (if (null? undead-outs) '() (car undead-outs))]
         [undead-rest (if (null? undead-outs) '() (cdr undead-outs))])
+  ;(println (format "tail: ~a" t))
     (match t
       [`(halt ,a) (cons (undead-cons a undead-out) undead-outs)]
       [`(begin ,e ... ,tail) (let* ([tU (undead-tail tail `(,undead-out))])

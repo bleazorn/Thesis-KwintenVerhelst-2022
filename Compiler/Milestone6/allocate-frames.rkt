@@ -66,7 +66,6 @@
 ;ass:  assignments? '((aloc fvar) ...)
 (define (allocate-pred p calls frames ass)
   (match p
-    [`(,relop ,a ,b) (values `(,relop ,a ,b) '())]
     ['(true)         (values '(true) '())]
     ['(false)        (values '(false) '())]
     [`(not ,p) (let-values ([(newP assP) (allocate-pred p calls frames ass)])
@@ -78,6 +77,7 @@
                                     [(newP2 assP2) (allocate-pred p2 calls frames ass)]
                                     [(newP3 assP3) (allocate-pred p3 calls frames ass)])
                         (values `(if ,newP1 ,newP2 ,newP3) (append assP1 assP2 assP3)))]
+    [`(,relop ,a ,b) (values `(,relop ,a ,b) '())]
     [_ #f]))
 
 ;

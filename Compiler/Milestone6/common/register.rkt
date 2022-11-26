@@ -73,7 +73,7 @@
 ;res : symbol?
 (define (register? res)
   (with-handlers ([exn:fail? (lambda (e) #f)])
-    (or (isCapability? res) (isNonCapRegister? res))))
+    (or (isCapability? res) (isNonCapRegister? res) (x86Register? res))))
 
 (define (isNonCapRegister? res)
   (if (symbol? res)
@@ -119,6 +119,9 @@
                       [`("ct" ,cn) #:when (and (string->number cn) (and (<= 0 (string->number cn)) (< (string->number cn) 7))) cap]
                       [_ #f]))]))])
       #f))
+
+(define (x86Register? reg)
+  (member reg '(r15 rax rbp)))
 
 (define (makeCap reg)
   (if (isNonCapRegister? reg)

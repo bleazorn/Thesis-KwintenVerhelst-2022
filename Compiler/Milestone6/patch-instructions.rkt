@@ -27,31 +27,40 @@
 ;(patch-binop a b c binop)->list? '((set! ...) ...)
 ;a,b,c:triv?
 (define (patch-binop a b c binop)
-  (let* ([aReg (if (register? a) a (newTemp))]
+  (let* ([aReg (cond
+                 [(register? a) a]
+                 [else (newTemp)])]
          [bReg (cond
                  [(register? b) b]
                  [(equal? a b) aReg]
                  [else (newTemp)])]
          [cReg (cond
+                 [(and (equal? binop '-) (isCapability? a) (isCapability? b) (isCapability? c)) 's8]
                  [(register? c) c]
-                 [(equal? a c) aReg]
                  [(equal? b c) bReg]
-                 [(and (or (equal? binop '+) (equal? binop '-)) (and (integer? c) (and (< c 2048) (>= c -2048)))) c]
+                 [(equal? a c) aReg]
+                 [(and (equal? binop '+) (and (integer? c) (and (< c 2048) (>= c -2048)))) c]
+                 [(and (equal? binop '-) (and (integer? c) (and (< c 2048) (>= c -2048)))) c]
                  [else (newTemp)])])
-    (let ([aSet (if (register? a) '() `((set! ,a ,aReg)))]
+    (let ([aSet (cond
+                  [(register? a) '()]
+                  [else `((set! ,a ,aReg))])]
           [bSet (cond
                   [(register? b) '()]
+                  [(equal? a b) `((set! ,bReg ,b))]
                   [else `((set! ,bReg ,b))])]
           [cSet (cond
-                  [(and (equal? binop '-) (register? c)) `((set! ,cReg (- x0 ,c)))]
+                  [(and (equal? binop '-) (isCapability? a) (isCapability? b) (isCapability? c)) `((set! s8 (- x0 ,c)))]
                   [(register? c) '()]
                   [(equal? b c) '()]
-                  [(and (or (equal? binop '+) (equal? binop '-)) (and (integer? c) (and (< c 2048) (>= c -2048)))) '()]
+                  [(equal? a c) `((set! ,cReg ,c))]
+                  [(and (equal? binop '+) (and (integer? c) (and (< c 2048) (>= c -2048)))) '()]
+                  [(and (equal? binop '-) (and (integer? c) (and (< c 2048) (>= c -2048)))) '()]
                   [else `((set! ,cReg ,c))])]
-          [binop (cond [(and (equal? binop '-) (register? c)) '+]
+          [binop (cond [(and (equal? binop '-) (isCapability? a) (isCapability? b) (isCapability? c)) '+]
                        [else binop])])
       (append bSet cSet `((set! ,aReg (,binop ,bReg ,cReg))) aSet))))
-    
+
 ;
 ;(patch-set s)->list? '((set! ...) ...)
 ;s: (set! ...)
