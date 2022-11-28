@@ -27,7 +27,8 @@
 ;
 ;(assign-fvar x conf)->'(aloc fvar)
 ;x: aloc?
-;conf: conflicts? '((aloc (aloc ...)) ...)
+;conf: conflicts? '((aloc (triv? ...)) ...)
+;assFvar: '(fvar? ...)
 (define (assign-fvar x conf assFvar)
   (let ([xFvars (append (getConfFrames x conf) assFvar)])
     `(,x ,(getFvar 0 xFvars))))
@@ -36,13 +37,14 @@
 ;
 ;(assign-tail t)->assignments? '((aloc fvar) ...)
 ;calls: call-undead? '(loc ...)
-;conf: conflicts? '((aloc (aloc ...)) ...)
-(define (assign-call-undead calls confs assFvar)
+;conf: conflicts? '((aloc (triv? ...)) ...)
+(define (assign-call-undead calls confs)
   (if (null? calls)
       '()
       (let ([x (car calls)])
-        (let ([assX (assign-fvar x confs assFvar)])
-          (cons assX (assign-call-undead (cdr calls) (remove-conf x confs) (cons (second assX) assFvar)))))))
+        (let ([assRec (assign-call-undead (cdr calls) (remove-conf x confs))])
+          (let ([assX (assign-fvar x confs (map second assRec))])
+            (cons assX assRec))))))
 ;
 ;(assign-info i)->info?
 ;i: info?
@@ -76,8 +78,7 @@
                                           (rbp (r15 fv0 fv1 tmp-ra.10))
                                           (fv1 (r15 fv0 rbp tmp-ra.10))
                                           (fv0 (r15 rbp fv1 tmp-ra.10))
-                                          (r15 (rbp fv0 fv1)))
-                                    '())
+                                          (r15 (rbp fv0 fv1))))
                 '()
                 "assign-call-undead: succes-01: empty call-undead")
   (check-equal? (assign-call-undead '(tmp-ra.7) '((y.2 (rbp tmp-ra.7 x.1 nfv.9))
@@ -90,8 +91,7 @@
                                                   (r15 (rbp nfv.8 nfv.9))
                                                   (rax (rbp tmp-ra.7))
                                                   (fv0 (tmp-ra.7))
-                                                  (fv1 (x.1 tmp-ra.7)))
-                                    '())
+                                                  (fv1 (x.1 tmp-ra.7))))
                 '((tmp-ra.7 fv2))
                 "assign-call-undead: succes-02: non empty call-undead")
   ;|#

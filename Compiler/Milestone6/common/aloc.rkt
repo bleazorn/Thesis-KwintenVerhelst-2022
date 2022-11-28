@@ -4,10 +4,11 @@
          aloc?			
          label?			
          isTmp?
-         resetfresh		
+         resetfresh
+         freshAloc		
          freshtmp		
-         freshLabel		
-         freshAloc)
+         freshLabel
+         freshLabelTmp)
 
 (define (name? v)
   (symbol? v))
@@ -55,6 +56,10 @@
 (define (freshLabel l)
   (set! fres (add1 fres))
   (string->symbol (format "L.~a.~a" l fres)))
+
+(define (freshLabelTmp)
+  (set! fres (add1 fres))
+  (string->symbol (format "L.tmp.~a" fres)))
 
 (module+ test
   (require rackunit))

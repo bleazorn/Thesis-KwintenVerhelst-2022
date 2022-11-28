@@ -90,7 +90,7 @@
     [_ #f]))
                 
 (module+ test
-  #|
+  ;#|
 ;uncover-triv
   ;succes
   (check-equal? (uncover-triv 'x.1 '()) '(x.1) "uncover-triv: succes-1: empty locals")
@@ -126,32 +126,37 @@
   (check-equal? (uncover-pred '(if (= x.1 y.2) (= z.3 y.2) (= x.1 a.4)) '(z.3)) '(z.3 x.1 y.2 a.4) "uncover-pred: succes-10: if")
 ;uncover-effects
   ;succes
-  (check-equal? (uncover-effects '(set! x.1 4) '()) '(x.1) "uncover-begins: succes-1: integer set empty locals")
-  (check-equal? (uncover-effects '(set! x.1 4) '(y.0)) '(y.0 x.1) "uncover-begins: succes-2: integer set and not empty locals")
-  (check-equal? (uncover-effects '(set! x.1 z.2) '(y.0)) '(y.0 x.1 z.2) "uncover-begins: succes-3: set different alocs")
-  (check-equal? (uncover-effects '(set! x.1 x.1) '(y.0)) '(y.0 x.1) "uncover-begins: succes-4: set same alocs")
+  (check-equal? (uncover-effects '(set! x.1 4) '()) '(x.1)              "uncover-begins: succes-01: integer set empty locals")
+  (check-equal? (uncover-effects '(set! x.1 4) '(y.0)) '(y.0 x.1)       "uncover-begins: succes-02: integer set and not empty locals")
+  (check-equal? (uncover-effects '(set! x.1 z.2) '(y.0)) '(y.0 x.1 z.2) "uncover-begins: succes-03: set different alocs")
+  (check-equal? (uncover-effects '(set! x.1 x.1) '(y.0)) '(y.0 x.1)     "uncover-begins: succes-04: set same alocs")
 
-  (check-equal? (uncover-effects '(set! x.1 (* z.2 w.3)) '(y.0)) '(y.0 x.1 z.2 w.3) "uncover-begins: succes-5: binop different alocs")
-  (check-equal? (uncover-effects '(set! x.1 (+ x.1 5)) '(y.0)) '(y.0 x.1) "uncover-begins: succes-6: binop same aloc and integer")
+  (check-equal? (uncover-effects '(set! x.1 (* z.2 w.3)) '(y.0)) '(y.0 x.1 z.2 w.3) "uncover-begins: succes-05: binop different alocs")
+  (check-equal? (uncover-effects '(set! x.1 (+ x.1 5)) '(y.0)) '(y.0 x.1)           "uncover-begins: succes-06: binop same aloc and integer")
 
-  (check-equal? (uncover-effects '(begin (set! y.2 5) (set! z.3 5) (set! x.1 (* y.2 z.3)) (set! w.4 x.1)) '(y.0)) '(y.0 y.2 z.3 x.1 w.4) "uncover-begins: succes-7: one begin")
-  (check-equal? (uncover-effects '(begin (set! y.2 5) (begin (set! z.3 5) (set! x.1 (* y.2 z.3))) (set! w.4 x.1)) '(y.0)) '(y.0 y.2 z.3 x.1 w.4) "uncover-begins: succes-8: nested begins")
+  (check-equal? (uncover-effects '(begin (set! y.2 5) (set! z.3 5) (set! x.1 (* y.2 z.3)) (set! w.4 x.1)) '(y.0)) '(y.0 y.2 z.3 x.1 w.4)         "uncover-begins: succes-07: one begin")
+  (check-equal? (uncover-effects '(begin (set! y.2 5) (begin (set! z.3 5) (set! x.1 (* y.2 z.3))) (set! w.4 x.1)) '(y.0)) '(y.0 y.2 z.3 x.1 w.4) "uncover-begins: succes-08: nested begins")
 
-  (check-equal? (uncover-pred '(if (= x.1 y.2) (set! x.1 z.2) (begin (set! y.2 5) (begin (set! z.3 5) (set! x.1 (* y.2 z.3))) (set! w.4 x.1))) '(z.3)) '(z.3 x.1 y.2 z.2 w.4) "uncover-pred: succes-9: if")
+  (check-equal? (uncover-effects '(if (= x.1 y.2) (set! x.1 z.2) (begin (set! y.2 5) (begin (set! z.3 5) (set! x.1 (* y.2 z.3))) (set! w.4 x.1))) '(z.3)) '(z.3 x.1 y.2 z.2 w.4) "uncover-pred: succes-09: if")
+  (check-equal? (uncover-effects '(return-point L.foo.1 (if (= x.1 y.2) (begin (set! a0 a.4) (jump cra)) (begin (set! y.2 5) (set! z.3 5) (set! w.5 (* y.2 z.3)) (begin (set! a0 x.1) (jump cra)))))
+                                 '(z.3))
+                '(z.3 x.1 y.2 a.4 w.5)
+                "uncover-begins: succes-10: return")
   ;failure
   (check-false (uncover-effects '(set! x.1 7 4) '()) "uncover-begins: failure-1: wrong input")
 ;uncover-tail
   ;succes
-  (check-equal? (uncover-tail '(halt 4) '()) '() "uncover-tail: succes-1: integer halt empty locals")
-  (check-equal? (uncover-tail '(halt x.1) '()) '(x.1) "uncover-tail: succes-2: halt aloc and empty locals")
-  (check-equal? (uncover-tail '(halt 4) '(y.0 z.2)) '(y.0 z.2) "uncover-tail: succes-3: integer halt not empty locals")
-  (check-equal? (uncover-tail '(halt x.1) '(y.0 z.2)) '(y.0 z.2 x.1) "uncover-tail: succes-4: halt aloc and aloc not in locals")
-  (check-equal? (uncover-tail '(halt x.1) '(y.0 x.1)) '(y.0 x.1) "uncover-tail: succes-5: halt aloc and aloc in locals")
+  (check-equal? (uncover-tail '(begin (set! a0 x.1) (jump cra)) '()) '(x.1) "uncover-tail: succes-2: halt aloc and empty locals")
+  (check-equal? (uncover-tail '(begin (set! a0 x.1) (jump cra)) '(y.0 z.2)) '(y.0 z.2 x.1) "uncover-tail: succes-4: halt aloc and aloc not in locals")
+  (check-equal? (uncover-tail '(begin (set! a0 x.1) (jump cra)) '(y.0 x.1)) '(y.0 x.1) "uncover-tail: succes-5: halt aloc and aloc in locals")
 
-  (check-equal? (uncover-tail '(begin (set! y.2 5) (set! z.3 5) (set! x.1 (* y.2 z.3)) (halt x.1)) '(y.0)) '(y.0 y.2 z.3 x.1) "uncover-tail: succes-7: one begin")
-  (check-equal? (uncover-tail '(begin (set! y.2 5) (begin (set! z.3 5) (set! x.1 (* y.2 z.3))) (halt x.1)) '(y.0)) '(y.0 y.2 z.3 x.1) "uncover-tail: succes-8: nested begins")
+  (check-equal? (uncover-tail '(begin (set! y.2 5) (set! z.3 5) (set! x.1 (* y.2 z.3)) (begin (set! a0 x.1) (jump cra))) '(y.0)) '(y.0 y.2 z.3 x.1) "uncover-tail: succes-7: one begin")
+  (check-equal? (uncover-tail '(begin (set! y.2 5) (begin (set! z.3 5) (set! x.1 (* y.2 z.3))) (begin (set! a0 x.1) (jump cra))) '(y.0)) '(y.0 y.2 z.3 x.1) "uncover-tail: succes-8: nested begins")
 
-  (check-equal? (uncover-tail '(if (= x.1 y.2) (halt a.4) (begin (set! y.2 5) (set! z.3 5) (set! w.5 (* y.2 z.3)) (halt x.1))) '(z.3)) '(z.3 x.1 y.2 a.4 w.5) "uncover-pred: succes-10: if")
+  (check-equal? (uncover-tail '(if (= x.1 y.2) (begin (set! a0 a.4) (jump cra)) (begin (set! y.2 5) (set! z.3 5) (set! w.5 (* y.2 z.3)) (begin (set! a0 x.1) (jump cra))))
+                              '(z.3))
+                '(z.3 x.1 y.2 a.4 w.5)
+                "uncover-pred: succes-10: if")
   ;failure
   (check-false (uncover-tail '(set! x.1 7 4) '()) "uncover-begins: failure-1: wrong input")
   (check-false (uncover-tail '(begin (set! y.2 5) (begin (set! z.3 5) (set! x.1 (* y.2 z.3))) (set! x.1 5)) '(y.0)) "uncover-tail: failure-2: no halt")
@@ -161,8 +166,8 @@
                  '(module ()
                     (begin
                       (set! x.1 0)
-                      (halt x.1))))
-                '(module ((locals (x.1))) (begin (set! x.1 0) (halt x.1)))
+                      (begin (set! a0 x.1) (jump cra)))))
+                '(module ((locals (x.1))) (begin (set! x.1 0) (begin (set! a0 x.1) (jump cra))))
                 "uncover-locals: succes-1: one local")
   (check-equal? (uncover-locals
                  '(module ()
@@ -170,10 +175,10 @@
                       (set! x.1 0)
                       (set! y.1 x.1)
                       (set! y.1 (+ y.1 x.1))
-                      (halt y.1))))
+                      (begin (set! a0 y.1) (jump cra)))))
                 '(module
                    ((locals (x.1 y.1)))
-                   (begin (set! x.1 0) (set! y.1 x.1) (set! y.1 (+ y.1 x.1)) (halt y.1)))
+                   (begin (set! x.1 0) (set! y.1 x.1) (set! y.1 (+ y.1 x.1)) (begin (set! a0 y.1) (jump cra))))
                 "uncover-locals: succes-2: two locals")
 ;|#
   )

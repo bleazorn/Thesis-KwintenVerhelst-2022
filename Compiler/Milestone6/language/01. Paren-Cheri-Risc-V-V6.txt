@@ -2,29 +2,34 @@ generate-cheri-risc-v
 
 p	::=	(begin s ...)
  	 	 	 	 
-s	::=	(set! addr reg)			| Move in memory	
-	|	(set! reg triv)			| get in register (geheugen, register, integer)
- 	|	(set! reg (binop reg reg))	| add en mul
-	|	(set! reg (+ reg int12))	| add 
-	| 	(with-label label s)		| label 
-	|	(jump trg)			| unconditional jump
-	| 	(compare reg (relop reg reg))	| compare
-	|	(jump-if label (relop reg reg))	| conditional jump
+s	::=	(set! addr ireg)			| Move in memory	
+	|	(set! ireg itriv)			| get in register   (geheugen register integer)
+	|	(set! creg ctriv)			| get in capability (label capability  int12)
+	|	(set! ireg (binop ireg ireg))		| operation register 	(add sub mul)
+	|	(set! creg (+ creg ireg))		| operation capability 	(add)
+	|	(set! reg (+ reg int12))		| operation reg int	(add)
+	| 	(with-label label s)			| label 
+	|	(jump jloc)				| unconditional jump
+	| 	(compare ireg (relop ireg ireg))	| compare
+	|	(jump-if label (relop ireg ireg))	| conditional jump
 
-trg	::=	reg
+trg	::=	creg
 	|	label
 
-triv	::= 	trg
-	| 	integer
+itriv	::= 	iloc
+	|	integer
 
-opand	::= 	integer
-	|	reg
-	 	 	 	 
-loc 	::=	reg
+ttriv	::= 	trg
+	|   	int12
+	 	 
+iloc 	::=	ireg
 	|	addr
 
-binop	::=	+
- 	|	*
+jloc	::= 	trg
+	|	addr
+
+binop	::=	*
+ 	|	+
 	|	-
 
 relop	::=	 <
@@ -34,7 +39,45 @@ relop	::=	 <
  	 |	 >
  	 |	 !=
  	 		 		 	 	 	 
-reg	::=	cnull
+reg	::=	ireg
+	|	creg
+ 	 		 	 	 	 
+ireg	::=	zero
+ 	|	ra
+ 	|	sp
+ 	|	gp
+ 	|	tp
+ 	|	fp
+ 	|	pc
+ 	|	a0
+ 	|	a1
+ 	|	a2
+ 	|	a3
+ 	|	a4
+ 	|	a5
+ 	|	a6
+ 	|	a7
+ 	|	s0
+ 	|	s1
+ 	|	s2
+ 	|	s3
+ 	|	s4
+ 	|	s5
+ 	|	s6
+ 	|	s7
+ 	|	s8
+ 	|	s9
+ 	|	s10
+ 	|	s11
+ 	|	t0
+ 	|	t1
+ 	|	t2
+ 	|	t3
+ 	|	t4
+ 	|	t5
+ 	|	t6
+
+creg	::=	cnull
  	|	cra
  	|	csp
  	|	cgp
@@ -64,9 +107,9 @@ reg	::=	cnull
  	|	ct0
  	|	ct1
  	|	ct2
- 	|	ct3			
- 	|	ct4			
- 	|	ct5			
+ 	|	ct3
+ 	|	ct4
+ 	|	ct5
  	|	ct6
 
 addr	::= 	(fbp - dispoff)

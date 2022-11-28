@@ -73,7 +73,7 @@
     [_ "resolve predicates failed"]))
 
 (module+ test
-  #|
+  ;#|
 ;resolve-not
   ;succes
   (check-equal? (resolve-not '(= a0 a1)) '(!= a0 a1) "resolve-not: succes-01: equal")
@@ -124,14 +124,13 @@
 
   ;resolve-tail
   ;succes
-  (check-equal? (resolve-tail '(halt a0)) '(halt a0) "resolve-tail: succes-01: halt")
   (check-equal? (resolve-tail '(jump a1)) '(jump a1) "resolve-tail: succes-02: jump")
   
-  (check-equal? (resolve-tail '(begin (set! a0 a1) (set! a0 (+ a1 a2)) (halt a0)))
-                '(begin (set! a0 a1) (set! a0 (+ a1 a2)) (halt a0))
+  (check-equal? (resolve-tail '(begin (set! a0 a1) (set! a0 (+ a1 a2)) (set! a0 a0) (jump cra)))
+                '(begin (set! a0 a1) (set! a0 (+ a1 a2)) (set! a0 a0) (jump cra))
                 "resolve-tail: succes-03: begin")
-  (check-equal? (resolve-tail '(begin (set! a0 a1) (set! a0 (+ a1 a2)) (begin (set! a0 a1) (set! a0 (+ a1 a2)) (halt a0))))
-                '(begin (set! a0 a1) (set! a0 (+ a1 a2)) (begin (set! a0 a1) (set! a0 (+ a1 a2)) (halt a0)))
+  (check-equal? (resolve-tail '(begin (set! a0 a1) (set! a0 (+ a1 a2)) (begin (set! a0 a1) (set! a0 (+ a1 a2)) (set! a0 a0) (jump cra))))
+                '(begin (set! a0 a1) (set! a0 (+ a1 a2)) (begin (set! a0 a1) (set! a0 (+ a1 a2)) (set! a0 a0) (jump cra)))
                 "resolve-tail: succes-04: begin")
   (check-equal? (resolve-tail '(begin (set! a0 a1) (set! a0 (+ a1 a2)) (if (not (not (false))) (jump L1) (jump L2))))
                 '(begin (set! a0 a1) (set! a0 (+ a1 a2)) (jump L2))
@@ -143,8 +142,8 @@
 
   ;resolve-predicates
   ;succes
-  (check-equal? (resolve-predicates '(module (define L0 (if (not (not (false))) (jump L1) (jump L2))) (define L1 (jump L2)) (define L2 (halt a0))))
-                '(module (define L0 (jump L2)) (define L1 (jump L2)) (define L2 (halt a0)))
+  (check-equal? (resolve-predicates '(module (define L0 (if (not (not (false))) (jump L1) (jump L2))) (define L1 (jump L2)) (define L2 (begin (set! a0 a0) (jump cra)))))
+                '(module (define L0 (jump L2)) (define L1 (jump L2)) (define L2 (begin (set! a0 a0) (jump cra))))
                 "resolve-predicates: succes-01: mult def")
   ;|#
   )

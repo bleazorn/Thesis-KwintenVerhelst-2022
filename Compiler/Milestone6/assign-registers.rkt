@@ -101,18 +101,19 @@
                    (v.1 (w.2 t.6 p.1 z.5))))
 ;(assign-recur '(v.1 w.2 x.3 y.4 z.5 t.6 p.1) testConf '() testConf)
   
-#|
 (module+ test
 ;assign-registers
   ;succes
   (check-equal? (assign-registers '(module ((locals (x.1))
-                                            (conflicts ((x.1 ()))))
+                                            (conflicts ((x.1 ())))
+                                            (assignment ()))
                                      (begin
                                        (set! x.1 42)
-                                       (halt x.1))))
+                                       (set! x.1 x.1)
+                                       (jump L.foo.4))))
                 '(module
-                     ((locals (x.1)) (assignment ((x.1 t0))))
-                   (begin (set! x.1 42) (halt x.1)))
+                     ((assignment ((x.1 t0))) (conflicts ((x.1 ()))) (locals ()))
+                   (begin (set! x.1 42) (set! x.1 x.1) (jump L.foo.4)))
                 "assign-registers: succes-1 one instruction")
   (check-equal? (assign-registers '(module ((locals (v.1 w.2 x.3 y.4 z.5 t.6 p.1))
                                             (conflicts
@@ -122,7 +123,8 @@
                                               (y.4 (t.6 z.5 p.1 w.2 x.3))
                                               (p.1 (t.6 z.5 y.4 w.2 x.3))
                                               (z.5 (t.6 p.1 y.4 w.2 x.3))
-                                              (t.6 (z.5 p.1 y.4)))))
+                                              (t.6 (z.5 p.1 y.4))))
+                                            (assignment ()))
                                      (begin
                                        (set! v.1 1)
                                        (set! w.2 46)
@@ -138,11 +140,21 @@
                                        (set! p.1 -1)
                                        (set! t.6 (* t.6 p.1))
                                        (set! z.5 (+ z.5 t.6))
-                                       (halt z.5))))
+                                       (set! z.5 z.5)
+                                       (jump L.foo.4))))
                 '(module
-                     ((locals (v.1 w.2 x.3 y.4 z.5 t.6 p.1))
-                      (assignment
-                       ((v.1 t0) (t.6 t0) (x.3 t1) (w.2 t2) (y.4 t3) (p.1 t4) (z.5 fv0))))
+                     ((assignment
+                       ((p.1 t4) (y.4 t3) (w.2 t2) (x.3 t1) (t.6 t0) (v.1 t0)))
+                      (conflicts
+                       ((x.3 (z.5 p.1 y.4 v.1 w.2))
+                        (w.2 (z.5 p.1 y.4 v.1 x.3))
+                        (v.1 (w.2 x.3))
+                        (y.4 (t.6 z.5 p.1 w.2 x.3))
+                        (p.1 (t.6 z.5 y.4 w.2 x.3))
+                        (z.5 (t.6 p.1 y.4 w.2 x.3))
+                        (t.6 (z.5 p.1 y.4))))
+                      (locals (z.5))
+                      )
                    (begin
                      (set! v.1 1)
                      (set! w.2 46)
@@ -158,7 +170,8 @@
                      (set! p.1 -1)
                      (set! t.6 (* t.6 p.1))
                      (set! z.5 (+ z.5 t.6))
-                     (halt z.5)))
+                     (set! z.5 z.5)
+                     (jump L.foo.4)))
                 "assign-registers: succes-2: multiple instructions")
   )
 ;|#

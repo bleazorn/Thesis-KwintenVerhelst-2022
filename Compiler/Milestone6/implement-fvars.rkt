@@ -11,7 +11,9 @@
 
 (define offset 0)
 (define (resetOffSet)
-  (addOffSet 0))
+  (setOffSet 0))
+(define (setOffSet n)
+  (set! offset n))
 (define (addOffSet binop n)
   (match binop
     ['- (set! offset (- offset n))]
@@ -19,9 +21,9 @@
     [_ #f]))
 
 ; returns (n-1)*8 with n the number of the fvar
-;(fvar-number? v) -> integer?
+;(addr-number v) -> integer?
 ; v: fvar?
-(define (fvar-number? v)
+(define (addr-number v)
   (if (fvar? v)
       (let* ([n (getFvarNumber v)])
         (+ (* n framesize) offset))
@@ -32,7 +34,7 @@
 ;fvar: any?
 (define (change-fvar f)
   (if (fvar? f)
-      `(,(current-frame-base-pointer-register) - ,(fvar-number? f))
+      `(,(current-frame-base-pointer-register) - ,(addr-number f))
       f))
 
 ;
@@ -87,146 +89,104 @@
 ;(implement-fvars p) → Paren-cheri-risc-v-V2?
 ;p : Paren-cheri-risc-v-V2-fvars?
 (define (implement-fvars p)
+  (resetOffSet)
   (match p
     [`(module ,f ... ,t) `(module ,@(map implement-func f) ,(implement-tail t))]
     [_ "implement fvars failed"]))
 
 (module+ test
-  (define (check-fvar? a b m)
-    (check-equal? a b m))
-  #|
-;fvar-number?
+  (define (check-fvar? f a b o m)
+    (setOffSet o)
+    (check-equal? (f a) b m))
+  ;#|
+;addr-number
   ;succes
-  (check-equal? (fvar-number? 'fv0) 0 "fvar-number?: succes-1: first frame fv")
-  (check-equal? (fvar-number? 'fv1) 8 "fvar-number?: succes-2: second frame fv")
-  (check-equal? (fvar-number? 'fv2) 16 "fvar-number?: succes-3: third frame fv")
+  (check-fvar? addr-number 'fv0 0 0 "addr-number: succes-01: first frame fv")
+  (check-fvar? addr-number 'fv1 8 0 "addr-number: succes-02: second frame fv")
+  (check-fvar? addr-number 'fv2 16 0 "addr-number: succes-03: third frame fv")
+  
+  (check-fvar? addr-number 'fv0 8 8 "addr-number: succes-04: first frame fv offset 8")
+  (check-fvar? addr-number 'fv1 16 8 "addr-number: succes-05: second frame fv offset 8")
+  (check-fvar? addr-number 'fv2 24 8 "addr-number: succes-06: third frame fv offset 8")
+  
+  (check-fvar? addr-number 'fv0 -8 -8 "addr-number: succes-07: first frame fv offset -8")
+  (check-fvar? addr-number 'fv1 0 -8 "addr-number: succes-08: second frame fv offset- 8")
+  (check-fvar? addr-number 'fv2 8 -8 "addr-number: succes-09: third frame fv offset -8")
   ;failure
-  (check-equal? (fvar-number? 0) #f "fvar-number?: failure-1: integer")
-  (check-equal? (fvar-number? 'x) #f "fvar-number?: failure-2: random symbol")
-  (check-equal? (fvar-number? 'fv) #f "fvar-number?: failure-3: no number behind fv")
-  (check-equal? (fvar-number? 'fv.1) #f "fvar-number?: failure-4: char between fv and number")
+  (check-equal? (addr-number 0) #f "addr-number: failure-1: integer")
+  (check-equal? (addr-number 'x) #f "addr-number: failure-2: random symbol")
+  (check-equal? (addr-number 'fv) #f "addr-number: failure-3: no number behind fv")
+  (check-equal? (addr-number 'fv.1) #f "addr-number: failure-4: char between fv and number")
 ;change-fvar
   ;succes
-  (check-equal? (change-fvar 'fv0) '(cfp - 0) "change-fvar: succes-1: single number fv")
-  (check-equal? (change-fvar 'fv2) '(cfp - 16) "change-fvar: succes-2: double number fv")
+  (check-fvar? change-fvar 'fv0 '(cfp - 0) 0 "change-fvar: succes-1: single number fv")
+  (check-fvar? change-fvar 'fv2 '(cfp - 16) 0 "change-fvar: succes-2: double number fv")
+
+  (check-fvar? change-fvar 'fv0 '(cfp - 8) 8 "change-fvar: succes-3: single number fv offset 8")
+  (check-fvar? change-fvar 'fv2 '(cfp - 24) 8 "change-fvar: succes-4: double number fv offset 8")
+
+  (check-fvar? change-fvar 'fv0 '(cfp - -8) -8 "change-fvar: succes-5: single number fv offset -8")
+  (check-fvar? change-fvar 'fv2 '(cfp - 8) -8 "change-fvar: succes-6: double number fv offset -8")
   ;failure
   (check-equal? (change-fvar 0) 0 "change-fvar: failure-1: integer")
   (check-equal? (change-fvar 'x) 'x "change-fvar: failure-2: random symbol")
 ;implement-set
   ;succes
-  (check-equal? (implement-set '(with-label L1 (set! fv0 fv1))) '(with-label L1 (set! (cfp - 0) (cfp - 8))) "implement-set: succes-01: with-label")
+  ;(check-equal? (implement-set '(with-label L1 (set! fv0 fv1))) '(with-label L1 (set! (cfp - 0) (cfp - 8))) "implement-set: succes-01: with-label")
 ;implement-fvars
   ;succes
-  (check-fvar? (implement-fvars '(begin
-                                    (set! a0 50)
-                                    (set! t0 a0)
-                                    (set! t0 (+ t0 t0))
-                                    (set! sp t0)
-                                    (set! sp (* sp sp))
-                                    (set! a1 2000)))
-                '(0 (begin
-                   (set! a0 50)
-                   (set! t0 a0)
-                   (set! t0 (+ t0 t0))
-                   (set! sp t0)
-                   (set! sp (* sp sp))
-                   (set! a1 2000)))
-                "implement-fvars: succes-1: no fvars")
-  (check-fvar? (implement-fvars '(begin
-                                    (set! a0 50)
-                                    (set! fv0 a0)
-                                    (set! t0 (+ t0 t0))
-                                    (set! sp t0)
-                                    (set! sp (* sp sp))
-                                    (set! a1 2000)))
-                '(8 (begin
-                   (set! a0 50)
-                   (set! (cfp - 0) a0)
-                   (set! t0 (+ t0 t0))
-                   (set! sp t0)
-                   (set! sp (* sp sp))
-                   (set! a1 2000)))
-                "implement-fvars: succes-2: one fvars")
-  (check-fvar? (implement-fvars '(begin
-                                    (set! a0 50)
-                                    (set! fv0 a0)
-                                    (set! t0 (+ t0 t0))
-                                    (set! fv0 t0)
-                                    (set! sp (* sp sp))
-                                    (set! a1 2000)))
-                '(8 (begin
-                   (set! a0 50)
-                   (set! (cfp - 0) a0)
-                   (set! t0 (+ t0 t0))
-                   (set! (cfp - 0) t0)
-                   (set! sp (* sp sp))
-                   (set! a1 2000)))
-                "implement-fvars: succes-3: two same fvars")
-  (check-fvar? (implement-fvars '(begin
-                                    (set! a0 50)
-                                    (set! fv0 a0)
-                                    (set! t0 (+ t0 t0))
-                                    (set! fv1 t0)
-                                    (set! sp (* sp sp))
-                                    (set! a1 2000)))
-                '(16 (begin
-                   (set! a0 50)
-                   (set! (cfp - 0) a0)
-                   (set! t0 (+ t0 t0))
-                   (set! (cfp - 8) t0)
-                   (set! sp (* sp sp))
-                   (set! a1 2000)))
-                "implement-fvars: succes-4: two different fvars")
-  (check-fvar? (implement-fvars '(module (define L.swap.1
-             (begin
-               (set! fv2 cra)
-               (set! t0 fv0)
-               (set! fv0 fv1)
-               (if (< fv0 t0)
-                 (begin (set! ca0 t0) (jump fv2))
-                 (begin
-                   (begin
-                     (set! cfp (- cfp 24))
-                     (return-point
-                      L.rp-label.6
-                      (begin
-                        (set! fv4 t0)
-                        (set! fv3 fv0)
-                        (set! cra L.rp-label.6)
-                        (jump L.swap.1)))
-                     (set! cfp (+ cfp 24)))
-                   (set! t0 ca0)
-                   (begin (set! ca0 (+ t0 fv0)) (jump fv2))))))
-  (begin
-    (set! t0 cra)
-    (begin (set! fv1 2) (set! fv0 1) (set! cra t0) (jump L.swap.1)))))
-  '(module (define L.swap.1
-             (begin
-               (set! (cfp - 16) cra)
-               (set! t0 (cfp - 0))
-               (set! (cfp - 0) (cfp - 8))
-               (if (< (cfp - 0) t0)
-                 (begin (set! ca0 t0) (jump (cfp - 16)))
-                 (begin
-                   (begin
-                     (set! cfp (- cfp 24))
-                     (return-point
-                      L.rp-label.6
-                      (begin
-                        (set! (cfp - 8) t0)
-                        (set! (cfp - 0) (cfp - -24))
-                        (set! cra L.rp-label.6)
-                        (jump L.swap.1)))
-                     (set! cfp (+ cfp 24)))
-                   (set! t0 ca0)
-                   (begin (set! ca0 (+ t0 (cfp - 0))) (jump (cfp - 16)))))))
-  (begin
-    (set! t0 cra)
-    (begin
-      (set! (cfp - 8) 2)
-      (set! (cfp - 0) 1)
-      (set! cra t0)
-      (jump L.swap.1))))
-  "implement-fvars: succes-05: value call")
-  ;|#
+  (check-fvar? implement-fvars
+               '(module (define L.swap.1
+                          (begin
+                            (set! fv2 cra)
+                            (set! t0 fv0)
+                            (set! fv0 fv1)
+                            (if (< fv0 t0)
+                                (begin (set! ca0 t0) (jump fv2))
+                                (begin
+                                  (begin
+                                    (set! cfp (- cfp 24))
+                                    (return-point
+                                     L.rp-label.6
+                                     (begin
+                                       (set! fv4 t0)
+                                       (set! fv3 fv0)
+                                       (set! cra L.rp-label.6)
+                                       (jump L.swap.1)))
+                                    (set! cfp (+ cfp 24)))
+                                  (set! t0 ca0)
+                                  (begin (set! ca0 (+ t0 fv0)) (jump fv2))))))
+                  (begin
+                    (set! t0 cra)
+                    (begin (set! fv1 2) (set! fv0 1) (set! cra t0) (jump L.swap.1))))
+               '(module (define L.swap.1
+                          (begin
+                            (set! (cfp - 16) cra)
+                            (set! t0 (cfp - 0))
+                            (set! (cfp - 0) (cfp - 8))
+                            (if (< (cfp - 0) t0)
+                                (begin (set! ca0 t0) (jump (cfp - 16)))
+                                (begin
+                                  (begin
+                                    (set! cfp (- cfp 24))
+                                    (return-point
+                                     L.rp-label.6
+                                     (begin
+                                       (set! (cfp - 8) t0)
+                                       (set! (cfp - 0) (cfp - -24))
+                                       (set! cra L.rp-label.6)
+                                       (jump L.swap.1)))
+                                    (set! cfp (+ cfp 24)))
+                                  (set! t0 ca0)
+                                  (begin (set! ca0 (+ t0 (cfp - 0))) (jump (cfp - 16)))))))
+                  (begin
+                    (set! t0 cra)
+                    (begin
+                      (set! (cfp - 8) 2)
+                      (set! (cfp - 0) 1)
+                      (set! cra t0)
+                      (jump L.swap.1))))
+               0
+               "implement-fvars: succes-01: value call")
+;|#
   )
