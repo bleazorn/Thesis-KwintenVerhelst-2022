@@ -12,13 +12,19 @@ calling conventions
 	bescherment data
 object capabilities
 
-Check implementation of c-compiler for security
 
+Allocate frames
+	maxfvar is niet gelijk aan het maxfvar nachecken
+			
+	
+Slides maken
+	skeleton en al een paar gewone				(maandag-woensdag)
 
-Vandaag
-	Checker
-	Papers
+Security op papier zetten					(dinsdag-woensdag)
+	Check implementation of c-compiler for security
 
+Al wa securtity implementeren?					(als tijd)
+	nieuwe milestone 6s.0
 
 
 --Compiler Steps
@@ -30,31 +36,33 @@ sequentialize-let
 normalize-bind
 	ok
 impose-calling-conventions
-	ok
+	-- <- jumps
+		- call
+		- return
 select-instructions
 	ok -- check voor optimalisatie
 uncover-locals
-	ok --volgorde locals kan verschillend zijn, ni echt belangrijk
+	-- --volgorde locals kan verschillend zijn, ni echt belangrijk
 undead-analysis
-	ok
+	--
 conflict-analysis
-	ok
+	--
 assign-registers
-	ok
+	--
 replace-locations
-	ok
+	--
 expose-basic-blocks
-	ok
+	--
 resolve-predicates
-	ok 
+	-- 
 flatten-program
-	ok   -- optimalisatie (jump L1) (with-label L1) (als er maar 1 jump L1 is)
+	--   -- optimalisatie (jump L1) (with-label L1) (als er maar 1 jump L1 is)
 patch-instructions
-	ok   -- check voor optimalisatie
+	--   -- check voor optimalisatie
 implement-fvars
-	ok
+	--
 generalize-cheri-risc-v
-	ok
+	--
 
 
 

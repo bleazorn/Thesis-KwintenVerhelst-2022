@@ -4,9 +4,9 @@
 
 #Variables
 #arguments
-MVersion=6
+MVersion=6s
 MEmulator="off"
-MVerbose="off"
+MVerbose="on"
 
 #local variables
 varCurLoc=${PWD}
@@ -21,6 +21,9 @@ ifeq ($(call VERS, $(MVersion)),yes)
 else
 	varBuilder=Builders/elf-cheri-risc-v-builder/
 endif
+
+varLinBuilder=Builders/elf-cheri-risc-v-builder-linear-cap/
+varBuilder=$(varLinBuilder)
 
 #Code
 %.S: %.txt
@@ -70,6 +73,20 @@ examp:
 	@echo "Run program: " $(varCurLoc)
 	~/T/sail-cheri-riscv/c_emulator/cheri_riscv_sim_RV64 $(varCurLoc)/example.elf
 
+examl:
+	@echo "\nMake elf for " $(varCurLoc)
+	make -C $(varLinBuilder) $(varCurLoc)/example.elf
+	@echo "Run program: " $(varCurLoc)
+	~/T/sail-borrowed-cap/sail-cheri-riscv/ocaml_emulator/cheri_riscv_ocaml_sim_RV64 $(varCurLoc)/example.elf
+
+exampl:
+	@echo "Compile program in: " $(varCurLoc)/$(varCurLoc)
+	racket $(varCompile) example.txt
+	@echo "\nMake elf for " $(varCurLoc)
+	make -C $(varLinBuilder) $(varCurLoc)/example.elf
+	@echo "Run program: " $(varCurLoc)
+	~/T/sail-borrowed-cap/sail-cheri-riscv/ocaml_emulator/cheri_riscv_ocaml_sim_RV64 $(varCurLoc)/example.elf
+
 test:
 	raco test Milestone$(MVersion)/*.rkt
 
@@ -81,6 +98,8 @@ generate:
 	raco make Milestone4c/main.rkt
 	raco make Milestone5/main.rkt
 	raco make Milestone6/main.rkt
+	raco make Milestone6f/main.rkt
+	raco make Milestone6s/main.rkt
 cleanbin:
 	rm -rvf compiled/ 
 	rm -rvf Milestone2/compiled/ 
@@ -89,6 +108,8 @@ cleanbin:
 	rm -rvf Milestone4c/compiled/ 
 	rm -rvf Milestone5/compiled/ 
 	rm -rvf Milestone6/compiled/ 
+	rm -rvf Milestone6f/compiled/ 
+	rm -rvf Milestone6s/compiled/ 
 
 cleanS:
 	rm -v *.S

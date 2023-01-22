@@ -125,7 +125,7 @@
   (check-equal? #t #t "test"))
 
 ;(interp-values-lang testProgram)
-;(test testProgram)
+(test testProgram)
 ;(write-program testProgram "ap.S")
 ;(compile-file "ap.txt")
 ;(test simpleProgram)

@@ -15,7 +15,8 @@ pred 	::= 	(relop opand opand)
 
 tail  	::= 	(jump trg loc ...)
 	|	(begin effect ... tail)
-	|	(if pred tail tail)	
+	|	(if pred tail tail)
+	| 	(return-point label tail)	
 
 value	::= 	triv
 	|   	(binop opand opand)

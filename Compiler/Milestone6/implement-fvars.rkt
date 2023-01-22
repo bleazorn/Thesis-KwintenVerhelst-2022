@@ -61,7 +61,6 @@
                                (addOffSet binop c) `(set! ,a (,binop ,b ,c))]
     [`(set! ,a (,binop ,b ,c)) `(set! ,(change-fvar a) (,binop ,(change-fvar b) ,(change-fvar c)))]
     [`(set! ,a ,b) `(set! ,(change-fvar a) ,(change-fvar b))]
-    [`(return-point ,l ,t) `(return-point ,l ,(implement-tail t))]
     [_ #f]))
     
 
@@ -73,6 +72,7 @@
     [`(begin ,e ... ,tail) `(begin ,@(map implement-effect e) ,(implement-tail tail))]
     [`(if ,p ,t1 ,t2) `(if ,(implement-pred p) ,(implement-tail t1) ,(implement-tail t2))]
     [`(jump ,trg) `(jump ,(change-fvar trg))]
+    [`(return-point ,l ,t) `(return-point ,l ,(implement-tail t))]
     [_ #f]))
 
 

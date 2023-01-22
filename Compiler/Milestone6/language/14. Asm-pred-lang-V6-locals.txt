@@ -15,7 +15,8 @@ pred 	::= 	(relop loc loc)
 
 tail  	::= 	(jump trg loc ...)
 	|	(begin effect ... tail)
-	|	(if pred tail tail)	
+	|	(if pred tail tail)
+	| 	(return-point label tail)	
 
 effect	::=	(set! loc triv)
 	|	(set! loc (binop loc loc))

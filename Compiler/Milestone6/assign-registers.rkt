@@ -19,6 +19,17 @@
 (define (newNonAssFrameVar)
   (freshAloc nonAssFrameVar))
 
+(define spilled '())
+
+(define (getSpilled)
+  spilled)
+
+(define (addSpilled l)
+  (set! spilled (cons l spilled)))
+
+(define (resetSpilled)
+  (set! spilled '()))
+
 
 ;
 ;(getRegFromAssign con assign)->list? '(loc ...)
@@ -28,16 +39,7 @@
   (foldl (lambda (c regs) (let ([l (assoc c assign)])
                             (cond [l (cons (second l) regs)]
                                   [else regs])))
-         '() con))
-
-;
-;(getARegister conflictedRegisters)->loc
-;conflictedRegisters: list? '(loc ...)
-(define (getARegister conflictedRegisters)
-  (let ([available (remove* conflictedRegisters (current-assignable-registers))])
-    (if (null? available)
-        (newNonAssFrameVar)                           
-        (car available))))        
+         '() con))      
 
 ;
 ;(assign-recur loc conf assign)->list? '((aloc loc) ...)
@@ -46,19 +48,18 @@
 ;assign: list? '((aloc loc) ...)
 (define (assign-recur loc conf assign confDel)
   ;(println confDel)
-  (if (null? loc)
-      assign
-      (let* ([i (index-of-lowest-conf confDel)]
-             [c (list-ref confDel i)]
-             [l (car c)]
-             [reg (getARegister (getRegFromAssign (second (assoc l conf)) assign))])
-        (assign-recur (remove l loc)
-                      conf
-                      (cons `(,l ,reg) assign)
-                      (remove-conf l confDel)))))
-
-(define (deleteSpiled ass)
-  (filter-not (lambda (a) (isNonAssFrameVar? (second a))) ass))
+  (cond [(null? loc) assign]
+        [else (let* ([i (index-of-lowest-conf confDel)]
+                     [l (car (list-ref confDel i))])
+                (let ([available (remove* (getRegFromAssign (second (assoc l conf)) assign) (current-assignable-registers))])
+                  (cond [(null? available) (addSpilled l)(assign-recur (remove l loc)
+                                                                       conf
+                                                                       assign
+                                                               (remove-conf l confDel))]
+                        [else (assign-recur (remove l loc)
+                                            conf
+                                            (cons `(,l ,(car available)) assign)
+                                            (remove-conf l confDel))])))]))
 
 ;
 ;(assign-info i)->info?
@@ -68,11 +69,10 @@
         [conf  (getInfo i getConflicts)]
         [ass    (getInfo i getAssignment)])
     (let* ([nonLocConf (filter (lambda (c) (member (car c) loc)) conf)]
-           [newAss (assign-recur loc conf ass nonLocConf)]
-           [dAss (deleteSpiled newAss)])
-      (addInfo (addInfo (addInfo '() (setLocals (remove* (map car dAss) loc)))
+           [newAss (assign-recur loc conf ass nonLocConf)])
+      (addInfo (addInfo (addInfo '() (setLocals (getSpilled)))
                         (setConflicts conf))
-               (setAssignment dAss)))))
+               (setAssignment newAss)))))
 
 ;
 ;(assign-func f)->'(define label? info? tail?)   info?: '(locals assignments)

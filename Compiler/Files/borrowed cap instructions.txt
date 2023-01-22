@@ -1,0 +1,41 @@
+CCreateToken lr lr 
+	1 creates a normal standalone living lifetime token.
+	2 lifetimes can be created as sublifetimes of existing lifetimes by
+		providing a fraction of the desired parent lifetime
+
+CKillToken lr lr 
+	lifetime token can be irreversibly killed
+
+CUnlockToken r r r
+	clears the child id field on the parent token. The parent token can
+then be killed or receive a new sublifetime
+
+CSplitLT lr lr 
+	lifetime tokens to have a fraction f and be split using
+
+CMergeLT lr lr lr 
+	This instruction consumes both fractions to create
+		the same lifetime token
+
+CBorrowImmut br br lr
+	A lifetime token can be used to borrow a capability
+
+CBorrowMut br br lr 
+	A lifetime token can be used to borrow a capability
+
+CRetrieveIndex br ir lr
+
+CGetLinear rd cs1
+	gets linear bit
+
+CMakeLinear cd cs1
+	copies the capability in cs1 to cd and sets its linear
+		bit	
+
+CSplitCap cd cs1 rs2
+	splits the capability in cs1 in two with the boundaries
+		of both parts determined by the integer offset specified in cs2
+
+CMergeCap cd cs1 cs2
+	requires two capabilities pointing to contiguous memory sections in its source registers and joins
+	them together to form a single capability that points to the entire memory section

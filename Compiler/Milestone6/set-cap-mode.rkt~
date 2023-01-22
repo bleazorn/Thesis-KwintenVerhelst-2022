@@ -1,8 +1,0 @@
-#lang racket
-
-(require "common/register.rkt")
-
-(provide set-cap-mode)
-
-(module+ test
-  (require rackunit))

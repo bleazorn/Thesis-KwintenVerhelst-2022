@@ -1,13 +1,15 @@
 #lang racket
 
 (require racket/system)
-(require "Milestone6/generate-values-lang.rkt")
-(require "Milestone6/interp-values-lang.rkt"
-         "Milestone6/common/register.rkt")
+(require "Milestone6s/generate-values-lang.rkt")
+(require "Milestone6s/interp-values-lang.rkt"
+         "Milestone6s/common/register.rkt"
+         "Milestone6s/steps.rkt")
 (module+ test
   (require rackunit))
 
-(define emulatorLoc "T/sail-cheri-riscv/c_emulator/cheri_riscv_sim_RV64")
+;(define emulatorLoc "T/sail-cheri-riscv/c_emulator/cheri_riscv_sim_RV64")
+(define emulatorLoc "T/sail-borrowed-cap/sail-cheri-riscv/ocaml_emulator/cheri_riscv_ocaml_sim_RV64")
 
 (define (check-program-file program result)
   (define-values (sp out in err)
@@ -65,10 +67,12 @@
       (check-equal? (check-random) "Test Succeed" (format "RandomTest ~a" i))))
 
 ;RandomTest
-  (parameterize ()
+  ;#|
+  (parameterize ([steps (halfStack (steps))])
                  ;[current-parameter-registers '()]
                  ;[current-assignable-registers '()]) 
-    (randomTesting 100))
+    (randomTesting 50))
+  ;|#
   
 ;Milestone 2 en 3
   ;succes
@@ -101,7 +105,7 @@
   (check-Program '(module (let ([x 50] [y 50]) (let ([z (if (= x y) (let ([k 40]) k) (* x y))]) z))) 40 "Program: succes-18: value if")
   ;|#
 ;Milestone 5
-  ;#|
+  #|
   (check-Program '(module
                       (define odd?
                         (lambda (x)
@@ -117,5 +121,17 @@
                               (call odd? y)))))
                     (call even? 5))
                  0 "Program: succes-19: tail call")
+  ;|#
+;Milestone 6
+  ;#|
+  (check-Program '(module
+                      (define swap
+                        (lambda (x y)
+                          (if (< y x)
+                              x
+                              (let ([z (call swap y x)])
+                                z))))
+                    (call swap 1 2))
+                 2 "Program: succes-20: value call")             
   ;|#
 )

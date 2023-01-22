@@ -1,0 +1,23 @@
+Begin Methode                   //Invoke
+	(set! fv0 cfp)
+	(set! fv1 cra)
+Voor call                       //Invoke
+	(split csp csp cfp framesize)
+	(set! cra tmpra)
+	(seal cra cfp token)
+Na call                         //Return-point change
+	(unseal cra cfp token)
+	(splice csp csp cfp)
+Eind Methode                    //Invoke
+	(set! cfp fv0)
+	(set! cra fv1)
+	(Invoke cra cfp)
+
+
+Nieuwe effects
+	(seal reg ... int)
+	(unseal reg ... int)
+	(split reg reg reg int)
+	(splice reg reg reg int)
+	(invoke reg reg)
+	

@@ -1,0 +1,97 @@
+Begin van Programma
+	Initialize csp
+    		cspecialr csp, pcc
+    		auipcc csp, %pcrel_hi(0x81000000)
+	Bounds csp
+		li t0, 15728640
+		csetbounds csp, csp, t0
+		cincoffset csp, csp, t0
+		cincoffsetimm csp, csp, -4
+	Remove Excecute perm csp
+    		li t0, 495613
+    		candperm csp, csp, t0
+	Seal return address en csp
+		cspecialr cs1, pcc
+		li t0, RANDOM TOKEN
+		csetoffset cs1, cs1, t0
+		cseal cra, cra, cs1
+		cseal cfp, csp, cs1
+	
+		
+Begin van methods 	csp, cra, cfp 
+
+	save cfp en ra (it's sealed)
+		CIncOffset cs10, csp, -0-(16*n° arguments) 
+    		sc.cap cfp, 0(csp)
+    		CIncOffset cs10, csp, -16-(16*n° arguments) 
+    		sc.cap cra, 0(cs10)
+	Split csp -> csp en cfp
+		//bounds cfp
+    		cmove cfp, csp
+    		Addi t0, cfp, -FRAMESIZE
+    		CIncOffset cfp, cfp, t0
+    		CSetBoundsImm cfp, cfp, FRAMESIZE
+    		CIncOffsetImm cfp, cfp, FRAMESIZE
+
+		//bounds csp
+    		CGetBase t0, csp
+    		CGetLen t1, csp
+    		Addi t1, x0, -FRAMESIZE
+    		CSetOffset csp, csp, t0
+    		CSetBounds csp, csp, t1
+    		CIncOffsetImm csp, csp, t1
+Voor een call
+	//Return address gecreerd
+		cllc cra, raLabelX
+	//parameters gecreerd
+		addi a0, x0, 50
+	Seal cra en csp
+		cspecialr cs1, pcc
+		li t0, RANDOM TOKEN
+		csetoffset cs1, cs1, t0
+		cseal cfp, cfp, cs1
+		cseal cra, cra, cs1
+	Save csp en cfp
+		CIncOffset cs10, csp, -32-(16*n° arguments)-(16*n° local variables)
+    		sc.cap csp, 0(cs10)
+	//CLEAR REGISTERS
+    		cllc cs11, func
+    		cjr cs11
+Na een call
+	Get Token  
+		cspecialr cs1, pcc
+		li t0, RANDOM TOKEN
+		csetoffset cs1, cs1, t0
+	Unseal
+    		cunseal cra, cra, cs1
+    		cunseal cfp, cfp, cs1
+	Get csp
+		CIncOffset cs10, csp, -32-(16*n° arguments)-(16*n° local variables)
+    		sc.cap csp, 0(cs10)
+	Splice csp <- csp cfp
+	Check if base cfp == base + length csp + 1
+		cgetbase t0, csp
+		cgetlen t1, csp
+ 		add t0, t0, t1
+		cgetbase t1, cfp
+		BNE t0, t1, error
+	Check if base csp == base csp this frame
+		CIncOffset cs10, cfp, -32-(16*n° arguments)-(16*n° local variables)
+    		sc.cap ct1, 0(cs10)
+		cgetbase t2, ct1
+		BNE t0, t2, error
+	Reset this frames csp
+		cMove csp, ct1
+		
+		
+einde van methode
+		CIncOffset cs10, csp, -0-(16*n° arguments) 
+    		lc.cap cfp, 0(csp)
+    		CIncOffset cs10, csp, -16-(16*n° arguments) 
+    		lc.cap cra, 0(cs10)
+		CInvoke cra, cfp
+Error
+	code for error handling
+
+Einde Programma	
+    	cjr cra 		(cra sentry)

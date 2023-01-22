@@ -127,7 +127,20 @@
 
 ;######################################################################
 
-(define simpleProgram '(module 50))
+(define simpleProgram '(module
+                      (define odd?
+                        (lambda (x)
+                          (if (= x 0)
+                              0
+                              (let ([y (+ x -1)])
+                                (call even? y)))))
+                    (define even?
+                      (lambda (x)
+                        (if (= x 0)
+                            1
+                            (let ([y (+ x -1)])
+                              (call odd? y)))))
+                    (call even? 5)))
 
 (define infProgram '(module (define fun1
                               (lambda (x1 x2)
@@ -154,7 +167,7 @@
   (append (current-parameter-registers) (current-assignable-registers))
   (test testProgram))
 (compileStepsDis 2 (sub1 (length steps)) simpleProgram)
-(interp-values-lang testProgram)
+(interp-values-lang simpleProgram)
 ;(write-program testProgram "ap.S")
 ;(compile-file "ap.txt")
 ;(test simpleProgram)

@@ -1,0 +1,128 @@
+generate-cheri-risc-v
+
+p	::=	(begin s ...)
+ 	 	 	 	 
+s	::=	(set! addr ireg)			| Move in memory	
+	|	(set! ireg itriv)			| get in register   (geheugen register integer)
+	|	(set! creg ctriv)			| get in capability (label capability  int12)
+	|	(set! ireg (binop ireg ireg))		| operation register 	(add sub mul)
+	|	(set! creg (+ creg ireg))		| operation capability 	(add)
+	|	(set! reg (+ reg int12))		| operation reg int	(add)
+	| 	(with-label label s)			| label 
+	|	(jump jloc)				| unconditional jump
+	| 	(compare ireg (relop ireg ireg))	| compare
+	|	(jump-if label (relop ireg ireg))	| conditional jump
+
+trg	::=	creg
+	|	label
+
+itriv	::= 	iloc
+	|	integer
+
+ttriv	::= 	trg
+	|   	int12
+	 	 
+iloc 	::=	ireg
+	|	addr
+
+jloc	::= 	trg
+	|	addr
+
+binop	::=	*
+ 	|	+
+	|	-
+
+relop	::=	 <
+ 	 |	 <=
+ 	 |	 =
+ 	 |	 >=
+ 	 |	 >
+ 	 |	 !=
+ 	 		 		 	 	 	 
+reg	::=	ireg
+	|	creg
+ 	 		 	 	 	 
+ireg	::=	zero
+ 	|	ra
+ 	|	sp
+ 	|	gp
+ 	|	tp
+ 	|	fp
+ 	|	pc
+ 	|	a0
+ 	|	a1
+ 	|	a2
+ 	|	a3
+ 	|	a4
+ 	|	a5
+ 	|	a6
+ 	|	a7
+ 	|	s0
+ 	|	s1
+ 	|	s2
+ 	|	s3
+ 	|	s4
+ 	|	s5
+ 	|	s6
+ 	|	s7
+ 	|	s8
+ 	|	s9
+ 	|	s10
+ 	|	s11
+ 	|	t0
+ 	|	t1
+ 	|	t2
+ 	|	t3
+ 	|	t4
+ 	|	t5
+ 	|	t6
+
+creg	::=	cnull
+ 	|	cra
+ 	|	csp
+ 	|	cgp
+ 	|	ctp
+ 	|	cfp
+ 	|	cpc
+ 	|	ca0
+ 	|	ca1
+ 	|	ca2
+ 	|	ca3
+ 	|	ca4
+ 	|	ca5
+ 	|	ca6
+ 	|	ca7
+ 	|	cs0
+ 	|	cs1
+ 	|	cs2
+ 	|	cs3
+ 	|	cs4
+ 	|	cs5
+ 	|	cs6
+ 	|	cs7
+ 	|	cs8
+ 	|	cs9
+ 	|	cs10
+ 	|	cs11
+ 	|	ct0
+ 	|	ct1
+ 	|	ct2
+ 	|	ct3
+ 	|	ct4
+ 	|	ct5
+ 	|	ct6
+
+addr	::= 	(fbp - dispoff)
+
+fbp	::=	frame-base-pointer-register?
+
+dispoff	::=	dispoffset?
+
+label	::= 	label?
+ 	 	 	 	 
+integer	::=	int32
+	|	int12
+
+int32	::=	int32?
+int12	::=	int12?
+

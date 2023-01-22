@@ -49,7 +49,7 @@
 ;(assign-info i)->info?
 ;i: info?
 (define (assign-info i)
-  (addInfo (removeInfo i getUndead-out) (setAssignment (assign-call-undead (getInfo i getCallUndead) (getInfo i getConflicts) '()))))
+  (addInfo (removeInfo i getUndead-out) (setAssignment (assign-call-undead (getInfo i getCallUndead) (getInfo i getConflicts)))))
 
 ;
 ;(assign-funcs f)->'(define label? info? tail?)
@@ -94,5 +94,139 @@
                                                   (fv1 (x.1 tmp-ra.7))))
                 '((tmp-ra.7 fv2))
                 "assign-call-undead: succes-02: non empty call-undead")
+
+  (check-equal? (assign-call-undead-variables '(module ((conflicts
+                                                         ((a0 (ra tmp-ra.9 cfp))
+                                                          (cfp (ra tmp-ra.9 a0))
+                                                          (ra (cfp a0))
+                                                          (tmp-ra.9 (cfp a0))))
+                                                        (undead-out
+                                                         ((tmp-ra.9 cfp) ((tmp-ra.9 cfp a0) (cfp ra a0) (cfp ra a0))))
+                                                        (call-undead ())
+                                                        (locals (tmp-ra.9))
+                                                        (new-frames ()))
+                                                 (define L.odd?.1
+                                                   ((conflicts
+                                                     ((cfp (ra tmp-ra.7 a0 y.4 x.3 tmp.10))
+                                                      (a0 (ra tmp-ra.7 cfp))
+                                                      (ra (cfp a0))
+                                                      (y.4 (tmp-ra.7 cfp))
+                                                      (tmp.10 (tmp-ra.7 cfp x.3))
+                                                      (x.3 (tmp-ra.7 cfp tmp.10))
+                                                      (tmp-ra.7 (cfp a0 y.4 x.3 tmp.10))))
+                                                    (undead-out
+                                                     ((a0 tmp-ra.7 cfp)
+                                                      (tmp-ra.7 cfp x.3)
+                                                      (((tmp.10 tmp-ra.7 cfp x.3) (tmp-ra.7 cfp x.3))
+                                                       ((tmp-ra.7 cfp a0) (cfp a0))
+                                                       ((y.4 tmp-ra.7 cfp) ((tmp-ra.7 cfp a0) (cfp ra a0) (cfp ra a0))))))
+                                                    (call-undead (tmp-ra.7))
+                                                    (locals (tmp-ra.7 x.3 tmp.10 y.4))
+                                                    (new-frames ()))
+                                                   (begin
+                                                     (set! tmp-ra.7 ra)
+                                                     (set! x.3 a0)
+                                                     (if (begin (set! tmp.10 0) (= x.3 tmp.10))
+                                                         (begin (set! a0 0) (jump tmp-ra.7 cfp a0))
+                                                         (begin
+                                                           (set! y.4 (+ x.3 -1))
+                                                           (begin
+                                                             (set! a0 y.4)
+                                                             (set! ra tmp-ra.7)
+                                                             (jump L.even?.2 cfp ra a0))))))
+                                                 (define L.even?.2
+                                                   ((conflicts
+                                                     ((cfp (ra tmp-ra.8 a0 y.6 x.5 tmp.11))
+                                                      (a0 (ra tmp-ra.8 cfp))
+                                                      (ra (cfp a0))
+                                                      (y.6 (tmp-ra.8 cfp))
+                                                      (tmp.11 (tmp-ra.8 cfp x.5))
+                                                      (x.5 (tmp-ra.8 cfp tmp.11))
+                                                      (tmp-ra.8 (cfp a0 y.6 x.5 tmp.11))))
+                                                    (undead-out
+                                                     ((a0 tmp-ra.8 cfp)
+                                                      (tmp-ra.8 cfp x.5)
+                                                      (((tmp.11 tmp-ra.8 cfp x.5) (tmp-ra.8 cfp x.5))
+                                                       ((tmp-ra.8 cfp a0) (cfp a0))
+                                                       ((y.6 tmp-ra.8 cfp) ((tmp-ra.8 cfp a0) (cfp ra a0) (cfp ra a0))))))
+                                                    (call-undead (tmp-ra.8))
+                                                    (locals (tmp-ra.8 x.5 tmp.11 y.6))
+                                                    (new-frames ()))
+                                                   (begin
+                                                     (set! tmp-ra.8 ra)
+                                                     (set! x.5 a0)
+                                                     (if (begin (set! tmp.11 0) (= x.5 tmp.11))
+                                                         (begin (set! a0 1) (jump tmp-ra.8 cfp a0))
+                                                         (begin
+                                                           (set! y.6 (+ x.5 -1))
+                                                           (begin
+                                                             (set! a0 y.6)
+                                                             (set! ra tmp-ra.8)
+                                                             (jump L.odd?.1 cfp ra a0))))))
+                                                 (begin
+                                                   (set! tmp-ra.9 ra)
+                                                   (begin (set! a0 5) (set! ra tmp-ra.9) (jump L.even?.2 cfp ra a0)))))
+                '(module ((assignment ())
+                          (conflicts
+                           ((a0 (ra tmp-ra.9 cfp))
+                            (cfp (ra tmp-ra.9 a0))
+                            (ra (cfp a0))
+                            (tmp-ra.9 (cfp a0))))
+                          (call-undead ())
+                          (locals (tmp-ra.9))
+                          (new-frames ()))
+                   (define L.odd?.1
+                     ((assignment ((tmp-ra.7 fv0)))
+                      (conflicts
+                       ((cfp (ra tmp-ra.7 a0 y.4 x.3 tmp.10))
+                        (a0 (ra tmp-ra.7 cfp))
+                        (ra (cfp a0))
+                        (y.4 (tmp-ra.7 cfp))
+                        (tmp.10 (tmp-ra.7 cfp x.3))
+                        (x.3 (tmp-ra.7 cfp tmp.10))
+                        (tmp-ra.7 (cfp a0 y.4 x.3 tmp.10))))
+                      (call-undead (tmp-ra.7))
+                      (locals (tmp-ra.7 x.3 tmp.10 y.4))
+                      (new-frames ()))
+                     (begin
+                       (set! tmp-ra.7 ra)
+                       (set! x.3 a0)
+                       (if (begin (set! tmp.10 0) (= x.3 tmp.10))
+                           (begin (set! a0 0) (jump tmp-ra.7 cfp a0))
+                           (begin
+                             (set! y.4 (+ x.3 -1))
+                             (begin
+                               (set! a0 y.4)
+                               (set! ra tmp-ra.7)
+                               (jump L.even?.2 cfp ra a0))))))
+                   (define L.even?.2
+                     ((assignment ((tmp-ra.8 fv0)))
+                      (conflicts
+                       ((cfp (ra tmp-ra.8 a0 y.6 x.5 tmp.11))
+                        (a0 (ra tmp-ra.8 cfp))
+                        (ra (cfp a0))
+                        (y.6 (tmp-ra.8 cfp))
+                        (tmp.11 (tmp-ra.8 cfp x.5))
+                        (x.5 (tmp-ra.8 cfp tmp.11))
+                        (tmp-ra.8 (cfp a0 y.6 x.5 tmp.11))))
+                      (call-undead (tmp-ra.8))
+                      (locals (tmp-ra.8 x.5 tmp.11 y.6))
+                      (new-frames ()))
+                     (begin
+                       (set! tmp-ra.8 ra)
+                       (set! x.5 a0)
+                       (if (begin (set! tmp.11 0) (= x.5 tmp.11))
+                           (begin (set! a0 1) (jump tmp-ra.8 cfp a0))
+                           (begin
+                             (set! y.6 (+ x.5 -1))
+                             (begin
+                               (set! a0 y.6)
+                               (set! ra tmp-ra.8)
+                               (jump L.odd?.1 cfp ra a0))))))
+                   (begin
+                     (set! tmp-ra.9 ra)
+                     (begin (set! a0 5) (set! ra tmp-ra.9) (jump L.even?.2 cfp ra a0))))
+                "assign-call-undead-variables: succes-01: value call")
+                
   ;|#
   )

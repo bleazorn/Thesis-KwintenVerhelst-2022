@@ -1,0 +1,97 @@
+    .p2align 6
+    .global main
+    .option capmode
+main:
+    cspecialr csp, pcc
+    auipcc csp, %pcrel_hi(0x81000000)
+    cincoffsetimm csp, csp, -4
+
+    li t0, 15728640
+    csetbounds csp, csp, t0
+    cincoffset csp, csp, t0
+
+    li t0, 495613
+    candperm csp, csp, t0
+
+    cspecialr cs1, pcc
+    li t0, 128
+    csetoffset cs1, cs1, t0
+    cseal cra, cra, cs1
+    cseal cfp, csp, cs1
+	
+    li s4, 16384	
+    li s5, -16384
+
+tmp0:
+    CIncOffset cs10, csp, -16
+    sc.cap cfp, 0(cs10)
+    CIncOffset cs10, csp, -32
+    sc.cap cra, 0(cs10)
+
+
+    cmove cfp, csp
+    CIncOffset cfp, cfp, s5
+    CSetBounds cfp, cfp, s4
+    CIncOffset cfp, cfp, s4
+
+    CGetBase t0, csp
+    CGetLen t1, csp
+    sub t1, x0, t1
+
+    CIncOffset csp, csp, t1
+
+    sub t1, x0, t1
+    Add t1, t1, s5
+    CSetBounds csp, csp, t1
+    CIncOffset csp, csp, t1
+
+    cllc cra, raLabel0
+
+    CIncOffset cs10, cfp, -48
+    sc.cap csp, 0(cs10)
+
+    cspecialr cs1, pcc
+    li t0, 64
+    csetoffset cs1, cs1, t0
+    cseal cfp, cfp, cs1
+    cseal cra, cra, cs1
+
+    
+    cllc cs11, func
+    cjr cs11
+
+func:
+    addi a0, x0, 1234
+    CInvoke cra, cfp
+
+raLabel0:
+
+    cspecialr cs1, pcc
+    li t0, 64
+    csetoffset cs1, cs1, t0
+
+    cunseal cra, cra, cs1
+    cunseal cfp, cfp, cs1
+
+    cgetbase t0, csp
+    cgetlen t1, csp
+    add t1, t0, t1
+    cgetbase t2, cfp
+    BNE t1, t2, error
+
+    CIncOffset cs10, cfp, -48
+    lc.cap ct6, 0(cs10)
+    cgetbase t2, ct6
+    BNE t0, t2, error
+
+    cMove csp, ct6
+		
+    CIncOffset cs10, csp, -16
+    lc.cap cfp, 0(csp)
+    CIncOffset cs10, csp, -32
+    lc.cap cra, 0(cs10)
+    CInvoke cra, cfp
+error:
+    addi a0, x0, 321
+    cret
+

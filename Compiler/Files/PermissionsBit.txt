@@ -1,0 +1,14 @@
+Bit	Dec	Name
+0	1	Global
+1	2	Permit_Execute
+2	4	Permit_Load
+3	8	Permit_Store
+4	16	Permit_Load_Capability
+5	32	Permit_Store_Capability
+6	64	Permit_Store_Local_Capability
+7	128	Permit_Seal
+8	256	Permit_CInvoke
+9	512	Permit_Unseal
+10	1024	Permit_Access_System_Registers
+11	2048	Permit_Set_CID
+

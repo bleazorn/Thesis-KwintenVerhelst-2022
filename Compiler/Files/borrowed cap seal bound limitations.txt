@@ -1,0 +1,35 @@
+sail-borrowed-cap/sail-cheri-riscv/src:
+cheri_insts.sail:
+
+	Normal vers
+		else if (cs2_cursor > cap_max_otype)
+			length violiotion
+	Borrowed Cap
+		else if (cs2_cursor > cap_max_otype) | (cs2_cursor < cap_min_otype)
+			length violiotion
+
+
+
+
+cheri_insts.sail:
+
+	cap_otype_width = 4   in  64bit
+	cap_otype_width = 18  in 128bit
+	reserved_otypes = 4
+
+
+
+cheri_cap_common.sail:
+
+	let cap_max_otype = MAX(cap_otype_width) - reserved_otypes
+	let cap_min_otype = MAX(cap_otype_width - 1) 
+
+
+=> cseal otype is tussen 
+	2^17   - (2^18 - 2^4)
+	131072 - (262144 - 16)
+        131072 - 262128 
+    	= 131056
+
+
+

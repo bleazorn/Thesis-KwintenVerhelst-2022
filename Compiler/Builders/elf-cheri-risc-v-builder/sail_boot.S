@@ -7,11 +7,57 @@ tohost: .dword 0
     .section .init
     .p2align 6
     .global _start
-    .option capmode
+    .option nocapmode
 _start:
+    // clear all registers except DDC
+    li x0, 0
+    li x1, 0
+    li x2, 0
+    li x3, 0
+    li x4, 0
+    li x5, 0
+    li x6, 0
+    li x7, 0
+    li x8, 0
+    li x9, 0
+    li x10, 0
+    li x11, 0
+    li x12, 0
+    li x13, 0
+    li x14, 0
+    li x15, 0
+    li x16, 0
+    li x17, 0
+    li x18, 0
+    li x19, 0
+    li x20, 0
+    li x21, 0
+    li x22, 0
+    li x23, 0
+    li x24, 0
+    li x25, 0
+    li x26, 0
+    li x27, 0
+    li x28, 0
+    li x29, 0
+    li x30, 0
+    li x31, 0
+
+    // retrieve PCC
+    cspecialr ct0, pcc
+    // set capmode flag
+    li t1, 1
+    csetflags ct0, ct0, t1
+    // advance to next local label
+    la t1, 1f
+    cfromptr ct0, ct0, t1
+    // install as new PCC
+    cjr ct0
+
+    .option capmode
     // initialize PMP to allow all access
     // set trap handler to skip this part if something fails
-    cllc ct0, 1f
+1:  cllc ct0, 1f
     cspecialrw c0, mtcc, ct0
     li t0, (1 << (31 + (__riscv_xlen / 64) * (53 - 31))) - 1
     csrw pmpaddr0, t0
@@ -38,13 +84,10 @@ _start:
     // install default exit code in case program exits unexpectedly
     li a0, 1337
 
-    // set exception program counter to point to main symbol
-    cllc ct0, main
-    csrw mepc, t0
     // set return address to _exit symbol
     cllc cra, _exit
-    // return from machine to user mode, causing jump to mepc
-    mret //geeft error
+    // jump to main
+    j main
 
     .global _exit
 _exit:
