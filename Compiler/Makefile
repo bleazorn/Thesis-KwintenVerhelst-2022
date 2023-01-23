@@ -112,16 +112,16 @@ cleanbin:
 	rm -rvf Milestone6s/compiled/ 
 
 cleanS:
-	rm -v *.S
+	rm -fv *.S
 cleanE:
-	rm -v *.elf
+	rm -fv *.elf
 
 cleanFiles: cleanS cleanE
 
 cleanTest:
-	rm -v tmpTest.txt
-	rm -v tmpTest.S
-	rm -v tmpTest.elf
+	rm -fv tmpTest.txt
+	rm -fv tmpTest.S
+	rm -fv tmpTest.elf
 
 clean: cleanFiles cleanbin
 
