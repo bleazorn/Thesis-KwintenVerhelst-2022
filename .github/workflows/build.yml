@@ -1,0 +1,17 @@
+name: "Test Compiler"
+on: [push]
+jobs:
+  raco-test:
+   runs-on: ubuntu-latest
+   steps:
+     - name: Check out repository code
+       uses: actions/checkout@v3
+     - name: Setup Racket
+       uses: Bogdanp/setup-racket@v1.9
+       with:
+         architecture: 'x64'
+         distribution: 'full'
+         variant: 'CS'
+         version: '8.6'
+     - name: Test latest compiler
+       run: raco test ./Compiler/Milestone6f/*.rkt
