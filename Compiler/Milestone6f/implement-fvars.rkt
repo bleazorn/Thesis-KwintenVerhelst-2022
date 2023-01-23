@@ -102,16 +102,16 @@
 ;addr-number
   ;succes
   (check-fvar? addr-number 'fv0 0 0 "addr-number: succes-01: first frame fv")
-  (check-fvar? addr-number 'fv1 8 0 "addr-number: succes-02: second frame fv")
-  (check-fvar? addr-number 'fv2 16 0 "addr-number: succes-03: third frame fv")
+  (check-fvar? addr-number 'fv1 16 0 "addr-number: succes-02: second frame fv")
+  (check-fvar? addr-number 'fv2 32 0 "addr-number: succes-03: third frame fv")
   
   (check-fvar? addr-number 'fv0 8 8 "addr-number: succes-04: first frame fv offset 8")
-  (check-fvar? addr-number 'fv1 16 8 "addr-number: succes-05: second frame fv offset 8")
-  (check-fvar? addr-number 'fv2 24 8 "addr-number: succes-06: third frame fv offset 8")
+  (check-fvar? addr-number 'fv1 24 8 "addr-number: succes-05: second frame fv offset 8")
+  (check-fvar? addr-number 'fv2 40 8 "addr-number: succes-06: third frame fv offset 8")
   
-  (check-fvar? addr-number 'fv0 -8 -8 "addr-number: succes-07: first frame fv offset -8")
-  (check-fvar? addr-number 'fv1 0 -8 "addr-number: succes-08: second frame fv offset- 8")
-  (check-fvar? addr-number 'fv2 8 -8 "addr-number: succes-09: third frame fv offset -8")
+  (check-fvar? addr-number 'fv0 -16 -16 "addr-number: succes-07: first frame fv offset -16")
+  (check-fvar? addr-number 'fv1 0 -16 "addr-number: succes-08: second frame fv offset- 8")
+  (check-fvar? addr-number 'fv2 16 -16 "addr-number: succes-09: third frame fv offset -8")
   ;failure
   (check-equal? (addr-number 0) #f "addr-number: failure-1: integer")
   (check-equal? (addr-number 'x) #f "addr-number: failure-2: random symbol")
@@ -120,13 +120,13 @@
 ;change-fvar
   ;succes
   (check-fvar? change-fvar 'fv0 '(cfp - 0) 0 "change-fvar: succes-1: single number fv")
-  (check-fvar? change-fvar 'fv2 '(cfp - 16) 0 "change-fvar: succes-2: double number fv")
+  (check-fvar? change-fvar 'fv2 '(cfp - 32) 0 "change-fvar: succes-2: double number fv")
 
   (check-fvar? change-fvar 'fv0 '(cfp - 8) 8 "change-fvar: succes-3: single number fv offset 8")
-  (check-fvar? change-fvar 'fv2 '(cfp - 24) 8 "change-fvar: succes-4: double number fv offset 8")
+  (check-fvar? change-fvar 'fv2 '(cfp - 40) 8 "change-fvar: succes-4: double number fv offset 8")
 
   (check-fvar? change-fvar 'fv0 '(cfp - -8) -8 "change-fvar: succes-5: single number fv offset -8")
-  (check-fvar? change-fvar 'fv2 '(cfp - 8) -8 "change-fvar: succes-6: double number fv offset -8")
+  (check-fvar? change-fvar 'fv2 '(cfp - 24) -8 "change-fvar: succes-6: double number fv offset -8")
   ;failure
   (check-equal? (change-fvar 0) 0 "change-fvar: failure-1: integer")
   (check-equal? (change-fvar 'x) 'x "change-fvar: failure-2: random symbol")
@@ -161,28 +161,28 @@
                     (begin (set! fv1 2) (set! fv0 1) (set! cra t0) (jump L.swap.1))))
                '(module (define L.swap.1
                           (begin
-                            (set! (cfp - 16) cra)
+                            (set! (cfp - 32) cra)
                             (set! t0 (cfp - 0))
-                            (set! (cfp - 0) (cfp - 8))
+                            (set! (cfp - 0) (cfp - 16))
                             (if (< (cfp - 0) t0)
-                                (begin (set! ca0 t0) (jump (cfp - 16)))
+                                (begin (set! ca0 t0) (jump (cfp - 32)))
                                 (begin
                                   (begin
                                     (set! cfp (- cfp 24))
                                     (return-point
                                      L.rp-label.6
                                      (begin
-                                       (set! (cfp - 8) t0)
-                                       (set! (cfp - 0) (cfp - -24))
+                                       (set! (cfp - 40) t0)
+                                       (set! (cfp - 24) (cfp - -24))
                                        (set! cra L.rp-label.6)
                                        (jump L.swap.1)))
                                     (set! cfp (+ cfp 24)))
                                   (set! t0 ca0)
-                                  (begin (set! ca0 (+ t0 (cfp - 0))) (jump (cfp - 16)))))))
+                                  (begin (set! ca0 (+ t0 (cfp - 0))) (jump (cfp - 32)))))))
                   (begin
                     (set! t0 cra)
                     (begin
-                      (set! (cfp - 8) 2)
+                      (set! (cfp - 16) 2)
                       (set! (cfp - 0) 1)
                       (set! cra t0)
                       (jump L.swap.1))))
