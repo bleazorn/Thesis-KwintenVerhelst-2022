@@ -190,12 +190,14 @@
                                                    (begin (set! a0 0) (jump tmp-ra.1 cfp a0))
                                                    (begin
                                                      (set! y.4 (+ x.3 -1))
-                                                     (return-point
-                                                      L.rpLabel.2
-                                                      (begin
-                                                        (set! a0 y.4)
-                                                        (set! ra L.rpLabel.2)
-                                                        (jump L.even?.2 cfp ra a0)))))))
+                                                     (begin
+                                                       (return-point
+                                                        L.rpLabel.2
+                                                        (begin
+                                                          (set! a0 y.4)
+                                                          (set! ra L.rpLabel.2)
+                                                          (jump L.even?.2 cfp ra a0)))
+                                                       (jump tmp-ra.1 cfp a0))))))
                    (define L.even?.2
                      ((new-frames ()))
                      (begin
@@ -205,17 +207,21 @@
                            (begin (set! a0 1) (jump tmp-ra.3 cfp a0))
                            (begin
                              (set! y.6 (+ x.5 -1))
-                             (return-point
-                              L.rpLabel.4
-                              (begin
-                                (set! a0 y.6)
-                                (set! ra L.rpLabel.4)
-                                (jump L.odd?.1 cfp ra a0)))))))
+                             (begin
+                               (return-point
+                                L.rpLabel.4
+                                (begin
+                                  (set! a0 y.6)
+                                  (set! ra L.rpLabel.4)
+                                  (jump L.odd?.1 cfp ra a0)))
+                               (jump tmp-ra.3 cfp a0))))))
                    (begin
                      (set! tmp-ra.5 ra)
-                     (return-point
-                      L.rpLabel.6
-                      (begin (set! a0 5) (set! ra L.rpLabel.6) (jump L.even?.2 cfp ra a0)))))
+                     (begin
+                       (return-point
+                        L.rpLabel.6
+                        (begin (set! a0 5) (set! ra L.rpLabel.6) (jump L.even?.2 cfp ra a0)))
+                       (jump tmp-ra.5 cfp a0))))
                 "sequentialize-let: succes-02: tail calls")
   (check-impose '(module (define L.test.1 (lambda (x.1 x.2 x.3) (begin (set! y.4 (+ x.1 x.2)) (+ x.3 y.4)))) (call L.test.1 1 2 3))
                 '(module ((new-frames ()))
@@ -227,14 +233,16 @@
                                      (set! a0 (+ x.3 y.4))
                                      (jump tmp-ra.1 cfp a0)))))
                    (begin (set! tmp-ra.2 ra)
-                          (return-point
-                           L.rpLabel.3
-                           (begin
-                             (set! a0 1)
-                             (set! a1 2)
-                             (set! a2 3)
-                             (set! ra L.rpLabel.3)
-                             (jump L.test.1 cfp ra a0 a1 a2)))))
+                          (begin
+                            (return-point
+                             L.rpLabel.3
+                             (begin
+                               (set! a0 1)
+                               (set! a1 2)
+                               (set! a2 3)
+                               (set! ra L.rpLabel.3)
+                               (jump L.test.1 cfp ra a0 a1 a2)))
+                            (jump tmp-ra.2 cfp a0))))
                 "impose-calling-conventions: succes-03: tail calls with fvar args")
   (check-impose '(module (define L.swap.1
                            (lambda (x.1 y.2)
@@ -264,13 +272,15 @@
                                                        (jump tmp-ra.1 cfp a0))))))
                    (begin
                      (set! tmp-ra.3 ra)
-                     (return-point
-                      L.rpLabel.4
-                      (begin
-                        (set! a0 1)
-                        (set! a1 2)
-                        (set! ra L.rpLabel.4)
-                        (jump L.swap.1 cfp ra a0 a1)))))
+                     (begin
+                       (return-point
+                        L.rpLabel.4
+                        (begin
+                          (set! a0 1)
+                          (set! a1 2)
+                          (set! ra L.rpLabel.4)
+                          (jump L.swap.1 cfp ra a0 a1)))
+                       (jump tmp-ra.3 cfp a0))))
                 "impose-calling-conventions: succes-04: value call")
   ;|#
   )
