@@ -5,7 +5,8 @@
 (module+ test
   (require rackunit))
 
-(apply compile-file (vector->list (current-command-line-arguments)))
+(when (not (vector-empty? (current-command-line-arguments)))
+    (apply compile-file (vector->list (current-command-line-arguments))))
 
 (module+ test
   (check-equal? #t #t "test"))
