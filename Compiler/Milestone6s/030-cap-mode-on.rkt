@@ -98,12 +98,12 @@
 ;cap-set
   ;succes
   (check-equal? (cap-set '(set! (cfp - 8) a0)) '(set! (cfp - 8) a0) "cap-set: succes-01: cap addr reg")
-  (check-equal? (cap-set '(set! (cfp - 8) ca0)) '(set! (cfp - 8) a0) "cap-set: succes-21: cap addr cap")
+  (check-equal? (cap-set '(set! (cfp - 8) ca0)) '(set! (cfp - 8) ca0) "cap-set: succes-02: cap addr cap")
   (check-equal? (cap-set '(set! (fp - 8) a0)) '(set! (cfp - 8) a0) "cap-set: succes-03: reg addr reg")
-  (check-equal? (cap-set '(set! (fp - 8) ca0)) '(set! (cfp - 8) a0) "cap-set: succes-04: reg addr cap")
+  (check-equal? (cap-set '(set! (fp - 8) ca0)) '(set! (cfp - 8) ca0) "cap-set: succes-04: reg addr cap")
 
   (check-equal? (cap-set '(set! a0 (cfp - 8))) '(set! a0 (cfp - 8)) "cap-set: succes-05: cap addr reg")
-  (check-equal? (cap-set '(set! ca0 (cfp - 8))) '(set! a0 (cfp - 8)) "cap-set: succes-06: cap addr cap")
+  (check-equal? (cap-set '(set! ca0 (cfp - 8))) '(set! ca0 (cfp - 8)) "cap-set: succes-06: cap addr cap")
   (check-equal? (cap-set '(set! a0 (fp - 8))) '(set! a0 (cfp - 8)) "cap-set: succes-07: reg addr reg")
   (check-equal? (cap-set '(set! a0 (fp - 8))) '(set! a0 (cfp - 8)) "cap-set: succes-08: reg addr cap")
 

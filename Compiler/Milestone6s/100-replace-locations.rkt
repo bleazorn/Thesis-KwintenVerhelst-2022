@@ -131,9 +131,10 @@
                     (begin
                       (set! x.1 0)
                       (jump x.1))))
-                '(module (begin
-                           (set! rax 0)
-                           (jump rax)))
+                '(module ((locals (x.1)) (assignment ((x.1 rax))))
+                   (begin
+                     (set! rax 0)
+                     (jump rax)))
                 "replace-locations: succes-1: one location")
   (check-equal? (replace-locations
                  '(module ((locals (x.1 y.1 w.1))
@@ -143,11 +144,13 @@
                       (set! y.1 x.1)
                       (set! w.1 (+ w.1 y.1))
                       (jump w.1))))
-                '(module (begin
-                           (set! rax 0)
-                           (set! rbx rax)
-                           (set! r9 (+ r9 rbx))
-                           (jump r9)))
+                '(module ((locals (x.1 y.1 w.1))
+                          (assignment ((x.1 rax) (y.1 rbx) (w.1 r9))))
+                   (begin
+                     (set! rax 0)
+                     (set! rbx rax)
+                     (set! r9 (+ r9 rbx))
+                     (jump r9)))
                 "replace-locations: succes-2: multiple locations")
   ;|#
   )
