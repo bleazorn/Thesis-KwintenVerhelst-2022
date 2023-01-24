@@ -25,6 +25,10 @@ endif
 varLinBuilder=Builders/elf-cheri-risc-v-builder-linear-cap/
 varBuilder=$(varLinBuilder)
 
+compiler:
+	@echo "Creating compiler for latest version (Milestone"$(MVersion)")"
+	raco exe -o compiler $(varCompile)
+
 #Code
 %.S: %.txt
 	@echo "Compile program in: " $(varCurLoc)/$(varCurLoc)
