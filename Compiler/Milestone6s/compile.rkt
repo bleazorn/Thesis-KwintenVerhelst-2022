@@ -59,16 +59,18 @@
 ;file: path-string?
 ;p:
 (define (write-program-to-file p)
-  (if (output-file)
-      (write-string-to-file (output-file) (compile p))
-      (printf (compile p))))
+  (let ([transformer (if (pass)
+                         (compose pretty-format compile)
+                         compile)])
+    (if (output-file)
+        (write-string-to-file (output-file) (transformer p))
+        (printf (transformer p)))))
 
 ;compile a given program and write to the file "test.S"
 ;(write-program p) -> void
 ;p:
 (define (write-program p)
   (write-program-to-file p))
-
 
 (define (read-program-from-file file)
   (if (file-exists? file)
@@ -84,8 +86,18 @@
     ['stktokens     (stkTokens steps)]
     [unknown        (error "unsupported calling convention: " unknown)]))
 
+(define (setup-passes steps)
+  (if (not (pass))
+      steps
+      (let ([s (memf (compose (curry equal? (pass)) object-name) steps)])
+        (if s
+            s
+            (error "no such pass exists: " (pass))))))
+
+(define setup-steps (compose setup-passes setup-cc))
+
 (define (compile-file file)
-  (parameterize ([steps (setup-cc (steps))]
+  (parameterize ([steps (setup-steps (steps))]
                  [fvarRegister 'csp]
                  [stack-direction '+])
                  ;[current-parameter-registers '()]

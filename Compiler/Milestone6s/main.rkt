@@ -19,6 +19,9 @@ Default calling convention is vanilla riscv.
           [("-o" "--output-file") out
                                   "Output file for assembly code"
                                   (output-file out)]
+          [("-p" "--pass") p
+                           "Compile up to the given pass"
+                           (pass (string->symbol p))]
           #:once-any
           [("-s" "--stktokens") "Compile with the StkStokens Calling Convention"
                                 (cc 'stktokens)]

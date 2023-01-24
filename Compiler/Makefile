@@ -119,8 +119,10 @@ cleanS:
 	rm -fv *.S
 cleanE:
 	rm -fv *.elf
+cleanCompiler:
+	rm -fv compiler
 
-cleanFiles: cleanS cleanE
+cleanFiles: cleanS cleanE cleanCompiler
 
 cleanTest:
 	rm -fv tmpTest.txt
