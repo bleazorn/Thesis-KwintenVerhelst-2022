@@ -2,6 +2,7 @@
 
 (require "common/fvar.rkt"
          "common/register.rkt"
+         "config.rkt"
          "steps.rkt"
          "interp-values-lang.rkt")
 ;(require racket/system)
@@ -76,8 +77,16 @@
 (define (compile-program p)
   (write-program p "Test.S"))
 
+(define (setup-cc steps)
+  (println steps)
+  (println (cc))
+  (match (cc)
+    ['vanilla-riscv steps]
+    ['stktokens     (stkTokens steps)]
+    [unknown        (error "unsupported calling convention: " unknown)]))
+
 (define (compile-file file)
-  (parameterize ([steps (stkTokens (steps))]
+  (parameterize ([steps (setup-cc (steps))]
                  [fvarRegister 'csp]
                  [stack-direction '+])
                  ;[current-parameter-registers '()]
