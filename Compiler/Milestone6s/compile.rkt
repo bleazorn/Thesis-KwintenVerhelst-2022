@@ -78,8 +78,6 @@
   (write-program p "Test.S"))
 
 (define (setup-cc steps)
-  (println steps)
-  (println (cc))
   (match (cc)
     ['vanilla-riscv steps]
     ['stktokens     (stkTokens steps)]
