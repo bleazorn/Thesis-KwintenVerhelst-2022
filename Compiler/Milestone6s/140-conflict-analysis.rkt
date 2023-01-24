@@ -3,7 +3,8 @@
 (require "common/info.rkt"
          "common/aloc.rkt"
          "common/fvar.rkt"
-         "common/register.rkt")
+         "common/register.rkt"
+         "log.rkt")
 (provide conflict-analysis)
 
 (module+ test
@@ -26,7 +27,7 @@ Any variable defined during a move instruction is in conflict with every variabl
 ;posC: list? '(aloc ...)
 ;undead-out: undead-set?
 (define (conflict-aloc-add-conflicted a conflicted conf)
-  ;(println (format "second ~a : ~a - ~a" a conflicted conf))
+  ;(logln (format "second ~a : ~a - ~a" a conflicted conf))
   (if (canConflict? a)
       (let ([c (assoc a conf)])
         (list-set conf (index-of conf c) `(,a ,(remove-duplicates (append conflicted (second c))))))
@@ -39,7 +40,7 @@ Any variable defined during a move instruction is in conflict with every variabl
 ;posC: list? '(aloc ...)
 ;undead-out: undead-set?
 (define (conflict-aloc a notC posC undead-out conf)
-  ;(println (format "conflict: ~a : ~a ~a - ~a - ~a" a notC posC undead-out conf))
+  ;(logln (format "conflict: ~a : ~a ~a - ~a - ~a" a notC posC undead-out conf))
   (if (canConflict? a)
       ;initialize every possible conflict in the conflicts list
       (let ([addConf (foldl (lambda (al co) (cond [(assoc al co) co]
@@ -70,7 +71,7 @@ Any variable defined during a move instruction is in conflict with every variabl
 ;undead-outs: undead-set-tree?
 ;conf:conflicts?
 (define (conflict-pred p undead-outs conf)
-  ;(println (format "conflict-pred: ~a -:- ~a" p undead-outs))
+  ;(logln (format "conflict-pred: ~a -:- ~a" p undead-outs))
   (match p
     [`(begin ,e ... ,pred) (conflict-pred pred (last undead-outs) (conflict-begin e (drop-right undead-outs 1) conf))]
     [`(,relop ,a ,b) (conflict-aloc a '() '() undead-outs (conflict-aloc b '() '() undead-outs conf))]
@@ -87,7 +88,7 @@ Any variable defined during a move instruction is in conflict with every variabl
 ;undead-outs: undead-set-tree?
 ;conf:conflicts?
 (define (conflict-effect e undead-outs conf)
-  ;(println (format "conflict-effect: ~a -:- ~a" e undead-outs))
+  ;(logln (format "conflict-effect: ~a -:- ~a" e undead-outs))
   (match e
     [`(begin ,eff ...) (conflict-begin eff undead-outs conf)]
     [`(set! ,a (,binop ,b ,c)) (conflict-aloc a `(,b ,c) '() undead-outs (conflict-aloc b `(,a) '() undead-outs (conflict-aloc c `(,a) '() undead-outs conf)))]
@@ -106,7 +107,7 @@ Any variable defined during a move instruction is in conflict with every variabl
 ;undead-outs: undead-set-tree?
 ;conf:conflicts?
 (define (conflict-tail t undead-outs conf)
-  ;(println (format "conflict-tail: ~a -:- ~a" t undead-outs))
+  ;(logln (format "conflict-tail: ~a -:- ~a" t undead-outs))
   (match t
     [`(begin ,e ... ,tail) (conflict-tail tail (last undead-outs) (conflict-begin e (drop-right undead-outs 1) conf))]
     [`(if ,p ,t1 ,t2) (conflict-tail t2 (third undead-outs)

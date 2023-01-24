@@ -1,6 +1,7 @@
 #lang racket
 
-(require "common/register.rkt")
+(require "common/register.rkt"
+         "log.rkt")
 (provide patch-instructions)
 
 (module+ test
@@ -51,7 +52,7 @@
     [`(set! ,a ,b) #:when (or (register? a) (register? b)) `((set! ,a ,b))]                  
     [`(set! ,a ,b) #:when (and (addr? a) (not (register? b))) (let ([reg (newTemp)])
                                                                 `((set! ,reg ,b) (set! ,a ,reg)))]
-    [`(set! ,a ,b) (println (addr? a))]
+    [`(set! ,a ,b) (logln (addr? a))]
     [_ #f]))
 
 ;

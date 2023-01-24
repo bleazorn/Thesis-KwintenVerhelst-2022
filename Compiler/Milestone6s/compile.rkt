@@ -3,6 +3,7 @@
 (require "common/fvar.rkt"
          "common/register.rkt"
          "config.rkt"
+         "log.rkt"
          "steps.rkt"
          "interp-values-lang.rkt")
 ;(require racket/system)
@@ -14,15 +15,13 @@
   (require rackunit))
 
 
-;; SAND: createList already exists, it's called inclusive-range
-
 (define (compileStepsDis start end program)
   (resetfvar)
-  (println (steps))
+  (logln (steps))
   (for/fold ([p program])
              ([i (reverse (inclusive-range start end))])
      (values (let ([fun (list-ref (steps) i)])
-               (println (format "~a:" fun))
+               (logln (format "~a:" fun))
                (let ([res (fun p)])
                  (pretty-display (cond [(list? res) (let-values ([(tak dro) (split-at res 1)])
                                                       (append tak '(()) dro))]
@@ -39,8 +38,8 @@
               res))))
 
 (define (compile program)
-  (println "Compiling Program")
-  (println program)
+  (logln "Compiling Program")
+  (logln program)
   (compileSteps 0 (sub1 (length (steps))) program))
 
 (define (test program)
@@ -137,7 +136,7 @@
   (check-equal? #t #t "test"))
 
 ;#|
-(parameterize ([steps (stkTokens (steps))]
+#;(parameterize ([steps (stkTokens (steps))]
                [fvarRegister 'csp]
                [stack-direction '+]
                ;[steps (halfStack (risc-v (steps)))])

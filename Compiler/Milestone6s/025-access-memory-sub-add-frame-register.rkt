@@ -1,6 +1,7 @@
 #lang racket
 
-(require "common/fvar.rkt")
+(require "common/fvar.rkt"
+         "log.rkt")
 (provide access-memory-sub-add-frame-register)
 
 (define (access-address-binop binop)
@@ -26,7 +27,7 @@
 ;(access-set s)->list? '(set? ...)
 ;s: set?
 (define (access-set s)
-  (println s)
+  (logln s)
   (match s
     [`(set! (,r ,binop ,n) ,b) #:when (access-address-binop binop) `(,(access-before-set r binop n)
                                                                      (set! (,r - ,0) ,b)

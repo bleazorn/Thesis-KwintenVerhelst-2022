@@ -3,7 +3,8 @@
 (require "common/info.rkt"
          "common/register.rkt"
          "common/fvar.rkt"
-         "common/aloc.rkt")
+         "common/aloc.rkt"
+         "log.rkt")
 (provide assign-registers-full)
 
 (module+ test
@@ -56,7 +57,7 @@
 ;conf:list? '((aloc? (...)) ...)
 ;assign: list? '((aloc loc) ...)
 (define (assign-recur loc conf assign confDel assigned)
-  ;(println confDel)
+  ;(logln confDel)
   (if (null? loc)
       '()
       (let* ([i (index-of-lowest-conf confDel)]

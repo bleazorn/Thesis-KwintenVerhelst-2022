@@ -9,9 +9,13 @@
   (let ([file-to-compile
          (command-line
           #:program "compile"
-          #:usage-help
-"""Nanopass compiler targeting CHERI-RISC-V.
-Default calling convention is vanilla riscv."""
+          #:usage-help """
+Nanopass compiler targeting CHERI-RISC-V.
+Default calling convention is vanilla riscv.
+"""
+          #:once-each
+          [("-v" "--verbose") "Compile with verbose messages"
+                              (verbose #t)]
           #:once-any
           [("-s" "--stktokens") "Compile with the StkStokens Calling Convention"
                                 (cc 'stktokens)]
