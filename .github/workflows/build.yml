@@ -14,4 +14,4 @@ jobs:
          variant: 'CS'
          version: '8.6'
      - name: Test latest compiler
-       run: raco test ./Compiler/Milestone6f/*.rkt
+       run: raco test ./Compiler/Milestone6s/*.rkt
