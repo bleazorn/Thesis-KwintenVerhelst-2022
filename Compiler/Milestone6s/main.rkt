@@ -16,6 +16,9 @@ Default calling convention is vanilla riscv.
           #:once-each
           [("-v" "--verbose") "Compile with verbose messages"
                               (verbose #t)]
+          [("-o" "--output-file") out
+                                  "Output file for assembly code"
+                                  (output-file out)]
           #:once-any
           [("-s" "--stktokens") "Compile with the StkStokens Calling Convention"
                                 (cc 'stktokens)]

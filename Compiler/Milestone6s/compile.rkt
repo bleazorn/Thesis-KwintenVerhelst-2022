@@ -58,14 +58,16 @@
 ;(write-program-to-file file p) -> any
 ;file: path-string?
 ;p:
-(define (write-program-to-file file p)
-  (write-string-to-file file (compile p)))
+(define (write-program-to-file p)
+  (if (output-file)
+      (write-string-to-file (output-file) (compile p))
+      (printf (compile p))))
 
 ;compile a given program and write to the file "test.S"
 ;(write-program p) -> void
 ;p:
-(define (write-program p file)
-  (write-program-to-file file p))
+(define (write-program p)
+  (write-program-to-file p))
 
 
 (define (read-program-from-file file)
@@ -88,7 +90,7 @@
                  [stack-direction '+])
                  ;[current-parameter-registers '()]
                  ;[current-assignable-registers '()]) 
-    (write-program (read-program-from-file file) (format "~a.S" (car (string-split file "."))))))
+    (write-program (read-program-from-file file))))
 
 ;######################################################################
 
