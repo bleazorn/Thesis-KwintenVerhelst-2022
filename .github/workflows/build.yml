@@ -13,7 +13,14 @@ jobs:
          distribution: 'full'
          variant: 'CS'
          version: '8.6'
+     - name: Cache Racket dependencies
+       uses: actions/cache@v3
+       with:
+         path: |
+           ~/.cache/racket
+           ~/.local/share/racket
+         key: ${{ runner.os }}-racket-8.6
      - name: Install cpsc411/cpsc411-lib
-       run: raco pkg install --auto https://github.com/cpsc411/cpsc411-pub.git\?path\=cpsc411-lib\#2021w2
+       run: raco pkg install --auto --skip-installed https://github.com/cpsc411/cpsc411-pub.git\?path\=cpsc411-lib\#2021w2
      - name: Test latest compiler
        run: raco test ./Compiler/Milestone6s/*.rkt
