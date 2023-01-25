@@ -1,6 +1,8 @@
 #lang racket
 
-(require "common/aloc.rkt")
+(require "common/aloc.rkt"
+         "langs/values-lang.rkt"
+         "langs/values-unique-lang.rkt")
 (provide uniquify)
 
 (module+ test
@@ -94,7 +96,7 @@
 ;Compiles Values-lang-V3? to Values-lang-V3-unique? by resolving all lexical identifiers to abstract locations.
 ;(uniquify p) → Values-lang-V3-unique?
 ;p: Values-lang-V3?
-(define (uniquify m)
+(define/contract (uniquify m) (-> values-lang? values-unique-lang?)
   (match m
     [`(module ,f ... ,a) (let ([funcNames (uniquify-func-names f)])
                            `(module ,@(map (lambda (func) (uniquify-func func funcNames)) f) ,(uniquify-tail a funcNames)))]
