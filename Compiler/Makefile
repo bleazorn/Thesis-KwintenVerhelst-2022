@@ -12,6 +12,8 @@ MVerbose="on"
 varCurLoc=${PWD}
 varCompile=Milestone$(MVersion)/main.rkt
 
+COLLECTS=$(shell racket -e "(require setup/dirs) (printf (path->string (find-collects-dir)))")
+
 define VERS
 $(shell test '$(1)' -lt 5 2>/dev/null && echo yes || echo no)
 endef
@@ -24,6 +26,12 @@ endif
 
 varLinBuilder=Builders/elf-cheri-risc-v-builder-linear-cap/
 varBuilder=$(varLinBuilder)
+
+compiler:
+	@echo "Creating bytecode files"
+	raco make $(varCompile)
+	@echo "Creating compiler for latest version (Milestone"$(MVersion)")"
+	raco exe --collects-path $(COLLECTS) ++lang "at-exp racket" -o compiler $(varCompile)
 
 #Code
 %.S: %.txt
@@ -115,8 +123,10 @@ cleanS:
 	rm -fv *.S
 cleanE:
 	rm -fv *.elf
+cleanCompiler:
+	rm -fv compiler
 
-cleanFiles: cleanS cleanE
+cleanFiles: cleanS cleanE cleanCompiler
 
 cleanTest:
 	rm -fv tmpTest.txt

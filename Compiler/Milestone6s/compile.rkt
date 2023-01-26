@@ -2,6 +2,8 @@
 
 (require "common/fvar.rkt"
          "common/register.rkt"
+         "config.rkt"
+         "log.rkt"
          "steps.rkt"
          "interp-values-lang.rkt")
 ;(require racket/system)
@@ -13,15 +15,13 @@
   (require rackunit))
 
 
-;; SAND: createList already exists, it's called inclusive-range
-
 (define (compileStepsDis start end program)
   (resetfvar)
-  (println (steps))
+  (logln (steps))
   (for/fold ([p program])
              ([i (reverse (inclusive-range start end))])
      (values (let ([fun (list-ref (steps) i)])
-               (println (format "~a:" fun))
+               (logln (format "~a:" fun))
                (let ([res (fun p)])
                  (pretty-display (cond [(list? res) (let-values ([(tak dro) (split-at res 1)])
                                                       (append tak '(()) dro))]
@@ -38,8 +38,8 @@
               res))))
 
 (define (compile program)
-  (println "Compiling Program")
-  (println program)
+  (logln "Compiling Program")
+  (logln program)
   (compileSteps 0 (sub1 (length (steps))) program))
 
 (define (test program)
@@ -58,15 +58,19 @@
 ;(write-program-to-file file p) -> any
 ;file: path-string?
 ;p:
-(define (write-program-to-file file p)
-  (write-string-to-file file (compile p)))
+(define (write-program-to-file p)
+  (let ([transformer (if (pass)
+                         (compose pretty-format compile)
+                         compile)])
+    (if (output-file)
+        (write-string-to-file (output-file) (transformer p))
+        (printf (transformer p)))))
 
 ;compile a given program and write to the file "test.S"
 ;(write-program p) -> void
 ;p:
-(define (write-program p file)
-  (write-program-to-file file p))
-
+(define (write-program p)
+  (write-program-to-file p))
 
 (define (read-program-from-file file)
   (if (file-exists? file)
@@ -76,13 +80,29 @@
 (define (compile-program p)
   (write-program p "Test.S"))
 
+(define (setup-cc steps)
+  (match (cc)
+    ['vanilla-riscv steps]
+    ['stktokens     (stkTokens steps)]
+    [unknown        (error "unsupported calling convention: " unknown)]))
+
+(define (setup-passes steps)
+  (if (not (pass))
+      steps
+      (let ([s (memf (compose (curry equal? (pass)) object-name) steps)])
+        (if s
+            s
+            (error "no such pass exists: " (pass))))))
+
+(define setup-steps (compose setup-passes setup-cc))
+
 (define (compile-file file)
-  (parameterize ([steps (stkTokens (steps))]
+  (parameterize ([steps (setup-steps (steps))]
                  [fvarRegister 'csp]
                  [stack-direction '+])
                  ;[current-parameter-registers '()]
                  ;[current-assignable-registers '()]) 
-    (write-program (read-program-from-file file) (format "~a.S" (car (string-split file "."))))))
+    (write-program (read-program-from-file file))))
 
 ;######################################################################
 
@@ -130,7 +150,7 @@
   (check-equal? #t #t "test"))
 
 ;#|
-(parameterize ([steps (stkTokens (steps))]
+#;(parameterize ([steps (stkTokens (steps))]
                [fvarRegister 'csp]
                [stack-direction '+]
                ;[steps (halfStack (risc-v (steps)))])

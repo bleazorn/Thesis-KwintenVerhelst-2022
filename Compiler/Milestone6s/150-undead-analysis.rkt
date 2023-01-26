@@ -3,7 +3,8 @@
 (require "common/info.rkt"
          "common/aloc.rkt"
          "common/fvar.rkt"
-         "common/register.rkt")
+         "common/register.rkt"
+         "log.rkt")
 (provide undead-analysis)
 
 (module+ test
@@ -56,7 +57,7 @@
   (match b
     ['() undead-outs]
     [`(,e ,rest-e ...)
-     ;(println (format "rest-let: ~a - ~a" rest-ss undead-outs))
+     ;(logln (format "rest-let: ~a - ~a" rest-ss undead-outs))
      (let ([undead-rest (undead-begin-rec rest-e undead-outs)])
        (undead-effect e undead-rest))]))
 
@@ -83,7 +84,7 @@
 (define (undead-pred p undead-outs)
   (let ([undead-out (if (null? undead-outs) '() (car undead-outs))]
         [undead-rest (if (null? undead-outs) '() (cdr undead-outs))])
-  ;(println (format "pred: ~a" p))
+  ;(logln (format "pred: ~a" p))
     (match p
       [`(begin ,e ... ,pred) (let ([pU (undead-pred pred `(,undead-out))])
                                (undead-begin e pU undead-rest))]
@@ -103,7 +104,7 @@
 (define (undead-effect e undead-outs)
   (let ([undead-out (if (null? undead-outs) '() (car undead-outs))]
         [undead-rest (if (null? undead-outs) '() (cdr undead-outs))])
-  ;(println (format "effect: ~a - ~a" e undead-out))
+  ;(logln (format "effect: ~a - ~a" e undead-out))
     (match e
       [`(set! ,a (,binop ,b ,c)) (cons (undead-cons b (undead-cons c (undead-remove a undead-out))) undead-outs)]
       [`(set! ,a ,b) (cons (undead-cons b (undead-remove a undead-out)) undead-outs)]
@@ -126,7 +127,7 @@
 (define (undead-tail t undead-outs)
   (let ([undead-out (if (null? undead-outs) '() (car undead-outs))]
         [undead-rest (if (null? undead-outs) '() (cdr undead-outs))])
-    ;(println (format "tail: ~a - ~a" t undead-out))
+    ;(logln (format "tail: ~a - ~a" t undead-out))
     (match t
       [`(begin ,e ... ,tail) (let* ([tU (undead-tail tail `(,undead-out))])
                                (undead-begin e tU undead-rest))]
@@ -163,7 +164,7 @@
 (define (undead-analysis p)
   (match p
     [`(module ,i ,f ... ,t) `(module ,(undead-info i t) ,@(map undead-func f) ,t)]
-    [_ (println "failed analysis")]))
+    [_ (logln "failed analysis")]))
 
 
 (module+ test

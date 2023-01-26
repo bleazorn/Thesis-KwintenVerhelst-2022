@@ -75,41 +75,41 @@
 
 ;Stktokens
 (define (stkTokens l)
-  (let ([wI (index-where l (lambda (a) (equal? wrap-cheri-risc-v-run-time a)))]
-        [gI (index-where l (lambda (a) (equal? access-memory-tempory-register a)))]
-        [sI (index-where l (lambda (a) (equal? change-frame-pointer a)))]
-        [iI (index-where l (lambda (a) (equal? impose-calling-conventions-full a)))])
-    (let ([switchedL (list-set
-                      (list-set
-                       (list-set l wI wrap-cheri-risc-v-run-time-secure)
-                       gI access-memory-sub-add-frame-register)
-                      sI secure-stack-tokens)])
-      (let ([tL (take switchedL iI)]
-            [dL (drop switchedL iI)])
-        (append tL
-                (list call-convention-secure)
-                dL)))))
+  (let* ([wI (index-where l (curry equal? wrap-cheri-risc-v-run-time))]
+         [gI (index-where l (curry equal? access-memory-tempory-register))]
+         [sI (index-where l (curry equal? change-frame-pointer))]
+         [iI (index-where l (curry equal? impose-calling-conventions-full))]
+         [switchedL (list-set
+                     (list-set
+                      (list-set l wI wrap-cheri-risc-v-run-time-secure)
+                      gI access-memory-sub-add-frame-register)
+                     sI secure-stack-tokens)]
+         [tL (take switchedL iI)]
+         [dL (drop switchedL iI)])
+    (append tL
+            (list call-convention-secure)
+            dL)))
 
 ;half stack
 (define (halfStack l)
-  (let ([iI (index-where l (lambda (a) (equal? impose-calling-conventions-full a)))])
-    (let ([l (list-set l iI impose-calling-conventions-half)])
-      (let ([aI (index-where l (lambda (a) (equal? allocate-frames-full a)))])
-        (let ([tL (take l aI)]
-              [dL (drop l (+ aI 3))])
-          (append tL
-                  (list assign-frame-variables-half
-                        assign-registers-half
-                        allocate-frames-half
-                        assign-call-undead-variables-half)
-                  dL))))))
+  (let* ([iI (index-where l (curry equal? impose-calling-conventions-full))]
+         [l (list-set l iI impose-calling-conventions-half)]
+         [aI (index-where l (curry equal? allocate-frames-full))]
+         [tL (take l aI)]
+         [dL (drop l (+ aI 3))])
+    (append tL
+            (list assign-frame-variables-half
+                  assign-registers-half
+                  allocate-frames-half
+                  assign-call-undead-variables-half)
+            dL)))
 
 ;risc-v
 (define (risc-v l)
-  (let ([cI (index-where l (lambda (a) (equal? cap-mode-on a)))])
-    (let ([dL (drop l (+ cI 1))])
-      (append (list wrap-risc-v-boilerplate
-                    wrap-risc-v-run-time
-                    generate-risc-v
-                    cap-mode-off)
-              dL))))
+  (let* ([cI (index-where l (curry equal? cap-mode-on))]
+         [dL (drop l (+ cI 1))])
+    (append (list wrap-risc-v-boilerplate
+                  wrap-risc-v-run-time
+                  generate-risc-v
+                  cap-mode-off)
+            dL)))

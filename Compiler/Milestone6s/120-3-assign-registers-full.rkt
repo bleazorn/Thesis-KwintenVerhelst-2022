@@ -3,7 +3,8 @@
 (require "common/info.rkt"
          "common/register.rkt"
          "common/fvar.rkt"
-         "common/aloc.rkt")
+         "common/aloc.rkt"
+         "log.rkt")
 (provide assign-registers-full)
 
 (module+ test
@@ -56,7 +57,7 @@
 ;conf:list? '((aloc? (...)) ...)
 ;assign: list? '((aloc loc) ...)
 (define (assign-recur loc conf assign confDel assigned)
-  ;(println confDel)
+  ;(logln confDel)
   (if (null? loc)
       '()
       (let* ([i (index-of-lowest-conf confDel)]
@@ -117,13 +118,14 @@
   (check-equal? (assign-registers-full '(module ((locals (x.1))
                                             (conflicts ((x.1 ())))
                                             (new-frames ())
-                                            (call-undead ()))
+                                            (call-undead ())
+                                            (allocatedFvars ()))
                                      (begin
                                        (set! x.1 42)
                                        (set! x.1 x.1)
                                        (jump L.foo.4))))
                 '(module
-                     ((assignment ((x.1 t0))) (locals (x.1)) (conflicts ((x.1 ()))) (new-frames ()) (call-undead ()))
+                     ((assignment ((x.1 t0))) (locals (x.1)) (conflicts ((x.1 ()))) (new-frames ()) (call-undead ()) (allocatedFvars ()))
                    (begin (set! x.1 42) (set! x.1 x.1) (jump L.foo.4)))
                 "assign-registers: succes-1 one instruction")
   (check-equal? (assign-registers-full '(module ((locals (v.1 w.2 x.3 y.4 z.5 t.6 p.1))
@@ -136,7 +138,8 @@
                                               (z.5 (t.6 p.1 y.4 w.2 x.3))
                                               (t.6 (z.5 p.1 y.4))))
                                              (new-frames ())
-                                             (call-undead ()))
+                                             (call-undead ())
+                                             (allocatedFvars ()))
                                      (begin
                                        (set! v.1 1)
                                        (set! w.2 46)
@@ -167,7 +170,8 @@
                         (z.5 (t.6 p.1 y.4 w.2 x.3))
                         (t.6 (z.5 p.1 y.4))))
                       (new-frames ())
-                      (call-undead ()))
+                      (call-undead ())
+                      (allocatedFvars ()))
                    (begin
                      (set! v.1 1)
                      (set! w.2 46)

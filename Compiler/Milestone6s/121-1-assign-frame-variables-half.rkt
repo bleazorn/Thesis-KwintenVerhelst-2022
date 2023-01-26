@@ -1,7 +1,8 @@
 #lang racket
 
 (require "common/info.rkt"
-         "common/fvar.rkt")
+         "common/fvar.rkt"
+         "log.rkt")
 (provide assign-frame-variables-half)
 
 (module+ test
@@ -33,7 +34,7 @@
 (define (getMaxFvar a ass conf)
   (let ([conflictedAssFvars (filter fvar? (map second (filter (lambda (as) (member (first as) (second (assoc a conf)))) ass)))]
         [conflictedFvars (filter fvar? (second (assoc a conf)))])
-    ;(println (append conflictedAssFvars conflictedFvars))
+    ;(logln (append conflictedAssFvars conflictedFvars))
     (getFirstAvailableFvar (append conflictedAssFvars conflictedFvars))))
 
 ;

@@ -1,5 +1,6 @@
 #lang racket
 
+(require "log.rkt")
 (provide normalize-bind)
 
 (module+ test
@@ -16,7 +17,7 @@
 ;(normalize-effect e)->effect?
 ;effect?
 (define (normalize-effect e)
-  ;(println "effect:")
+  ;(logln "effect:")
   ;(pretty-display e)
   (match e
     [`(set! ,a (begin ,e ... ,v)) `(begin ,@(map normalize-effect e) ,(normalize-set a v))] ;; SAND: rewritten with quasiquoting, also note that you can just pass the procedure as is, no need to wrap it in a lambda (change pushed through in other places too)
@@ -28,7 +29,7 @@
 ;(normalize-pred p)->pred?
 ;p:pred?
 (define (normalize-pred p)
-  ;(println "pred:")
+  ;(logln "pred:")
   ;(pretty-display p)
   (match p
     [`(begin ,e ... ,pred) `(begin ,@(map normalize-effect e) ,(normalize-pred pred))]
@@ -43,7 +44,7 @@
 ;(normalize-value v)->value?
 ;v: value?
 (define (normalize-value v)
-  ;(println "value:")
+  ;(logln "value:")
   ;(pretty-display v)
   (match v
     [`(begin ,e ... ,val) `(begin ,@(map normalize-effect e) ,(normalize-value val))]
@@ -55,7 +56,7 @@
 ;(normalize-tail t)->tail?
 ;t: tail?
 (define (normalize-tail t)
-  ;(println "tail:")
+  ;(logln "tail:")
   ;(pretty-display t)
   (match t
     [`(begin ,e ... ,tail) `(begin ,@(map normalize-effect e) ,(normalize-tail tail))]

@@ -2,6 +2,7 @@
 
 (require "common/assembly.rkt"
          "setup.rkt"
+         "log.rkt"
          "020-generate-cheri-risc-v.rkt")
 
 (provide wrap-cheri-risc-v-run-time-secure)
@@ -16,7 +17,7 @@
 ;(wrap-cheri-risc-v-run-time p) -> string?
 ;p: string?
 (define (wrap-cheri-risc-v-run-time-secure p)
-  (pretty-display p)
+  (pretty-log p)
   (match p
     [s #:when (string? s) (string-append "main:\n"
                                          (indent-instr (format "auipcc csp, %pcrel_hi(0x~a)" 81000000))

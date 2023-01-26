@@ -1,6 +1,7 @@
 #lang racket
 
-(require "common/aloc.rkt")
+(require "common/aloc.rkt"
+         "log.rkt")
 (provide expose-basic-blocks)
 
 (module+ test
@@ -20,14 +21,14 @@
 ;e: effect?
 ;l: label?
 (define (expose-if-effect e l)
-  ;(println "if-effect")
+  ;(logln "if-effect")
   ;(pretty-display e)
-  ;(println l)
+  ;(logln l)
   (match e
     [`(begin ,e ...) (expose-begin-effect (append e `((jump ,l))))]
     [`(if ,p ,e1 ,e2) (let ([l1 (freshLabelTmp)]
                             [l2 (freshLabelTmp)])
-                        ;(println (format "~a - ~a" l1 l2))
+                        ;(logln (format "~a - ~a" l1 l2))
                         (let-values ([(pP pD) (expose-if-pred p l1 l2)]
                                      [(e1P e1D) (expose-if-effect e1 l)]
                                      [(e2P e2D) (expose-if-effect e2 l)])
@@ -48,7 +49,7 @@
 ;(expose-begin-split e)-> '(list? list?) '(effect ...) '((define label? tail?) ...)
 ;e: list? '(effect? ...)
 (define (expose-begin-split e)
-  ;(println "begin-if")
+  ;(logln "begin-if")
   ;(pretty-display e)
   (match e
     ['() (values '() '())]
@@ -69,7 +70,7 @@
                              [`(if ,p ,e1 ,e2) (let ([l1 (freshLabelTmp)]
                                                      [l2 (freshLabelTmp)]
                                                      [l3 (freshLabelTmp)])
-                                                 ;(println (format "~a - ~a - ~a" l1 l2 l3))
+                                                 ;(logln (format "~a - ~a - ~a" l1 l2 l3))
                                                  (let-values ([(pP pD) (expose-if-pred p l1 l2)]
                                                               [(e1P e1D) (expose-if-effect e1 l3)]
                                                               [(e2P e2D) (expose-if-effect e2 l3)]
@@ -102,7 +103,7 @@
 ;(expose-begin e)-> '(list? list?) '(effect ...) '((define label? tail?) ...)
 ;e: list? '(effect? ...)
 (define (expose-begin-effect e)
-  ;(println "effect:")
+  ;(logln "effect:")
   ;(pretty-display e)
   (let ([eff (expose-begin-flatten e)])
     (expose-begin-split eff)))
@@ -111,12 +112,12 @@
 ;(expose-pred p curLabel)->(tail? list?) '(e/p/t ....) (curDefine  '(define ...))
 ;p: pred
 (define (expose-if-pred p curL1 curL2)
-  ;(println (format "pred: ~a - ~a" curL1 curL2))
+  ;(logln (format "pred: ~a - ~a" curL1 curL2))
   ;(pretty-display p)
   (match p
     [`(if ,p1 ,p2 ,p3) (let ([l1 (freshLabelTmp)]
                              [l2 (freshLabelTmp)])
-                         ;(println (format "~a - ~a" l1 l2))
+                         ;(logln (format "~a - ~a" l1 l2))
                          (let-values ([(p1P p1D) (expose-if-pred p1 l1 l2)]
                                       [(p2P p2D) (expose-if-pred p2 curL1 curL2)]
                                       [(p3P p3D) (expose-if-pred p3 curL1 curL2)])
@@ -144,7 +145,7 @@
 ;(expose-tail t curLabel)->(tail? list?) (curDefine  '(define ...))
 ;t: tail?
 (define (expose-tail t)
-  ;(println t)
+  ;(logln t)
   (match t
     [`(begin ,e ... ,tail) (let-values ([(eP eD) (expose-begin-effect e)]
                                         [(tP tD) (expose-tail tail)])
@@ -178,9 +179,9 @@
 ;(expose-basic-blocks p)->Asm-lang-V4-nested
 ;p:Pred-lang-V4-Block
 (define (expose-basic-blocks p)
-  ;(println "begin")
-  ;(println p)
-  ;(println "start")
+  ;(logln "begin")
+  ;(logln p)
+  ;(logln "start")
   (match p
     [`(module ,f ... ,t) (let-values ([(tP tD) (expose-tail t)])
                            `(module (define L.tmp.0 ,tP) ,@tD ,@(foldl (lambda (func des) (append (expose-func func) des)) '() f)))]

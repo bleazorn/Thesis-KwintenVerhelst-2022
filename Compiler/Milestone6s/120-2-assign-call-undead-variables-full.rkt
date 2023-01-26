@@ -1,7 +1,8 @@
 #lang racket
 
 (require "common/info.rkt"
-         "common/fvar.rkt")
+         "common/fvar.rkt"
+         "log.rkt")
 (provide assign-call-undead-variables-full)
 
 (module+ test
@@ -13,8 +14,8 @@
 ;conf:list? '((aloc? (...)) ...)
 ;assign: list? '((aloc loc) ...)
 (define (assign-call-undead calls conf fs confDel)
-  ;(println fs)
-  ;(println confDel)
+  ;(logln fs)
+  ;(logln confDel)
   (if (null? calls)
       '()
       (let* ([i (index-of-lowest-conf confDel)]
