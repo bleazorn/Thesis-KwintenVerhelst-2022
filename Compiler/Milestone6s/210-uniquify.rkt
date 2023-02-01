@@ -34,8 +34,8 @@
 ;locs: list? '((name aloc) ... (name label) ...)
 (define (uniquify-pred p locs)
   (match p
-    [`(let ,names ,body) (let ([newNames (uniquify-letNames names locs)])
-                           `(let ,(car newNames) ,(uniquify-pred body (second newNames))))]
+    [`(let ,names ,body) (let ([new-names (uniquify-letNames names locs)])
+                           `(let ,(car new-names) ,(uniquify-pred body (second new-names))))]
     [`(if ,p1 ,p2 ,p3) `(if ,(uniquify-pred p1 locs) ,(uniquify-pred p2 locs) ,(uniquify-pred p3 locs))]
     [`(,relop ,a ,b) `(,relop ,(uniquify-triv a locs) ,(uniquify-triv b locs))]
     ['(true) '(true)]
@@ -49,8 +49,8 @@
 ;locs: list? '((name aloc) ... (name label) ...)
 (define (uniquify-value v locs)
   (match v
-    [`(let ,names ,body) (let ([newNames (uniquify-letNames names locs)])
-                           `(let ,(car newNames) ,(uniquify-value body (second newNames))))]
+    [`(let ,names ,body) (let ([new-names (uniquify-letNames names locs)])
+                           `(let ,(car new-names) ,(uniquify-value body (second new-names))))]
     [`(if ,p ,v1 ,v2) `(if ,(uniquify-pred p locs) ,(uniquify-value v1 locs) ,(uniquify-value v2 locs))]
     [`(call ,n ,a ...) `(call ,(uniquify-triv n locs) ,@(map (lambda (tr) (uniquify-triv tr locs)) a))]
     [`(,binop ,t1 ,t2) `(,binop ,(uniquify-triv t1 locs) ,(uniquify-triv t2 locs))]
@@ -62,8 +62,8 @@
 ;locs: list? '((name aloc) ... (name label) ...)
 (define (uniquify-tail t locs)
   (match t
-    [`(let ,names ,body) (let ([newNames (uniquify-letNames names locs)])
-                           `(let ,(car newNames) ,(uniquify-tail body (second newNames))))]
+    [`(let ,names ,body) (let ([new-names (uniquify-letNames names locs)])
+                           `(let ,(car new-names) ,(uniquify-tail body (second new-names))))]
     [`(if ,p ,t1 ,t2) `(if ,(uniquify-pred p locs) ,(uniquify-tail t1 locs) ,(uniquify-tail t2 locs))]
     [`(call ,n ,a ...) `(call ,(uniquify-triv n locs) ,@(map (lambda (tr) (uniquify-triv tr locs)) a))]
     [v (uniquify-value v locs)]))
@@ -81,8 +81,8 @@
 ;locs: list? '((name aloc) ... (name label) ...)
 (define (uniquify-func f locs)
   (match f
-    [`(define ,l (lambda (,n ...) ,t)) (let ([fNames (uniquify-funcNamesLoc n locs)])
-                                         `(define ,(uniquify-triv l fNames) (lambda ,(map (lambda (name) (uniquify-triv name fNames)) n) ,(uniquify-tail t fNames))))]
+    [`(define ,l (lambda (,n ...) ,t)) (let ([func-names (uniquify-funcNamesLoc n locs)])
+                                         `(define ,(uniquify-triv l func-names) (lambda ,(map (lambda (name) (uniquify-triv name func-names)) n) ,(uniquify-tail t func-names))))]
     [_ '()]))
 
 ;
@@ -98,8 +98,8 @@
 ;p: Values-lang-V3?
 (define/contract (uniquify m) (-> values-lang? values-unique-lang?)
   (match m
-    [`(module ,i ,f ... ,a) (let ([funcNames (uniquify-func-names f)])
-                           `(module ,i ,@(map (lambda (func) (uniquify-func func funcNames)) f) ,(uniquify-tail a funcNames)))]
+    [`(module ,i ,f ... ,a) (let ([func-names (uniquify-func-names f)])
+                           `(module ,i ,@(map (lambda (func) (uniquify-func func func-names)) f) ,(uniquify-tail a func-names)))]
     [_ "uniquify failed"]))
          
 (module+ test
@@ -232,24 +232,24 @@
   (check-uniquify (uniquify-tail '(let ((x x)) (+ x x)) '((y y.0))) '(let ((x.1 #f)) (+ x.1 x.1)) "uniquify-tail: failure-04: name not in local")
 ;uniquify
   ;succes
-  (check-uniquify (uniquify '(module (+ 2 2)))
-                '(module (+ 2 2))
+  (check-uniquify (uniquify '(module () (+ 2 2)))
+                '(module () (+ 2 2))
                 "uniquify: succes-1: nothing to uniquify")
-  (check-uniquify (uniquify '(module (let ([x 5]) x)))
-                '(module (let ((x.1 5)) x.1))
+  (check-uniquify (uniquify '(module () (let ([x 5]) x)))
+                '(module () (let ((x.1 5)) x.1))
                 "uniquify: succes-2: one uniquify with integer as value")
-  (check-uniquify (uniquify '(module (let ([x (+ 2 2)]) x)))
-                '(module (let ((x.1 (+ 2 2))) x.1))
+  (check-uniquify (uniquify '(module () (let ([x (+ 2 2)]) x)))
+                '(module () (let ((x.1 (+ 2 2))) x.1))
                 "uniquify: succes-3: one uniquify with operation as value")
-  (check-uniquify (uniquify '(module (let ([x 2]) (let ([x 2]) (+ x x)))))
-                '(module (let ((x.1 2)) (let ((x.2 2)) (+ x.2 x.2))))
+  (check-uniquify (uniquify '(module () (let ([x 2]) (let ([x 2]) (+ x x)))))
+                '(module () (let ((x.1 2)) (let ((x.2 2)) (+ x.2 x.2))))
                 "uniquify: succes-4: double let")
-  (check-uniquify (uniquify '(module (let ([x 1] [y 2]) (+ x y))))
-                  '(module (let ((x.1 1) (y.2 2)) (+ x.1 y.2)))
+  (check-uniquify (uniquify '(module () (let ([x 1] [y 2]) (+ x y))))
+                  '(module () (let ((x.1 1) (y.2 2)) (+ x.1 y.2)))
                   "uniquify: succes-5: let with double names")
-  (check-uniquify (uniquify '(module (let ((x 4) (y 3)) (let ((x 4) (y (let ((x 7)) x))) (+ y x)))))
-                  '(module (let ((x.1 4) (y.2 3)) (let ((x.3 4) (y.4 (let ((x.5 7)) x.5))) (+ y.4 x.3)))) "uniquify: succes-6: nested let and has let val in let")
-  (check-uniquify (uniquify '(module
+  (check-uniquify (uniquify '(module () (let ((x 4) (y 3)) (let ((x 4) (y (let ((x 7)) x))) (+ y x)))))
+                  '(module () (let ((x.1 4) (y.2 3)) (let ((x.3 4) (y.4 (let ((x.5 7)) x.5))) (+ y.4 x.3)))) "uniquify: succes-6: nested let and has let val in let")
+  (check-uniquify (uniquify '(module ()
                                  (define odd?
                                    (lambda (x)
                                      (if (= x 0)
@@ -263,7 +263,7 @@
                                        (let ([y (+ x -1)])
                                          (call odd? y)))))
                                (call even? 5)))
-                  '(module
+                  '(module ()
                        (define L.odd?.1
                          (lambda (x.3)
                            (if (= x.3 0)
@@ -278,27 +278,27 @@
                                (call L.odd?.1 y.6)))))
                      (call L.even?.2 5))
                   "uniquify: succes-6: tail calls")
-  (check-uniquify (uniquify '(module
+  (check-uniquify (uniquify '(module ()
                                  (define addn?
                                    (lambda (x n)
                                      (+ x n)))
                                (let ([x (+ 4 5)])
                                  (call addn? x 5))))
-                  '(module
+                  '(module ()
                        (define L.addn?.1
                          (lambda (x.2 n.3)
                            (+ x.2 n.3)))
                      (let ([x.4 (+ 4 5)])
                        (call L.addn?.1 x.4 5)))
                   "uniquify: succes-07: tail calls with int and names")
-  (check-uniquify (uniquify '(module
+  (check-uniquify (uniquify '(module ()
                                  (define addn?
                                    (lambda (x n)
                                      (+ x n)))
                                (let ([x 5])
                                  (let ([y (call addn? x 5)])
                                    (call addn? x y)))))
-                  '(module
+                  '(module ()
                        (define L.addn?.1
                          (lambda (x.2 n.3)
                            (+ x.2 n.3)))

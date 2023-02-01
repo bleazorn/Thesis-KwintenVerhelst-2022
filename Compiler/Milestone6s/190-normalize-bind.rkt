@@ -1,6 +1,8 @@
 #lang racket
 
-(require "log.rkt")
+(require "log.rkt"
+         "langs/imp-mf-lang.rkt"
+         "langs/proc-imp-cmf-lang.rkt")
 (provide normalize-bind)
 
 (module+ test
@@ -81,7 +83,7 @@
 ;Compiles Imp-lang-V3-mf? to Imp-lang-V3-cmf?, pushing set! under begin so that the right-hand-side of each set! is simple value-producing operation. This normalizes Imp-lang-V3-mf? with respect to the equations
 ;(normalize-bind p) → Imp-lang-V3-cmf?
 ;p: Imp-lang-V3-mf?
-(define (normalize-bind p)
+(define/contract (normalize-bind p) (-> imp-mf-lang? proc-imp-cmf-lang?)
   (match p
     [`(module ,i ,f ... ,t) `(module ,i ,@(map normalize-func f) ,(normalize-entry t))]
     [_ "normalize-bind failed"]))
@@ -139,22 +141,22 @@
 
   ;normalize-bind
   ;succes
-  (check-equal? (normalize-bind '(module (+ 2 2)))
-                '(module (+ 2 2))
+  (check-equal? (normalize-bind '(module () (+ 2 2)))
+                '(module () (+ 2 2))
                 "normalize-bind: succes-1: value tail no normalizing")
-  (check-equal? (normalize-bind '(module (begin (set! x.1 2) (set! x.2 2) (+ x.1 x.2))))
-                '(module (begin (set! x.1 2) (set! x.2 2) (+ x.1 x.2)))
+  (check-equal? (normalize-bind '(module () (begin (set! x.1 2) (set! x.2 2) (+ x.1 x.2))))
+                '(module () (begin (set! x.1 2) (set! x.2 2) (+ x.1 x.2)))
                 "normalize-bind: succes-2: begin tail no normalizing")
-  (check-equal? (normalize-bind '(module (begin (set! x.1 2) (set! x.2 (begin (set! x.2 3) (+ x.2 2))) (+ x.1 x.2))))
-                '(module (begin (set! x.1 2) (begin (set! x.2 3) (set! x.2 (+ x.2 2))) (+ x.1 x.2)))
+  (check-equal? (normalize-bind '(module () (begin (set! x.1 2) (set! x.2 (begin (set! x.2 3) (+ x.2 2))) (+ x.1 x.2))))
+                '(module () (begin (set! x.1 2) (begin (set! x.2 3) (set! x.2 (+ x.2 2))) (+ x.1 x.2)))
                 "normalize-bind: succes-3: begin effect one normalizing")
-  (check-equal? (normalize-bind '(module (begin (set! x.1 2) (set! x.2 (begin (set! x.2 3) (begin (set! z.3 5) (+ x.2 z.3)))) (+ x.1 x.2))))
-                '(module (begin (set! x.1 2) (begin (set! x.2 3) (begin (set! z.3 5) (set! x.2 (+ x.2 z.3)))) (+ x.1 x.2)))
+  (check-equal? (normalize-bind '(module () (begin (set! x.1 2) (set! x.2 (begin (set! x.2 3) (begin (set! z.3 5) (+ x.2 z.3)))) (+ x.1 x.2))))
+                '(module () (begin (set! x.1 2) (begin (set! x.2 3) (begin (set! z.3 5) (set! x.2 (+ x.2 z.3)))) (+ x.1 x.2)))
                 "normalize-bind: succes-4: begin value in begin effect two normalizing")
-  (check-equal? (normalize-bind '(module (begin (set! x.1 2) (set! x.2 (begin (set! x.2 3) (begin (set! z.3 5) (begin (set! a.4 15) (+ x.2 z.3))))) (+ x.1 x.2))))
-                '(module (begin (set! x.1 2) (begin (set! x.2 3) (begin (set! z.3 5) (begin (set! a.4 15) (set! x.2 (+ x.2 z.3))))) (+ x.1 x.2)))
+  (check-equal? (normalize-bind '(module () (begin (set! x.1 2) (set! x.2 (begin (set! x.2 3) (begin (set! z.3 5) (begin (set! a.4 15) (+ x.2 z.3))))) (+ x.1 x.2))))
+                '(module () (begin (set! x.1 2) (begin (set! x.2 3) (begin (set! z.3 5) (begin (set! a.4 15) (set! x.2 (+ x.2 z.3))))) (+ x.1 x.2)))
                 "normalize-bind: succes-4: begin value in begin effect in begin effect tree normalizing")
-  (check-equal? (normalize-bind '(module
+  (check-equal? (normalize-bind '(module ()
                                      (if (false)
                                          (if (not (if (not (false)) (< 419 -178) (false)))
                                              (begin
@@ -200,7 +202,7 @@
                                                (* -242 350))
                                              (+ 189 -501))
                                          -462)))
-                '(module
+                '(module ()
                      (if (false)
                          (if (not (if (not (false)) (< 419 -178) (false)))
                              (begin
@@ -242,9 +244,9 @@
                              (+ 189 -501))
                          -462))
                 "normalize-bind: succes-5: complex program if begin")
-  (check-equal? (normalize-bind '(module (define L.meth.1 (lambda (x.1) (begin (set! x.2 (begin (set! x.2 3) (begin (set! z.3 5) (begin (set! a.4 15) (+ x.2 z.3))))) (+ x.1 x.2))))
+  (check-equal? (normalize-bind '(module () (define L.meth.1 (lambda (x.1) (begin (set! x.2 (begin (set! x.2 3) (begin (set! z.3 5) (begin (set! a.4 15) (+ x.2 z.3))))) (+ x.1 x.2))))
                                    (call L.meth.1 2)))
-                '(module (define L.meth.1 (lambda (x.1) (begin (begin (set! x.2 3) (begin (set! z.3 5) (begin (set! a.4 15) (set! x.2 (+ x.2 z.3))))) (+ x.1 x.2))))
+                '(module () (define L.meth.1 (lambda (x.1) (begin (begin (set! x.2 3) (begin (set! z.3 5) (begin (set! a.4 15) (set! x.2 (+ x.2 z.3))))) (+ x.1 x.2))))
                    (call L.meth.1 2))
                 "normalize-bind: succes-6: tail call")
   )
