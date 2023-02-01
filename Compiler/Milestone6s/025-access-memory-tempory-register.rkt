@@ -79,5 +79,5 @@
 ; p: any?
 (define (access-memory-tempory-register p)
     (match p
-    [`(begin ,s ...) `(begin ,@(foldl (lambda (set n) (append n (access-sets set))) '() s))]
+    [`(begin ,i ,s ...) `(begin ,i ,@(foldl (lambda (set n) (append n (access-sets set))) '() s))]
     [_ #f]))

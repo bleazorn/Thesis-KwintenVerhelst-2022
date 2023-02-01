@@ -71,8 +71,8 @@
     [`(if ,p ,t1 ,t2) (let* ([pLoc (uncover-pred p locals)]
                              [tLoc (uncover-tail t1 pLoc)])
                         (uncover-tail t2 tLoc))]
-    [`(jump ,trg ,l ...) (foldl (lambda (e l) (uncover-triv e l)) locals (cons trg l))]
-    [`(invoke ,a ,b) (uncover-triv b (uncover-triv a locals))]
+    [`(jump-call ,trg ,l ...) (foldl (lambda (e l) (uncover-triv e l)) locals (cons trg l))]
+    [`(jump-return ,trg ,l ...) (foldl (lambda (e l) (uncover-triv e l)) locals (cons trg l))]
     [_ #f]))
 
 ;

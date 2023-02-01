@@ -83,7 +83,7 @@
 ;p: Imp-lang-V3-mf?
 (define (normalize-bind p)
   (match p
-    [`(module ,f ... ,t) `(module ,@(map normalize-func f) ,(normalize-entry t))]
+    [`(module ,i ,f ... ,t) `(module ,i ,@(map normalize-func f) ,(normalize-entry t))]
     [_ "normalize-bind failed"]))
 
 

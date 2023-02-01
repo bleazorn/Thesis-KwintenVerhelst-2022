@@ -54,7 +54,7 @@
 ;p: paren-risc-v-V6-cap?
 (define (cap-mode-off p)
   (match p
-    [`(begin ,s ...)  `(begin ,@(map cap-effect s))]
+    [`(begin ,i ,s ...)  `(begin ,i ,@(map cap-effect s))]
     [_ "cap mode on failed"]))
 
 (module+ test

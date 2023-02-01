@@ -53,8 +53,8 @@
   (match t
     [`(begin ,e ... ,tail) `(begin ,@(map (lambda (eff) (replace-effect eff assign)) e) ,(replace-tail tail assign))]
     [`(if ,p ,t1 ,t2) `(if ,(replace-pred p assign) ,(replace-tail t1 assign) ,(replace-tail t2 assign))]
-    [`(jump ,trg ,l ...) `(jump ,(replace-triv trg assign))]
-    [`(invoke ,a ,b) `(invoke ,(replace-triv a assign) ,(replace-triv b assign))]
+    [`(jump-call ,trg ,l ...) `(jump-call ,(replace-triv trg assign))]
+    [`(jump-return ,trg ,l ...) `(jump-return ,(replace-triv trg assign))]
     [_ #f]))
 
 ;

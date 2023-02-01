@@ -7,6 +7,7 @@
 MVersion=6s
 MEmulator="off"
 MVerbose="on"
+CFLAGS=
 
 #local variables
 varCurLoc=${PWD}
@@ -35,29 +36,33 @@ compiler:
 
 #Code
 %.S: %.txt
+	@echo "Only Compile"
 	@echo "Compile program in: " $(varCurLoc)/$(varCurLoc)
 	racket $(varCompile) $< 
 
 ifeq ($(MEmulator), "off")
 %.elf: %.txt
+	@echo "No emulator"
 	@echo "Compile program in: " $(varCurLoc)/$(varCurLoc)
-	racket $(varCompile) $<
+	racket $(varCompile) $(CFLAGS) $<
 	@echo "Make elf for " $(varCurLoc)/$(varCurLoc)
 	make -C $(varBuilder) $(varCurLoc)/$@
 else
 ifeq ($(MVerbose), "off")
 %.elf: %.txt
-	@echo
+	@echo "non verbose"
 	@echo "Compile program in: " $(varCurLoc)/$(varCurLoc)
-	racket $(varCompile) $<
+	racket $(varCompile) $(CFLAGS) $<
 	@echo "\nMake elf for " $(varCurLoc)/$(varCurLoc)
 	make -C $(varBuilder) $(varCurLoc)/$@
 	@echo "Run program: " $(varCurLoc)/$(varCurLoc)
 	~/$(MEmulator) $(varCurLoc)/$@ -V
 else
 %.elf: %.txt
+	@echo "Verbose"
+	@echo $(CFLAGS)
 	@echo "Compile program in: " $(varCurLoc)/$(varCurLoc)
-	racket $(varCompile) $<
+	racket $(varCompile) $(CFLAGS) $<
 	@echo "Make elf for " $(varCurLoc)/$(varCurLoc)
 	make -C $(varBuilder) $(varCurLoc)/$@
 	@echo "Run program: " $(varCurLoc)/$(varCurLoc)
@@ -89,7 +94,7 @@ examl:
 
 exampl:
 	@echo "Compile program in: " $(varCurLoc)/$(varCurLoc)
-	racket $(varCompile) example.txt
+	racket $(varCompile) -s -o example.S example.txt
 	@echo "\nMake elf for " $(varCurLoc)
 	make -C $(varLinBuilder) $(varCurLoc)/example.elf
 	@echo "Run program: " $(varCurLoc)
@@ -97,7 +102,13 @@ exampl:
 
 test:
 	raco test Milestone$(MVersion)/*.rkt
-
+combined:
+	/home/kwinten/cheri/output/sdk/bin/clang --target=riscv64-unknown-elf -march=rv64imxcheri -mabi=l64pc128 -mno-relax    -c -o /media/kwinten/Data1/Thesis/New/Compiler/main.o /media/kwinten/Data1/Thesis/New/Compiler/main.S
+	/home/kwinten/cheri/output/sdk/bin/clang --target=riscv64-unknown-elf -march=rv64imxcheri -mabi=l64pc128 -mno-relax    -c -o /media/kwinten/Data1/Thesis/New/Compiler/example.o /media/kwinten/Data1/Thesis/New/Compiler/example.S
+	/home/kwinten/cheri/output/sdk/bin/clang --target=riscv64-unknown-elf -march=rv64imxcheri -mabi=l64pc128 -mno-relax    -c -o /media/kwinten/Data1/Thesis/New/Compiler/ap.o /media/kwinten/Data1/Thesis/New/Compiler/ap.S
+	/home/kwinten/cheri/output/sdk/bin/clang --target=riscv64-unknown-elf -march=rv64imxcheri -mabi=l64pc128 -mno-relax    -c -o /media/kwinten/Data1/Thesis/New/Compiler/Builders/elf-cheri-risc-v-builder-linear-cap/sail_boot.o /media/kwinten/Data1/Thesis/New/Compiler/Builders/elf-cheri-risc-v-builder-linear-cap/sail_boot.S
+	/home/kwinten/cheri/output/sdk/bin/clang --target=riscv64-unknown-elf-64 -march=rv64gcxcheri -mno-relax -T /media/kwinten/Data1/Thesis/New/Compiler/Builders/elf-cheri-risc-v-builder-linear-cap/sail.ld -nostdlib -o /media/kwinten/Data1/Thesis/New/Compiler/main.elf /media/kwinten/Data1/Thesis/New/Compiler/main.o /media/kwinten/Data1/Thesis/New/Compiler/example.o /media/kwinten/Data1/Thesis/New/Compiler/ap.o /media/kwinten/Data1/Thesis/New/Compiler/Builders/elf-cheri-risc-v-builder-linear-cap/sail_boot.o
+	~/T/sail-borrowed-cap/sail-cheri-riscv/ocaml_emulator/cheri_riscv_ocaml_sim_RV64 /media/kwinten/Data1/Thesis/New/Compiler/main.elf
 generate:
 	raco make tester.rkt
 	raco make Milestone2/main.rkt

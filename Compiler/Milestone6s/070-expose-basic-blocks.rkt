@@ -183,8 +183,8 @@
   ;(logln p)
   ;(logln "start")
   (match p
-    [`(module ,f ... ,t) (let-values ([(tP tD) (expose-tail t)])
-                           `(module (define L.tmp.0 ,tP) ,@tD ,@(foldl (lambda (func des) (append (expose-func func) des)) '() f)))]
+    [`(module ,i ,f ... ,t) (let-values ([(tP tD) (expose-tail t)])
+                           `(module ,i (define L.tmp.0 ,tP) ,@tD ,@(foldl (lambda (func des) (append (expose-func func) des)) '() f)))]
     [_ "blocks failed"]))
 
 #;(expose-basic-blocks '(module (define L.odd?.1

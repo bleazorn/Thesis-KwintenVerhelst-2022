@@ -130,7 +130,7 @@
 ;p : para-asm-lang-v6?
 (define (patch-instructions p)
   (match p
-    [`(begin ,s ...)  `(begin ,@(foldl (lambda (e sets) (append sets (patch-effect e))) '() s))]
+    [`(begin ,i ,s ...)  `(begin ,i ,@(foldl (lambda (e sets) (append sets (patch-effect e))) '() s))]
     [_ #f]))
 
 #;(patch-instructions '(begin

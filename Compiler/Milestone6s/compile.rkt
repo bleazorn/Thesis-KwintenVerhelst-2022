@@ -22,10 +22,9 @@
              ([i (reverse (inclusive-range start end))])
      (values (let ([fun (list-ref (steps) i)])
                (logln (format "~a:" fun))
+               (pretty-display (format "~a:" fun))
                (let ([res (fun p)])
-                 (pretty-display (cond [(list? res) (let-values ([(tak dro) (split-at res 1)])
-                                                      (append tak '(()) dro))]
-                                       [else res]))
+                 (pretty-display res)
                  (display (format "\n\n"))
                  res)))))
 
@@ -97,6 +96,7 @@
 (define setup-steps (compose setup-passes setup-cc))
 
 (define (compile-file file)
+  (println (format "test: ~a" (output-file)))
   (parameterize ([steps (setup-steps (steps))]
                  [fvarRegister 'csp]
                  [stack-direction '+])
@@ -149,14 +149,14 @@
 (module+ test
   (check-equal? #t #t "test"))
 
-;#|
-#;(parameterize ([steps (stkTokens (steps))]
+#|
+(parameterize ([steps (stkTokens (steps))]
                [fvarRegister 'csp]
                [stack-direction '+]
                ;[steps (halfStack (risc-v (steps)))])
                [current-parameter-registers '()]
                [current-assignable-registers '()]) 
-  (compileStepsDis 2 (sub1 (length (steps))) swapProgram))
+  (compileStepsDis 2 (sub1 (length (steps))) simpleProgram))
 ;|#
 ;(compileStepsDis 2 (sub1 (length (steps))) simpleProgram)
 ;(interp-values-lang bigProgram)

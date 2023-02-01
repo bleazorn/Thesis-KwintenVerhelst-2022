@@ -118,7 +118,7 @@ sltiu reg, reg, int12		compares < unsigned 12 bit integer
 ; p: any?
 (define (generate-risc-v p)
     (match p
-    [`(begin ,s ...) (foldl (lambda (s string) (format "~a~a" string (generate-sets s))) "" s)]
+    [`(begin ,i ,s ...) (foldl (lambda (s string) (format "~a~a" string (generate-sets s))) "" s)]
     [_ #f]))
 
 (module+ test

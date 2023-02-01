@@ -107,7 +107,7 @@
 (define (check-values-lang p)
   (match p
     [`(module ,f ... ,t) (let ([funcs (map second f)])
-                           `(module ,@(map (lambda (fun) (check-func fun funcs)) f) ,(check-tail t '() funcs)))]
+                           `(module () ,@(map (lambda (fun) (check-func fun funcs)) f) ,(check-tail t '() funcs)))]
     [_ (error "check values-lang failed in module")]))
 
 (module+ test

@@ -115,8 +115,8 @@
   (match t
     [`(begin ,e ... ,tail) `(begin ,@(select-begin e) ,(select-tail tail))]
     [`(if ,p ,t1 ,t2) `(if ,(select-pred p) ,(select-tail t1) ,(select-tail t2))]
-    [`(jump ,l ,a ...) `(jump ,l ,@a)]
-    [`(invoke ,a ,b) `(invoke ,a ,b)]
+    [`(jump-call ,l ,a ...) `(jump-call ,l ,@a)]
+    [`(jump-return ,l ,a ...) `(jump-return ,l ,@a)]
     [_ #f]))
 
 ;

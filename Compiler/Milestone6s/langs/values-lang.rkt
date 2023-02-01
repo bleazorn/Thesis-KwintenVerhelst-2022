@@ -8,10 +8,11 @@
  (all-defined-out))
 
 @define-grammar/pred[values-lang
-  #:literals (name? int64?)
+  #:literals (info? name? int64?)
   #:datum-literals (define lambda module let call true false not if * + < <= =
    >= > !=)
-  [p     (module (define x (lambda (x ...) tail)) ... tail)]
+  [p     (module info (define x (lambda (x ...) tail)) ... tail)]
+  [info info?]
   [pred  (relop triv triv)
          (true)
          (false)

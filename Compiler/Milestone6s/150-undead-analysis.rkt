@@ -134,10 +134,12 @@
       [`(if ,p ,t1 ,t2) (let* ([u1 (undead-tail t1 `(,undead-out))]    ;'((u) (r))
                                [u2 (undead-tail t2 `(,undead-out))])
                           (undead-if p u1 u2 undead-rest))]
-      [`(jump ,trg ,l ...) (let ([uJump (cond [(or (aloc? trg) (fvar? trg) (register? trg)) (addCallJump `(,trg)) (cons trg l)]
+      [`(jump-call ,trg ,l ...) (let ([uJump (cond [(or (aloc? trg) (fvar? trg) (register? trg)) (addCallJump `(,trg)) (cons trg l)]
                                               [else l])])
                              (cons uJump (cons l undead-rest)))]
-      [`(invoke ,a ,b) (cons `(,a ,b) (cons `(,a ,b) undead-rest))]
+      [`(jump-return ,trg ,l ...) (let ([uJump (cond [(or (aloc? trg) (fvar? trg) (register? trg)) (cons trg l)]
+                                              [else l])])
+                             (cons uJump (cons l undead-rest)))]
       [_ "tail"])))
 
 ;

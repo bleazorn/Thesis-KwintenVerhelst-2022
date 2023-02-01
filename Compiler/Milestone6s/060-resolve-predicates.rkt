@@ -70,7 +70,7 @@
 ;p:Asm-lang-V4-Block
 (define (resolve-predicates p)
   (match p
-    [`(module ,b ...) `(module ,@(map resolve-b b))]
+    [`(module ,i ,b ...) `(module ,i ,@(map resolve-b b))]
     [_ "resolve predicates failed"]))
 
 (module+ test

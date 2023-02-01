@@ -21,8 +21,11 @@
          "121-2-assign-registers-half.rkt"
          "121-1-assign-frame-variables-half.rkt"
          "100-replace-locations.rkt"
+         "095-secure-stack-tokens.rkt"
+         "094-clean-registers.rkt"
+         "091-create-got.rkt"
+         "090-replace-labels-to-got.rkt"
          "090-change-frame-pointer.rkt"
-         "090-secure-stack-tokens.rkt"
          "080-implement-fvars.rkt"     
          "070-expose-basic-blocks.rkt"
          "060-resolve-predicates.rkt"
@@ -83,12 +86,16 @@
                      (list-set
                       (list-set l wI wrap-cheri-risc-v-run-time-secure)
                       gI access-memory-sub-add-frame-register)
-                     sI secure-stack-tokens)]
+                     sI (list replace-labels-to-got
+                              create-got
+                              clean-registers
+                              secure-stack-tokens
+                             ))]
          [tL (take switchedL iI)]
          [dL (drop switchedL iI)])
-    (append tL
+    (flatten (append tL
             (list call-convention-secure)
-            dL)))
+            dL))))
 
 ;half stack
 (define (halfStack l)

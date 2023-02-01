@@ -98,8 +98,8 @@
 ;p: Values-lang-V3?
 (define/contract (uniquify m) (-> values-lang? values-unique-lang?)
   (match m
-    [`(module ,f ... ,a) (let ([funcNames (uniquify-func-names f)])
-                           `(module ,@(map (lambda (func) (uniquify-func func funcNames)) f) ,(uniquify-tail a funcNames)))]
+    [`(module ,i ,f ... ,a) (let ([funcNames (uniquify-func-names f)])
+                           `(module ,i ,@(map (lambda (func) (uniquify-func func funcNames)) f) ,(uniquify-tail a funcNames)))]
     [_ "uniquify failed"]))
          
 (module+ test

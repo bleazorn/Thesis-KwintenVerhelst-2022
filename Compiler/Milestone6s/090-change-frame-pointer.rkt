@@ -64,7 +64,8 @@
   (match t
     [`(begin ,e ... ,tail) `(begin ,@(map (lambda (eff) (change-effect eff frames assign)) e) ,(change-tail tail frames assign))]
     [`(if ,p ,t1 ,t2) `(if ,(change-pred p frames assign) ,(change-tail t1 frames assign) ,(change-tail t2 frames assign))]
-    [`(jump ,trg) `(jump ,trg)]
+    [`(jump-call ,trg) `(jump ,trg)]
+    [`(jump-return ,trg) `(jump ,trg)]
     [`(invoke ,a ,b) `(invoke ,a ,b)]
     [_ #f]))
 
@@ -73,13 +74,13 @@
 ;f: '(define label? info? tail?)
 (define (change-func f)
   (match f
-    [`(define ,l ,i ,t) `(define ,l ,(change-tail t (getInfo i getNewFrames) (getInfo i getAssignment)))]
+    [`(define ,l ,i ,t) `(define ,l ,i ,(change-tail t (getInfo i getNewFrames) (getInfo i getAssignment)))]
     [_ #t]))
 
 
 (define (change-frame-pointer p)
   (match p
-    [`(module ,i ,f ... ,pro) `(module ,@(map change-func f) ,(change-tail pro (getInfo i getNewFrames) (getInfo i getAssignment)))]
+    [`(module ,i ,f ... ,pro) `(module () ,@(map change-func f) ,(change-tail pro (getInfo i getNewFrames) (getInfo i getAssignment)))]
     [_ "replace locations failed"]))
 
 #;(change-frame-pointer '(module ((assignment ((tmp-ra.11 fv0))))

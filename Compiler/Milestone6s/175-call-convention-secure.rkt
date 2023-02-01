@@ -38,8 +38,8 @@
   (match t
     [`(begin ,e ... ,tail) `(begin ,@(map call-effect e) ,(call-tail tail return-p))]
     [`(if ,p ,t1 ,t2) `(if ,(call-pred p) ,(call-tail t1 return-p) ,(call-tail t2 return-p))]
-    [`(jump ,l ,a ...) (cond [return-p `(jump ,l ,@a)]                                               ;Call  
-                             [else `(invoke ,(current-return-address-register) cfp)])]               ;Return
+    [`(jump-call ,l ,a ...) `(jump-call ,l ,@a)]                                                   ;Call
+    [`(jump-return ,l ,a ...) `(jump-return ,l ,@a)]                                               ;Return
     [_ #f]))
 
 ;

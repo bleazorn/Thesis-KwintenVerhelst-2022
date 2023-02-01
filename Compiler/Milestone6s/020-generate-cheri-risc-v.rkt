@@ -187,7 +187,8 @@ sltiu reg, reg, int12		compares < unsigned 12 bit integer
   (match s 
     [`(set! ,a ,b) (generate-set s)]                               ;set
     
-    [`(with-label ,l ,a) (string-append (format "~a:\n" l)
+    [`(with-label ,l ,a) (string-append (indent-instr (format ".global ~a" l))
+                                        (format "~a:\n" l)
                                         (indent-instr (format "addi s6, s6, ~a" (oneUpLabel)))
                                         (generate-sets a))]        ;set label 
     [`(jump ,l) (generate-jump s)]                                 ;unconditional jump
@@ -210,7 +211,7 @@ sltiu reg, reg, int12		compares < unsigned 12 bit integer
 ; p: any?
 (define (generate-cheri-risc-v p)
     (match p
-    [`(begin ,s ...) (foldl (lambda (s string) (format "~a~a" string (generate-sets s))) "" s)]
+    [`(begin ,i ,s ...) `(begin ,i ,(foldl (lambda (s string) (format "~a~a" string (generate-sets s))) "" s))]
     [_ #f]))
 
 (module+ test

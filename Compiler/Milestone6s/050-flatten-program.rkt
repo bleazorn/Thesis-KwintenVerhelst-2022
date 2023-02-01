@@ -30,7 +30,7 @@
 ;p: Asm-lang-V2-nested?
 (define (flatten-program p)
   (match p
-    [`(module ,b ...) `(begin ,@(foldl (lambda (beg l) (append l (flatten-b beg))) '() b))]
+    [`(module ,i ,b ...) `(begin ,i ,@(foldl (lambda (beg l) (append l (flatten-b beg))) '() b))]
     [_ #f]))
 
 

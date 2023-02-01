@@ -76,7 +76,7 @@
                                                             `(return-point ,rp-label
                                                                            (begin ,@(map (lambda (arg par) `(set! ,par ,arg)) (append (reverse fraArg) regArg) (append (reverse fraPara) regPara))
                                                                                   (set! ,(current-return-address-register) ,rp-label)
-                                                                                  (jump ,n ,(current-frame-base-pointer-register) ,(current-return-address-register) ,@regPara ,@fraPara)))))]
+                                                                                  (jump-call ,n ,(current-frame-base-pointer-register) ,(current-return-address-register) ,@regPara ,@fraPara)))))]
                              [(integer? n) n]
                              [else #f])]
     [val val]))
@@ -104,11 +104,11 @@
                                                                      [(fraArg fraPara) (getFrameVar a)])
                                                           `(begin ,@(map (lambda (arg par) `(set! ,par ,arg)) (append (reverse fraArg) regArg) (append (reverse fraPara) regPara))
                                                                   (set! ,(current-return-address-register) ,tmp-ra)
-                                                                  (jump ,n ,(current-frame-base-pointer-register) ,(current-return-address-register) ,@regPara ,@fraPara)))]              
+                                                                  (jump-call ,n ,(current-frame-base-pointer-register) ,(current-return-address-register) ,@regPara ,@fraPara)))]              
                              [(integer? n) n]
                              [else #f])]
     [val `(begin (set! ,(current-return-value-register) ,val)
-                 (jump ,tmp-ra ,(current-frame-base-pointer-register) ,(current-return-value-register)))]))
+                 (jump-return ,tmp-ra ,(current-frame-base-pointer-register) ,(current-return-value-register)))]))
 
 ;
 ;(impose-entry e)->tail? info?
@@ -140,7 +140,7 @@
 (define (impose-calling-conventions-half p)
   (resetCurStack)
   (match p
-    [`(module ,f ... ,t) (let ([funcs (map impose-func f)]
+    [`(module ,i ,f ... ,t) (let ([funcs (map impose-func f)]
                                [tmp-ra (freshTmpRa)])
                            (let-values ([(entry info) (impose-entry t tmp-ra)])
                              `(module ,info ,@funcs (begin (set! ,tmp-ra ,(current-return-address-register)) ,entry))))]

@@ -88,7 +88,7 @@
 ;f: '(define label? tail?)
 (define (implement-func f)
   (match f
-    [`(define ,l ,t) `(define ,l ,(implement-tail t))]
+    [`(define ,l ,i ,t) `(define ,l ,(implement-tail t))]
     [_ #f]))
 
 ;
@@ -97,7 +97,7 @@
 (define (implement-fvars p)
   (resetOffSet)
   (match p
-    [`(module ,f ... ,t) `(module ,@(map implement-func f) ,(implement-tail t))]
+    [`(module ,i ,f ... ,t) `(module ,i ,@(map implement-func f) ,(implement-tail t))]
     [_ "implement fvars failed"]))
 
 (module+ test

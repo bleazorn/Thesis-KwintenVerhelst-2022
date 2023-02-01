@@ -57,7 +57,7 @@
 ;p: Values-lang-V3-unique?
 (define (sequentialize-let p)
   (match p
-    [`(module ,f ... ,t) `(module ,@(map sequentialize-func f) ,(sequentialize-tail t))]
+    [`(module ,i ,f ... ,t) `(module ,i ,@(map sequentialize-func f) ,(sequentialize-tail t))]
     [_ "sequentialize-let failed"]))
 
 (module+ test

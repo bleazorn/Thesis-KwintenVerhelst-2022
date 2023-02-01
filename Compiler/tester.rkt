@@ -10,10 +10,10 @@
 
 ;(define emulatorLoc "T/sail-cheri-riscv/c_emulator/cheri_riscv_sim_RV64")
 (define emulatorLoc "T/sail-borrowed-cap/sail-cheri-riscv/ocaml_emulator/cheri_riscv_ocaml_sim_RV64")
-
+(define flags "-s -o tmpTest.S")
 (define (check-program-file program result)
   (define-values (sp out in err)
-    (subprocess #f #f #f "/bin/bash" "./tester.sh" program (number->string result) emulatorLoc))
+    (subprocess #f #f #f "/bin/bash" "./tester.sh" program (number->string result) emulatorLoc flags))
   (define output (port->string out))
   (define error (port->string err))
   (close-input-port out)
@@ -68,10 +68,7 @@
 
 ;RandomTest
   ;#|
-  (parameterize ([steps (halfStack (steps))])
-                 ;[current-parameter-registers '()]
-                 ;[current-assignable-registers '()]) 
-    (randomTesting 50))
+  (randomTesting 50)
   ;|#
   
 ;Milestone 2 en 3

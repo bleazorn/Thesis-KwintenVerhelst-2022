@@ -113,8 +113,8 @@ Any variable defined during a move instruction is in conflict with every variabl
     [`(if ,p ,t1 ,t2) (conflict-tail t2 (third undead-outs)
                                      (conflict-tail t1 (second undead-outs)
                                                     (conflict-pred p (first undead-outs) conf)))]
-    [`(jump ,trg ,l ...) (conflict-aloc trg '() '() undead-outs conf)]
-    [`(invoke ,a ,b) (conflict-aloc a '() '(b) undead-outs (conflict-aloc b '() '(a) undead-outs conf))]
+    [`(jump-call ,trg ,l ...) (conflict-aloc trg '() '() undead-outs conf)]
+    [`(jump-return ,trg ,l ...) (conflict-aloc trg '() '() undead-outs conf)]
     [_ #f]
     ))
 

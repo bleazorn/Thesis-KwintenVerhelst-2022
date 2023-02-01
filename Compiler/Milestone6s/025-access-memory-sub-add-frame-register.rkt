@@ -96,5 +96,5 @@
 ; p: any?
 (define (access-memory-sub-add-frame-register p)
     (match p
-    [`(begin ,s ...) `(begin ,@(foldl (lambda (set n) (append n (access-sets set))) '() s))]
+    [`(begin ,i ,s ...) `(begin ,i ,@(foldl (lambda (set n) (append n (access-sets set))) '() s))]
     [_ #f]))
