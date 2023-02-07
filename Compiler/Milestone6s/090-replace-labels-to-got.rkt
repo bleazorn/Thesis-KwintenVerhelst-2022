@@ -2,6 +2,7 @@
 
 (require "common/info.rkt")
 (require "common/fvar.rkt"
+         "common/register.rkt"
          "langs/nested-asm-lang-jumps.rkt"
          "langs/nested-asm-lang-fvars.rkt")
 (provide replace-labels-to-got)
@@ -14,9 +15,9 @@
 (define (replace-label trg replace-labels)
   (let ([loc (second (assoc trg replace-labels))])
     `(begin
-       (set! ct0 (cgp + ,(* loc (framesize))))
-       (set! ct6 (cgp + ,(* (add1 loc) (framesize))))
-       (invoke ct0 ct6))))
+       (set! ,(current-invoke-jump-register) ,(newGvar loc))
+       (set! ,(current-invoke-data-register) ,(newGvar (add1 loc)))
+       (invoke ,(current-invoke-jump-register) ,(current-invoke-data-register)))))
 
 ;
 ;(replace-pred p assign)->pred?
@@ -86,122 +87,172 @@
                               `(module ,i ,@(map (lambda (func) (replace-func func replace-labels)) f) ,(replace-tail-begin t replace-labels)))]
     [_ "replace locations failed"]))
 
-#;(replace-labels-to-got '(module
-                            ((got-labels ((L.swap.1 0))))
-                          (define L.swap.1
-                            ()
-                            (begin
-                              (set! fv4 cra)
-                              (set! fv0 fv0)
-                              (set! fv0 fv1)
-                              (if (< fv0 fv0)
-                                  (begin
-                                    (set! a0 fv0)
-                                    (begin
-                                      ((set! a0 0)
-                                       (set! a1 0)
-                                       (set! a2 0)
-                                       (set! a3 0)
-                                       (set! a4 0)
-                                       (set! t0 0)
-                                       (set! t1 0)
-                                       (set! t2 0)
-                                       (set! t3 0)
-                                       (set! t4 0)
-                                       (set! t5 0)
-                                       (set! t6 0))
-                                      (invoke cra cfp)))
-                                  (begin
-                                    (begin
-                                      (begin
-                                        (set! fv2 cra)
-                                        (setLinear! fv3 cfp)
-                                        (split csp csp cfp 16384)
-                                        (return-point L.rpLabel.6
-                                                      (begin
-                                                        (set! fv6 fv0)
-                                                        (set! fv5 fv0)
-                                                        (set! cra L.rpLabel.6)
-                                                        (begin
-                                                          (seal cra cfp 152678)
-                                                          (begin
-                                                            ((set! a0 0)
-                                                             (set! a1 0)
-                                                             (set! a2 0)
-                                                             (set! a3 0)
-                                                             (set! a4 0)
-                                                             (set! t0 0)
-                                                             (set! t1 0)
-                                                             (set! t2 0)
-                                                             (set! t3 0)
-                                                             (set! t4 0)
-                                                             (set! t5 0)
-                                                             (set! t6 0))
-                                                            (jump-call L.swap.1)))))
-                                        (set! cfp ct6)
-                                        (splice csp csp cfp 16384)
-                                        (set! cra fv2)
-                                        (setLinear! cfp fv3))
-                                      (set! fv0 a0))
-                                    (begin
-                                      (set! a0 fv0)
-                                      (begin
-                                        ((set! a0 0)
-                                         (set! a1 0)
-                                         (set! a2 0)
-                                         (set! a3 0)
-                                         (set! a4 0)
-                                         (set! t0 0)
-                                         (set! t1 0)
-                                         (set! t2 0)
-                                         (set! t3 0)
-                                         (set! t4 0)
-                                         (set! t5 0)
-                                         (set! t6 0))
-                                        (invoke cra cfp)))))))
-                          (begin
-                            (set! fv2 cra)
-                            (begin
-                              (begin
-                                (set! fv0 cra)
-                                (setLinear! fv1 cfp)
-                                (split csp csp cfp 16384)
-                                (return-point L.rpLabel.10
-                                              (begin
-                                                (set! fv4 2)
-                                                (set! fv3 1)
-                                                (set! cra L.rpLabel.10)
-                                                (begin
-                                                  (seal cra cfp 169232)
-                                                  (begin
-                                                    ((set! a0 0)
-                                                     (set! a1 0)
-                                                     (set! a2 0)
-                                                     (set! a3 0)
-                                                     (set! a4 0)
-                                                     (set! t0 0)
-                                                     (set! t1 0)
-                                                     (set! t2 0)
-                                                     (set! t3 0)
-                                                     (set! t4 0)
-                                                     (set! t5 0)
-                                                     (set! t6 0))
-                                                    (jump-call L.swap.1)))))
-                                (set! cfp ct6)
-                                (splice csp csp cfp 16384)
-                                (set! cra fv0)
-                                (setLinear! cfp fv1))
-                              (begin
-                                ((set! a0 0)
-                                 (set! a1 0)
-                                 (set! a2 0)
-                                 (set! a3 0)
-                                 (set! a4 0)
-                                 (set! t0 0)
-                                 (set! t1 0)
-                                 (set! t2 0)
-                                 (set! t3 0)
-                                 (set! t4 0)
-                                 (set! t5 0)
-                                 (set! t6 0))
-                                (invoke cra cfp))))))
+(define/contract (re p) (-> nested-asm-lang-fvars? nested-asm-lang-fvars?)
+  p)
+
+
+
+
+#;(replace-labels-to-got '(module ((got-labels ((L.odd?.1 0) (L.even?.2 2))))
+  (define L.odd?.1
+    ()
+    (begin
+      (set! fv3 cra)
+      (set! fv0 fv0)
+      (if (begin (set! fv0 0) (= fv0 fv0))
+        (begin
+          (set! a0 150)
+          (begin
+            (set! a1 0)
+            (set! a2 0)
+            (set! a3 0)
+            (set! a4 0)
+            (set! t0 0)
+            (set! t1 0)
+            (set! t2 0)
+            (set! t3 0)
+            (set! t4 0)
+            (set! t5 0)
+            (set! t6 0)
+            (invoke cra cfp)))
+        (begin
+          (set! fv0 (+ fv0 -1))
+          (begin
+            (begin
+              (set! fv1 cra)
+              (setLinear! fv2 cfp)
+              (split csp csp cfp 16384)
+              (return-point
+               L.rpLabel.8
+               (begin
+                 (set! fv4 fv0)
+                 (set! cra L.rpLabel.8)
+                 (begin
+                   (seal cra cfp 175980)
+                   (begin
+                     (set! t0 0)
+                     (set! t1 0)
+                     (set! t2 0)
+                     (set! t3 0)
+                     (set! t4 0)
+                     (set! t5 0)
+                     (set! t6 0)
+                     (jump-call L.even?.2)))))
+              (set! cfp ct6)
+              (splice csp csp cfp 16384)
+              (set! cra fv1)
+              (setLinear! cfp fv2))
+            (begin
+              (set! a1 0)
+              (set! a2 0)
+              (set! a3 0)
+              (set! a4 0)
+              (set! t0 0)
+              (set! t1 0)
+              (set! t2 0)
+              (set! t3 0)
+              (set! t4 0)
+              (set! t5 0)
+              (set! t6 0)
+              (invoke cra cfp)))))))
+  (define L.even?.2
+    ()
+    (begin
+      (set! fv3 cra)
+      (set! fv0 fv0)
+      (if (begin (set! fv0 0) (= fv0 fv0))
+        (begin
+          (set! a0 200)
+          (begin
+            (set! a1 0)
+            (set! a2 0)
+            (set! a3 0)
+            (set! a4 0)
+            (set! t0 0)
+            (set! t1 0)
+            (set! t2 0)
+            (set! t3 0)
+            (set! t4 0)
+            (set! t5 0)
+            (set! t6 0)
+            (invoke cra cfp)))
+        (begin
+          (set! fv0 (+ fv0 -1))
+          (begin
+            (begin
+              (set! fv1 cra)
+              (setLinear! fv2 cfp)
+              (split csp csp cfp 16384)
+              (return-point
+               L.rpLabel.11
+               (begin
+                 (set! fv4 fv0)
+                 (set! cra L.rpLabel.11)
+                 (begin
+                   (seal cra cfp 160401)
+                   (begin
+                     (set! t0 0)
+                     (set! t1 0)
+                     (set! t2 0)
+                     (set! t3 0)
+                     (set! t4 0)
+                     (set! t5 0)
+                     (set! t6 0)
+                     (jump-call L.odd?.1)))))
+              (set! cfp ct6)
+              (splice csp csp cfp 16384)
+              (set! cra fv1)
+              (setLinear! cfp fv2))
+            (begin
+              (set! a1 0)
+              (set! a2 0)
+              (set! a3 0)
+              (set! a4 0)
+              (set! t0 0)
+              (set! t1 0)
+              (set! t2 0)
+              (set! t3 0)
+              (set! t4 0)
+              (set! t5 0)
+              (set! t6 0)
+              (invoke cra cfp)))))))
+  (begin
+    (set! fv2 cra)
+    (begin
+      (begin
+        (set! fv0 cra)
+        (setLinear! fv1 cfp)
+        (split csp csp cfp 16384)
+        (return-point
+         L.rpLabel.14
+         (begin
+           (set! fv3 5)
+           (set! cra L.rpLabel.14)
+           (begin
+             (seal cra cfp 223722)
+             (begin
+               (set! t0 0)
+               (set! t1 0)
+               (set! t2 0)
+               (set! t3 0)
+               (set! t4 0)
+               (set! t5 0)
+               (set! t6 0)
+               (jump-call L.even?.2)))))
+        (set! cfp ct6)
+        (splice csp csp cfp 16384)
+        (set! cra fv0)
+        (setLinear! cfp fv1))
+      (begin
+        (set! a1 0)
+        (set! a2 0)
+        (set! a3 0)
+        (set! a4 0)
+        (set! t0 0)
+        (set! t1 0)
+        (set! t2 0)
+        (set! t3 0)
+        (set! t4 0)
+        (set! t5 0)
+        (set! t6 0)
+        (invoke cra cfp))))))

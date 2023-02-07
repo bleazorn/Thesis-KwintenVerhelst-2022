@@ -22,22 +22,19 @@
     ['+ (set! offset (+ offset n))]
     [_ #f]))
 
-; returns (n-1)*8 with n the number of the fvar
-;(addr-number v) -> integer?
-; v: fvar?
-(define (addr-number v)
-  (if (fvar? v)
-      (let* ([n (add1 (getFvarNumber v))])
-        (+ (* n (framesize)) offset))
-      #f))
 
 ;if given argument is of type fvar, transforms it into (fp - dispoffset)
 ;(change-fvar fvar)-> symbol?
 ;fvar: any?
 (define (change-fvar f)
-  (if (fvar? f)
-      `(,(fvarRegister) ,(stack-direction) ,(addr-number f))
-      f))
+  (let ([n (getFvarNumber f)])
+    (cond [(ffvar? f) (let ([n (cond [(equal? (stack-direction) '-) (add1 n)]
+                                     [else n])])
+                        `(,(current-frame-base-pointer-register) ,(stack-direction) ,(+ (* n (framesize)) offset)))]
+          [(fgvar? f) (let ([n (cond [(equal? (global-direction) '-) (add1 n)]
+                                     [else n])])
+                        `(,(current-global-register) ,(global-direction) ,(* n (framesize))))]
+          [else f])))
 
 ;
 ;(implement-pred p)->pred?
@@ -102,29 +99,188 @@
     [`(module ,i ,f ... ,t) `(module ,i ,@(map implement-func f) ,(implement-tail t))]
     [_ "implement fvars failed"]))
 
+
+#;(implement-fvars '(module ((got-labels ((L.odd?.1 0) (L.even?.2 2))))
+       (define L.odd?.1
+         ()
+         (begin
+           (set! cs1 ct6)
+           (begin
+             (set! fv3 cra)
+             (set! fv0 fv0)
+             (if (begin (set! fv0 0) (= fv0 fv0))
+                 (begin
+                   (set! a0 150)
+                   (begin
+                     (set! a1 0)
+                     (set! a2 0)
+                     (set! a3 0)
+                     (set! a4 0)
+                     (set! t0 0)
+                     (set! t1 0)
+                     (set! t2 0)
+                     (set! t3 0)
+                     (set! t4 0)
+                     (set! t5 0)
+                     (set! t6 0)
+                     (invoke cra cfp)))
+                 (begin
+                   (set! fv0 (+ fv0 -1))
+                   (begin
+                     (begin
+                       (set! fv1 cra)
+                       (setLinear! fv2 csp)
+                       (split csp csp cfp 16384)
+                       (return-point
+                        L.rpLabel.8
+                        (begin
+                          (set! fv4 fv0)
+                          (set! cra L.rpLabel.8)
+                          (begin
+                            (seal cra cfp 166909)
+                            (begin
+                              (set! t0 0)
+                              (set! t1 0)
+                              (set! t2 0)
+                              (set! t3 0)
+                              (set! t4 0)
+                              (set! t5 0)
+                              (set! t6 0)
+                              (begin
+                                (set! ct0 gv2)
+                                (set! ct6 gv3)
+                                (invoke ct0 ct6))))))
+                       (set! cfp ct6)
+                       (splice csp csp cfp 16384)
+                       (set! cra fv1)
+                       (setLinear! csp fv2))
+                     (begin
+                       (set! a1 0)
+                       (set! a2 0)
+                       (set! a3 0)
+                       (set! a4 0)
+                       (set! t0 0)
+                       (set! t1 0)
+                       (set! t2 0)
+                       (set! t3 0)
+                       (set! t4 0)
+                       (set! t5 0)
+                       (set! t6 0)
+                       (invoke cra cfp))))))))
+       (define L.even?.2
+         ()
+         (begin
+           (set! cs1 ct6)
+           (begin
+             (set! fv3 cra)
+             (set! fv0 fv0)
+             (if (begin (set! fv0 0) (= fv0 fv0))
+                 (begin
+                   (set! a0 200)
+                   (begin
+                     (set! a1 0)
+                     (set! a2 0)
+                     (set! a3 0)
+                     (set! a4 0)
+                     (set! t0 0)
+                     (set! t1 0)
+                     (set! t2 0)
+                     (set! t3 0)
+                     (set! t4 0)
+                     (set! t5 0)
+                     (set! t6 0)
+                     (invoke cra cfp)))
+                 (begin
+                   (set! fv0 (+ fv0 -1))
+                   (begin
+                     (begin
+                       (set! fv1 cra)
+                       (setLinear! fv2 csp)
+                       (split csp csp cfp 16384)
+                       (return-point
+                        L.rpLabel.11
+                        (begin
+                          (set! fv4 fv0)
+                          (set! cra L.rpLabel.11)
+                          (begin
+                            (seal cra cfp 171343)
+                            (begin
+                              (set! t0 0)
+                              (set! t1 0)
+                              (set! t2 0)
+                              (set! t3 0)
+                              (set! t4 0)
+                              (set! t5 0)
+                              (set! t6 0)
+                              (begin
+                                (set! ct0 gv0)
+                                (set! ct6 gv1)
+                                (invoke ct0 ct6))))))
+                       (set! cfp ct6)
+                       (splice csp csp cfp 16384)
+                       (set! cra fv1)
+                       (setLinear! csp fv2))
+                     (begin
+                       (set! a1 0)
+                       (set! a2 0)
+                       (set! a3 0)
+                       (set! a4 0)
+                       (set! t0 0)
+                       (set! t1 0)
+                       (set! t2 0)
+                       (set! t3 0)
+                       (set! t4 0)
+                       (set! t5 0)
+                       (set! t6 0)
+                       (invoke cra cfp))))))))
+       (begin
+         (set! cs1 ct6)
+         (begin
+           (set! fv2 cra)
+           (begin
+             (begin
+               (set! fv0 cra)
+               (setLinear! fv1 csp)
+               (split csp csp cfp 16384)
+               (return-point
+                L.rpLabel.14
+                (begin
+                  (set! fv3 5)
+                  (set! cra L.rpLabel.14)
+                  (begin
+                    (seal cra cfp 169357)
+                    (begin
+                      (set! t0 0)
+                      (set! t1 0)
+                      (set! t2 0)
+                      (set! t3 0)
+                      (set! t4 0)
+                      (set! t5 0)
+                      (set! t6 0)
+                      (begin (set! ct0 gv2) (set! ct6 gv3) (invoke ct0 ct6))))))
+               (set! cfp ct6)
+               (splice csp csp cfp 16384)
+               (set! cra fv0)
+               (setLinear! csp fv1))
+             (begin
+               (set! a1 0)
+               (set! a2 0)
+               (set! a3 0)
+               (set! a4 0)
+               (set! t0 0)
+               (set! t1 0)
+               (set! t2 0)
+               (set! t3 0)
+               (set! t4 0)
+               (set! t5 0)
+               (set! t6 0)
+               (invoke cra cfp)))))))
+
 (module+ test
   (define (check-fvar? f a b o m)
     (setOffSet o)
     (check-equal? (f a) b m))
   ;#|
-;addr-number
-  ;succes
-  (check-fvar? addr-number 'fv0 16 0 "addr-number: succes-01: first frame fv")
-  (check-fvar? addr-number 'fv1 32 0 "addr-number: succes-02: second frame fv")
-  (check-fvar? addr-number 'fv2 48 0 "addr-number: succes-03: third frame fv")
-  
-  (check-fvar? addr-number 'fv0 24 8 "addr-number: succes-04: first frame fv offset 8")
-  (check-fvar? addr-number 'fv1 40 8 "addr-number: succes-05: second frame fv offset 8")
-  (check-fvar? addr-number 'fv2 56 8 "addr-number: succes-06: third frame fv offset 8")
-  
-  (check-fvar? addr-number 'fv0 8 -8 "addr-number: succes-07: first frame fv offset -8")
-  (check-fvar? addr-number 'fv1 24 -8 "addr-number: succes-08: second frame fv offset- 8")
-  (check-fvar? addr-number 'fv2 40 -8 "addr-number: succes-09: third frame fv offset -8")
-  ;failure
-  (check-equal? (addr-number 0) #f "addr-number: failure-1: integer")
-  (check-equal? (addr-number 'x) #f "addr-number: failure-2: random symbol")
-  (check-equal? (addr-number 'fv) #f "addr-number: failure-3: no number behind fv")
-  (check-equal? (addr-number 'fv.1) #f "addr-number: failure-4: char between fv and number")
 ;change-fvar
   ;succes
   (check-fvar? change-fvar 'fv0 '(cfp - 16) 0 "change-fvar: succes-1: single number fv")

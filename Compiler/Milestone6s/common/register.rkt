@@ -12,6 +12,9 @@
          current-return-address-register
          current-jump-register
          current-stack-register
+         current-global-register
+         current-invoke-jump-register
+         current-invoke-data-register
          register?
          isNonCapRegister?
          isCapability?
@@ -46,7 +49,7 @@
   (make-parameter 'cfp))
 
 (define (frame-base-pointer-register? v)
-  (equal? v (current-frame-base-pointer-register)))
+  (or (equal? v (current-frame-base-pointer-register)) (equal? v (current-global-register))))
 
 (define current-stack-base-pointer-register
   (make-parameter 'csp))
@@ -71,6 +74,16 @@
 
 (define current-stack-register
   (make-parameter 'cs10))
+
+(define current-global-register
+  (make-parameter 'cgp))
+
+(define current-invoke-jump-register
+  (make-parameter 'ct0))
+  
+(define current-invoke-data-register
+  (make-parameter 'ct6))
+
 
 ;Returns given symbol if it is a name for a register in paren-cheri-risc-v, otherwise returns false
 ;(check-reg res) -> symbol?/boolean?

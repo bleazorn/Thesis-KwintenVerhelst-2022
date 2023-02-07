@@ -24,7 +24,7 @@
                (logln (format "~a:" fun))
                (pretty-display (format "~a:" fun))
                (let ([res (fun p)])
-                 (pretty-display res)
+                 (pretty-display (cons (car res) (cons '() (cdr res))))
                  (display (format "\n\n"))
                  res)))))
 
@@ -98,7 +98,7 @@
 (define (compile-file file)
   (println (format "test: ~a" (output-file)))
   (parameterize ([steps (setup-steps (steps))]
-                 [fvarRegister 'csp]
+                 [current-frame-base-pointer-register 'csp]
                  [stack-direction '+])
                  ;[current-parameter-registers '()]
                  ;[current-assignable-registers '()]) 
@@ -149,9 +149,9 @@
 (module+ test
   (check-equal? #t #t "test"))
 
-#|
+;#|
 (parameterize ([steps (stkTokens (steps))]
-               [fvarRegister 'csp]
+               [current-frame-base-pointer-register 'csp]
                [stack-direction '+]
                ;[steps (halfStack (risc-v (steps)))])
                [current-parameter-registers '()]

@@ -4,7 +4,10 @@
 
 (provide framesize
          stack-direction
+         global-direction
          fvar?
+         ffvar?
+         fgvar?
          resetfvar
          getfvar
          setfvar
@@ -12,10 +15,10 @@
          newFvar
          freshsvar
          newSvar
+         newGvar
          getFvarNumber
          getFirstAvailableFvar
-         maxFvarNumber
-         fvarRegister)
+         maxFvarNumber)
 
 (module+ test
   (require rackunit))
@@ -26,13 +29,36 @@
 (define stack-direction
   (make-parameter '-))
 
+(define global-direction
+  (make-parameter '+))
+
 (define (fvar? v)
   (if (symbol? v)
       (let ([s (symbol->string v)])
         (if (> (string-length s) 1)
             (let ([fv (substring s 0 2)]
                   [n (string->number (substring s 2))])
-              (and (or (equal? fv "fv") (equal? fv "sv")) (and (integer? n) (>= n 0))))
+              (and (or (equal? fv "fv") (equal? fv "sv") (equal? fv "gv")) (and (integer? n) (>= n 0))))
+            #f))
+      #f))
+
+(define (ffvar? v)
+  (if (symbol? v)
+      (let ([s (symbol->string v)])
+        (if (> (string-length s) 1)
+            (let ([fv (substring s 0 2)]
+                  [n (string->number (substring s 2))])
+              (and (equal? fv "fv") (integer? n) (>= n 0)))
+            #f))
+      #f))
+
+(define (fgvar? v)
+  (if (symbol? v)
+      (let ([s (symbol->string v)])
+        (if (> (string-length s) 1)
+            (let ([fv (substring s 0 2)]
+                  [n (string->number (substring s 2))])
+              (and (equal? fv "gv") (integer? n) (>= n 0)))
             #f))
       #f))
 
@@ -61,6 +87,9 @@
 (define (newSvar n)
   (string->symbol (format "sv~a" n)))
 
+(define (newGvar n)
+  (string->symbol (format "gv~a" n)))
+
 (define (getFvarNumber f)
   (if (fvar? f)
       (string->number (substring (symbol->string f) 2))
@@ -78,9 +107,6 @@
   (foldl (lambda (f n) (cond [(and (fvar? f) (< n (getFvarNumber f))) (getFvarNumber f)]
                              [else n]))
          0 fs))
-
-(define fvarRegister
-  (make-parameter (current-frame-base-pointer-register)))
 
 (module+ test
 ;fvar?

@@ -9,7 +9,7 @@
 
 @define-grammar/pred[nested-asm-lang-jumps
   #:literals (info? int64? label? register? fvar?)
-  #:datum-literals (define module set! jump-call jump-return return-point true false not if * + < <= =
+  #:datum-literals (define module set! jump-call jump-return return-point true false not if * + < <= = split splice seal unseal sentry invoke setLinear!
    >= > !=)
   [p     (module info (define label info tail) ... tail)]
   [info info?]
@@ -22,12 +22,19 @@
   [tail  (begin effect ... tail)
          (if pred tail tail)
          (jump-call trg)
-         (jump-return trg)]
+         (jump-return trg)
+         (invoke reg reg)]
   [effect (set! loc triv)
           (set! loc (binop loc opand))
           (begin effect ... effect)
           (if pred effect effect)
-          (return-point label tail)]
+          (return-point label tail)
+          (split reg reg reg int64)
+          (splice reg reg reg int64)
+          (seal reg ... int64)
+          (unseal reg ... int64)
+          (sentry reg)
+          (setLinear! loc triv)]
   [opand int64 loc]
   [triv  opand label]
   [loc   reg fvar]
