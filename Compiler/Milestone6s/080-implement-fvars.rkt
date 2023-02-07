@@ -1,7 +1,9 @@
 #lang racket
 
 (require "common/fvar.rkt"
-         "common/register.rkt")
+         "common/register.rkt"
+         "langs/nested-asm-lang-fvars.rkt"
+         "langs/nested-asm-lang.rkt")
 (provide implement-fvars)
 
 (module+ test
@@ -94,7 +96,7 @@
 ;
 ;(implement-fvars p) → Paren-cheri-risc-v-V2?
 ;p : Paren-cheri-risc-v-V2-fvars?
-(define (implement-fvars p)
+(define/contract (implement-fvars p) (-> nested-asm-lang-fvars? nested-asm-lang?)
   (resetOffSet)
   (match p
     [`(module ,i ,f ... ,t) `(module ,i ,@(map implement-func f) ,(implement-tail t))]
@@ -142,7 +144,8 @@
 ;implement-fvars
   ;succes
   (check-fvar? implement-fvars
-               '(module (define L.swap.1
+               '(module () (define L.swap.1
+                             ()
                           (begin
                             (set! fv2 cra)
                             (set! t0 fv0)
@@ -164,7 +167,7 @@
                   (begin
                     (set! t0 cra)
                     (begin (set! fv1 2) (set! fv0 1) (set! cra t0) (jump L.swap.1))))
-               '(module (define L.swap.1
+               '(module () (define L.swap.1
                           (begin
                             (set! (cfp - 48) cra)
                             (set! t0 (cfp - 16))

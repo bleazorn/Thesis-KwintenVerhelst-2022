@@ -1,5 +1,7 @@
 #lang racket
 
+(require "langs/block-asm-lang.rkt"
+         "langs/para-asm-lang.rkt")
 (provide flatten-program)
 
 (module+ test
@@ -28,7 +30,7 @@
 ;Flatten all nested begin expressions.
 ;(flatten-begins p) → Paren-Cheri-Risc-V-V2-lang?
 ;p: Asm-lang-V2-nested?
-(define (flatten-program p)
+(define/contract (flatten-program p) (-> block-asm-lang? para-asm-lang?)
   (match p
     [`(module ,i ,b ...) `(begin ,i ,@(foldl (lambda (beg l) (append l (flatten-b beg))) '() b))]
     [_ #f]))
@@ -53,17 +55,17 @@
   (check-equal? (flatten-tail '(begin (set! a4 50) (set! a3 50) (begin (set! a1 50) (set! a2 50) (set! a5 50) (begin (begin (set! a0 50) (set! a0 a0) (jump cra))))))
                 '((set! a4 50) (set! a3 50) (set! a1 50) (set! a2 50) (set! a5 50) (set! a0 50) (set! a0 a0) (jump cra))
                 "flatten-tail: succes-4: tail double nested")
-  (check-equal? (flatten-tail '(if (= a0 a1) (jump L1) (jump L2)))
-                `((jump-if L1 (= a0 a1)) (jump L2))
+  (check-equal? (flatten-tail '(if (= a0 a1) (jump L.foo.1) (jump L.foo.1)))
+                `((jump-if L.foo.1 (= a0 a1)) (jump L.foo.1))
                 "flatten-tail: succes-5: if")
   ;flatten-program
   ;succes
-  (check-equal? (flatten-program '(module (define L0 (begin (set! a1 50) (set! a2 50) (begin (begin (set! a0 50) (jump L1)))))
-                                    (define L1 (begin (set! a1 50) (set! a2 50) (begin (begin (set! a0 50) (if (= a0 a1) (jump L0) (jump L2))))))
-                                    (define L2 (begin (set! a1 50) (set! a2 50) (begin (begin (set! a0 50) (set! a0 a0) (jump cra)))))))
-                '(begin (with-label L0 (set! a1 50)) (set! a2 50) (set! a0 50) (jump L1)
-                        (with-label L1 (set! a1 50)) (set! a2 50) (set! a0 50) (jump-if L0 (= a0 a1)) (jump L2)
-                        (with-label L2 (set! a1 50)) (set! a2 50) (set! a0 50) (set! a0 a0) (jump cra))
+  (check-equal? (flatten-program '(module () (define L.foo.0 (begin (set! a1 50) (set! a2 50) (begin (begin (set! a0 50) (jump L.foo.1)))))
+                                    (define L.foo.1 (begin (set! a1 50) (set! a2 50) (begin (begin (set! a0 50) (if (= a0 a1) (jump L.foo.0) (jump L.foo.1))))))
+                                    (define L.foo.1 (begin (set! a1 50) (set! a2 50) (begin (begin (set! a0 50) (set! a0 a0) (jump cra)))))))
+                '(begin () (with-label L.foo.0 (set! a1 50)) (set! a2 50) (set! a0 50) (jump L.foo.1)
+                        (with-label L.foo.1 (set! a1 50)) (set! a2 50) (set! a0 50) (jump-if L.foo.0 (= a0 a1)) (jump L.foo.1)
+                        (with-label L.foo.1 (set! a1 50)) (set! a2 50) (set! a0 50) (set! a0 a0) (jump cra))
                 "flatten-program: succes-01: mul def")
   ;|#
   )

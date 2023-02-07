@@ -2,7 +2,9 @@
 
 (require "common/register.rkt"
          "common/aloc.rkt"
-         "common/fvar.rkt")
+         "common/fvar.rkt"
+         "langs/imp-cmf-lang.rkt"
+         "langs/asm-pred-lang.rkt")
 (provide select-instructions)
 
 (module+ test
@@ -130,7 +132,7 @@
 ;Compiles Imp-lang-V3-cmf to Asm-lang-V2, selecting appropriate sequences of abstract assembly instructions to implement the operations of the source language
 ;(select-instructions p) → Asm-lang-V2
 ;p: Imp-lang-V3-cmf
-(define (select-instructions p)
+(define/contract (select-instructions p) (-> imp-cmf-lang? asm-pred-lang?)
   (match p
     [`(module ,i ,f ... ,t) `(module ,i ,@(map select-func f) ,(select-tail t))]
     [_ #f]))
@@ -234,55 +236,55 @@
 
 ;select-tail
   ;succes
-   (check-select (select-tail '(begin (set! x.1 5) (set! x.2 x.1) (set! x.1 5) (jump L.foo.1)))
-                 '(begin (set! x.1 5) (set! x.2 x.1) (set! x.1 5) (jump L.foo.1))
+   (check-select (select-tail '(begin (set! x.1 5) (set! x.2 x.1) (set! x.1 5) (jump-call L.foo.1)))
+                 '(begin (set! x.1 5) (set! x.2 x.1) (set! x.1 5) (jump-call L.foo.1))
                  "select-tail: succes-1: begin")
-  (check-select (select-tail '(begin (set! a0 (+ 5 4)) (jump L.foo.1)))
-                '(begin (begin (set! tmp.1 5) (set! a0 (+ tmp.1 4))) (jump L.foo.1))
+  (check-select (select-tail '(begin (set! a0 (+ 5 4)) (jump-call L.foo.1)))
+                '(begin (begin (set! tmp.1 5) (set! a0 (+ tmp.1 4))) (jump-call L.foo.1))
                 "select-tail: succes-2: binop")
-  (check-select (select-tail '(begin (set! a0 x.1) (jump L.foo.1)))
-                '(begin (set! a0 x.1) (jump L.foo.1))
+  (check-select (select-tail '(begin (set! a0 x.1) (jump-return L.foo.1)))
+                '(begin (set! a0 x.1) (jump-return L.foo.1))
                 "select-tail: succes-3: triv")
-  (check-select (select-tail '(if (= 4 5) (begin (set! a0 (+ 4 5)) (jump L.foo.1)) (begin (set! a0 4) (jump L.foo.1))))
+  (check-select (select-tail '(if (= 4 5) (begin (set! a0 (+ 4 5)) (jump-return L.foo.1)) (begin (set! a0 4) (jump-return L.foo.1))))
                 '(if (begin (set! tmp.1 4) (set! tmp.2 5) (= tmp.1 tmp.2))
-                     (begin (begin (set! tmp.3 4) (set! a0 (+ tmp.3 5))) (jump L.foo.1))
-                     (begin (set! a0 4) (jump L.foo.1)))
+                     (begin (begin (set! tmp.3 4) (set! a0 (+ tmp.3 5))) (jump-return L.foo.1))
+                     (begin (set! a0 4) (jump-return L.foo.1)))
                 "select-tail: succes-4: if")
   
 ;select-instructions
   ;succes
-  (check-select (select-instructions '(module () (begin (set! a0 (+ 2 2)) (jump L.foo.1))))
-                '(module () (begin (begin (set! tmp.1 2) (set! a0 (+ tmp.1 tmp.1))) (jump L.foo.1)))
+  (check-select (select-instructions '(module () (begin (set! a0 (+ 2 2)) (jump-call L.foo.1))))
+                '(module () (begin (begin (set! tmp.1 2) (set! a0 (+ tmp.1 tmp.1))) (jump-call L.foo.1)))
                 "select-instructions: succes-01: one operation")
   
   (check-select (select-instructions
                  '(module ()
-                      (begin (set! x.1 5) (set! a0 x.1) (jump L.foo.1))))
-                '(module () (begin (set! x.1 5) (set! a0 x.1) (jump L.foo.1)))
+                      (begin (set! x.1 5) (set! a0 x.1) (jump-call L.foo.1))))
+                '(module () (begin (set! x.1 5) (set! a0 x.1) (jump-call L.foo.1)))
                 "select-instructions: succes-02: one set")
   (check-select (select-instructions
                  '(module ()
                       (begin
                         (set! x.1 (+ 2 3))
-                        (set! a0 x.1) (jump L.foo.1))))
-                '(module () (begin (begin (set! tmp.1 2) (set! x.1 (+ tmp.1 3))) (set! a0 x.1) (jump L.foo.1)))
+                        (set! a0 x.1) (jump-return L.foo.1))))
+                '(module () (begin (begin (set! tmp.1 2) (set! x.1 (+ tmp.1 3))) (set! a0 x.1) (jump-return L.foo.1)))
                 "select-instructions: succes-03: a set with operation     !!!anders dan oplossing boek sinds b in binop kan verschillend zijn dan a")
   (check-select (select-instructions
                  '(module ()
                       (begin
                         (set! x.1 2)
                         (set! x.2 2)
-                        (begin (set! a0 (+ x.1 x.2)) (jump L.foo.1)))))
+                        (begin (set! a0 (+ x.1 x.2)) (jump-return L.foo.1)))))
                 '(module
                      ()
                    (begin
                      (set! x.1 2)
                      (set! x.2 2)
-                     (begin (set! a0 (+ x.1 x.2)) (jump L.foo.1))))
+                     (begin (set! a0 (+ x.1 x.2)) (jump-return L.foo.1))))
                 "select-instructions: succes-04: multiple instructions")
   (check-select (select-instructions
-                 '(module () (define L.test.1 () (begin  (set! x.2 fv0) (set! x.3 fv1) (set! x.1 ca0) (begin (set! y.4 (+ x.1 x.2)) (set! a0 (+ x.3 y.4)) (jump L.foo.1))))
-                    (begin (set! fv0 2) (set! fv1 3) (set! ca0 1) (jump L.test.1 cfp ca0 fv0 fv1))))
+                 '(module () (define L.test.1 () (begin  (set! x.2 fv0) (set! x.3 fv1) (set! x.1 ca0) (begin (set! y.4 (+ x.1 x.2)) (set! a0 (+ x.3 y.4)) (jump-return L.foo.1))))
+                    (begin (set! fv0 2) (set! fv1 3) (set! ca0 1) (jump-call L.test.1 cfp ca0 fv0 fv1))))
                 '(module ()
                    (define L.test.1
                      ()
@@ -292,12 +294,12 @@
                        (set! x.1 ca0)
                        (begin
                          (set! y.4 (+ x.1 x.2))
-                         (set! a0 (+ x.3 y.4)) (jump L.foo.1))))
+                         (set! a0 (+ x.3 y.4)) (jump-return L.foo.1))))
                    (begin
                      (set! fv0 2)
                      (set! fv1 3)
                      (set! ca0 1)
-                     (jump L.test.1 cfp ca0 fv0 fv1)))
+                     (jump-call L.test.1 cfp ca0 fv0 fv1)))
                 "select-instructions: succes-05: tail Call")
   ;|#
   )

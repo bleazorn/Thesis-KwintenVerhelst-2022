@@ -4,6 +4,7 @@
          "common/register.rkt"
          "common/fvar.rkt"
          "common/aloc.rkt"
+         "langs/asm-pred-lang.rkt"
          "log.rkt")
 (provide assign-registers-full)
 
@@ -98,7 +99,7 @@
 ;Performs graph-colouring register allocation. The pass attempts to fit each of the abstract location declared in the locals set into a register, and if one cannot be found, assigns it a frame variable instead.
 ;(assign-registers p) → Asm-lang-V2-assignments?
 ;p: Asm-lang-V2-conflicts?
-(define (assign-registers-full p)
+(define/contract (assign-registers-full p) (-> asm-pred-lang? asm-pred-lang?)
   (match p
     [`(module ,i ,f ... ,pro) `(module ,(assign-info i) ,@(map assign-func f) ,pro)]
     [_ #f]))
@@ -123,10 +124,10 @@
                                      (begin
                                        (set! x.1 42)
                                        (set! x.1 x.1)
-                                       (jump L.foo.4))))
+                                       (jump-return L.foo.4))))
                 '(module
                      ((assignment ((x.1 t0))) (locals (x.1)) (conflicts ((x.1 ()))) (new-frames ()) (call-undead ()) (allocatedFvars ()))
-                   (begin (set! x.1 42) (set! x.1 x.1) (jump L.foo.4)))
+                   (begin (set! x.1 42) (set! x.1 x.1) (jump-return L.foo.4)))
                 "assign-registers: succes-1 one instruction")
   (check-equal? (assign-registers-full '(module ((locals (v.1 w.2 x.3 y.4 z.5 t.6 p.1))
                                             (conflicts
@@ -156,7 +157,7 @@
                                        (set! t.6 (* t.6 p.1))
                                        (set! z.5 (+ z.5 t.6))
                                        (set! z.5 z.5)
-                                       (jump L.foo.4))))
+                                       (jump-call L.foo.4))))
                 '(module
                      ((assignment
                        ((v.1 t0) (t.6 t0) (x.3 t1) (w.2 t2) (y.4 t3) (p.1 t4) (z.5 fv0)))
@@ -188,7 +189,7 @@
                      (set! t.6 (* t.6 p.1))
                      (set! z.5 (+ z.5 t.6))
                      (set! z.5 z.5)
-                     (jump L.foo.4)))
+                     (jump-call L.foo.4)))
                 "assign-registers: succes-2: multiple instructions")
   )
 ;|#

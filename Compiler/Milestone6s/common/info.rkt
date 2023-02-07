@@ -29,6 +29,9 @@
          index-of-lowest-conf
          isInfo?)
 
+(module+ test
+  (require rackunit))
+
 (define (info? i)
   (cond [(list? i) (foldl (lambda (j b) (or b (isInfo? j))) #t i)]
         [else #f]))
@@ -177,6 +180,13 @@
                    (locals (tmp-ra.11))
                    (paramSize -1)
                    (new-frames ())))
+
+
+(module+ test
+;info?
+  ;succes
+  (check-true (info? '()) "info?: succes-01: empty")
+)
 ;|#
 
 #|

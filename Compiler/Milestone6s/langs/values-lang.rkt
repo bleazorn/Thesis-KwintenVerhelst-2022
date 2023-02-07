@@ -1,7 +1,7 @@
 #lang at-exp racket/base
 
 (require
- cpsc411/compiler-lib
+ "../common/langs-lib.rkt"
  cpsc411/langs/redex-gen)
 
 (provide

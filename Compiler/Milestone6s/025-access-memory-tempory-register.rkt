@@ -1,6 +1,7 @@
 #lang racket
 
-(require "common/fvar.rkt")
+(require "common/fvar.rkt"
+         "langs/paren-cheri-risc-v.rkt")
 (provide access-memory-tempory-register)
 
 (define (access-address-binop binop)
@@ -77,7 +78,7 @@
 ;Generates paren-cheri-risc-v code in string if argument matches. Otherwise false.
 ;(generate-cheri-risc-v p) -> string?/boolean?
 ; p: any?
-(define (access-memory-tempory-register p)
+(define/contract (access-memory-tempory-register p) (-> paren-cheri-risc-v? paren-cheri-risc-v?)
     (match p
     [`(begin ,i ,s ...) `(begin ,i ,@(foldl (lambda (set n) (append n (access-sets set))) '() s))]
     [_ #f]))

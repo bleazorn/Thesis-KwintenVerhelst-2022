@@ -1,7 +1,9 @@
 #lang racket
 
 (require "common/info.rkt"
-         "common/aloc.rkt")
+         "common/aloc.rkt"
+         "langs/asm-pred-lang.rkt"
+         "langs/nested-asm-lang-jumps.rkt")
 (provide replace-locations)
 
 (module+ test
@@ -68,7 +70,7 @@
 ;Compiles Asm-lang-V2-assignments to Asm-lang-V2-nested, replaced each abstract location with its assigned physical location from the assignment info field.
 ;(replace-locations p) → Asm-lang-V2-nested?
 ;p: Asm-lang-V2-assignments?
-(define (replace-locations p)
+(define/contract (replace-locations p) (-> asm-pred-lang? nested-asm-lang-jumps?)
   (match p
     [`(module ,i ,f ... ,pro) `(module ,i ,@(map replace-func f) ,(replace-tail pro (getInfo i getAssignment)))]
     [_ "replace locations failed"]))
@@ -112,12 +114,12 @@
   
 ;replace-tail
   ;succes
-  (check-equal? (replace-tail '(begin (set! x.1 x.1) (set! y.2 5) (set! x.1 (+ x.1 y.2)) (jump x.1)) '((x.1 a0) (y.2 a1)))
-                '(begin (set! a0 a0) (set! a1 5) (set! a0 (+ a0 a1)) (jump a0))
+  (check-equal? (replace-tail '(begin (set! x.1 x.1) (set! y.2 5) (set! x.1 (+ x.1 y.2)) (jump-call x.1)) '((x.1 a0) (y.2 a1)))
+                '(begin (set! a0 a0) (set! a1 5) (set! a0 (+ a0 a1)) (jump-call a0))
                 "replace-tail: succes-2: begin")
 
-  (check-equal? (replace-tail '(if (= x.1 y.2) (jump x.1) (jump y.2)) '((x.1 a0) (y.2 a1)))
-                '(if (= a0 a1) (jump a0) (jump a1))
+  (check-equal? (replace-tail '(if (= x.1 y.2) (jump-call x.1) (jump-return y.2)) '((x.1 a0) (y.2 a1)))
+                '(if (= a0 a1) (jump-call a0) (jump-return a1))
                 "replace-tail: succes-03: if")
 
   
@@ -130,11 +132,11 @@
                  '(module ((locals (x.1)) (assignment ((x.1 rax))))
                     (begin
                       (set! x.1 0)
-                      (jump x.1))))
+                      (jump-call x.1))))
                 '(module ((locals (x.1)) (assignment ((x.1 rax))))
                    (begin
                      (set! rax 0)
-                     (jump rax)))
+                     (jump-call rax)))
                 "replace-locations: succes-1: one location")
   (check-equal? (replace-locations
                  '(module ((locals (x.1 y.1 w.1))
@@ -143,14 +145,14 @@
                       (set! x.1 0)
                       (set! y.1 x.1)
                       (set! w.1 (+ w.1 y.1))
-                      (jump w.1))))
+                      (jump-return w.1))))
                 '(module ((locals (x.1 y.1 w.1))
                           (assignment ((x.1 rax) (y.1 rbx) (w.1 r9))))
                    (begin
                      (set! rax 0)
                      (set! rbx rax)
                      (set! r9 (+ r9 rbx))
-                     (jump r9)))
+                     (jump-return r9)))
                 "replace-locations: succes-2: multiple locations")
   ;|#
   )

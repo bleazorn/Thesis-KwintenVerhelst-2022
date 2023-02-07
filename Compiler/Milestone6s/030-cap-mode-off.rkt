@@ -1,7 +1,8 @@
 #lang racket
 
 (require "common/register.rkt"
-         "common/aloc.rkt")
+         "common/aloc.rkt"
+         "langs/paren-cheri-risc-v.rkt")
 
 (provide cap-mode-off)
 
@@ -52,7 +53,7 @@
 ;
 ;(set-cap-mode p)->paren-cheri-risc-v-V6?
 ;p: paren-risc-v-V6-cap?
-(define (cap-mode-off p)
+(define/contract (cap-mode-off p) (-> paren-cheri-risc-v? paren-cheri-risc-v?)
   (match p
     [`(begin ,i ,s ...)  `(begin ,i ,@(map cap-effect s))]
     [_ "cap mode on failed"]))

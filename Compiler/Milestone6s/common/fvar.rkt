@@ -17,6 +17,9 @@
          maxFvarNumber
          fvarRegister)
 
+(module+ test
+  (require rackunit))
+
 (define framesize
   (make-parameter 16))
 
@@ -80,4 +83,14 @@
   (make-parameter (current-frame-base-pointer-register)))
 
 (module+ test
-  (require rackunit))
+;fvar?
+  ;succes
+  (check-true (fvar? 'fv0) "fvar?: succes-01: zero fv")
+  (check-true (fvar? 'fv2) "fvar?: succes-02: two fv")
+  ;failure
+  (check-false (fvar? 0) "fvar?: failure-01: integer")
+  (check-false (fvar? 'x) "fvar?: failure-02: 'x")
+  (check-false (fvar? 'x.1) "fvar?: failure-03: 'x.1")
+  (check-false (fvar? 'fv) "fvar?: failure-04: 'fv")
+  (check-false (fvar? 'fv.1) "fvar?: failure-05: 'fv.1")
+)

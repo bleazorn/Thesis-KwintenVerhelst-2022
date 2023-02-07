@@ -125,7 +125,7 @@
       #f))
 
 (define (x86Register? reg)
-  (member reg '(r15 rax rbp rdi rsi)))
+  (member reg '(r9 r15 rax rbx rbp rdi rsi)))
 
 (define (makeCap reg)
   (if (isNonCapRegister? reg)

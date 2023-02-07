@@ -3,7 +3,9 @@
 (require "common/register.rkt"
          "common/fvar.rkt"
          "common/aloc.rkt"
-         "common/info.rkt")
+         "common/info.rkt"
+         "langs/proc-imp-cmf-lang.rkt"
+         "langs/imp-cmf-lang.rkt")
 (provide impose-calling-conventions-half)
 
 (module+ test
@@ -137,7 +139,7 @@
 ;Compiles Imp-lang-V5-cmf-proc to  Imp-lang-V5-cmf by imposing calling conventions on all calls and procedure definitions. The parameter registers are defined by the list current-parameter-registers.
 ;(impose-calling-conventions p)->Imp-lang-V5-cmf?
 ;p : Imp-lang-V5-cmf-proc?
-(define (impose-calling-conventions-half p)
+(define/contract (impose-calling-conventions-half p) (-> proc-imp-cmf-lang? imp-cmf-lang?)
   (resetCurStack)
   (match p
     [`(module ,i ,f ... ,t) (let ([funcs (map impose-func f)]
@@ -155,7 +157,7 @@
  ; #|
 ;impose-calling-conventions
   ;succes
-  (check-impose '(module (begin (set! x.1 2)
+  (check-impose '(module () (begin (set! x.1 2)
                                 (begin (set! y.2 3) (set! y.2 (+ y.2 2)))
                                 (+ x.1 y.2)))
                 '(module ((new-frames ()))
@@ -163,9 +165,9 @@
                           (begin
                             (set! x.1 2)
                             (begin (set! y.2 3) (set! y.2 (+ y.2 2)))
-                            (begin (set! a0 (+ x.1 y.2)) (jump tmp-ra.1 cfp a0)))))
+                            (begin (set! a0 (+ x.1 y.2)) (jump-return tmp-ra.1 cfp a0)))))
                 "impose-calling-conventions: succes-01: no tail calls")
-  (check-impose '(module
+  (check-impose '(module ()
                      (define L.odd?.1
                        (lambda (x.3)
                          (if (= x.3 0)
@@ -184,28 +186,28 @@
                      (begin (set! tmp-ra.1 cra)
                             (set! x.3 a0)
                             (if (= x.3 0)
-                                (begin (set! a0 0) (jump tmp-ra.1 cfp a0))
+                                (begin (set! a0 0) (jump-return tmp-ra.1 cfp a0))
                                 (begin (set! y.4 (+ x.3 -1)) 
                                        (begin (set! a0 y.4)
                                               (set! cra tmp-ra.1)
-                                              (jump L.even?.2 cfp cra a0))))))
+                                              (jump-call L.even?.2 cfp cra a0))))))
                    (define L.even?.2
                      ((new-frames ()))
                      (begin (set! tmp-ra.2 cra)
                             (set! x.5 a0)
                             (if (= x.5 0)
-                                (begin (set! a0 1) (jump tmp-ra.2 cfp a0))
+                                (begin (set! a0 1) (jump-return tmp-ra.2 cfp a0))
                                 (begin (set! y.6 (+ x.5 -1)) 
                                        (begin (set! a0 y.6)
                                               (set! cra tmp-ra.2)
-                                              (jump L.odd?.1 cfp cra a0))))))
+                                              (jump-call L.odd?.1 cfp cra a0))))))
                    (begin (set! tmp-ra.3 cra)
                           (begin (set! a0 5)
                                  (set! cra tmp-ra.3)
-                                 (jump L.even?.2 cfp cra a0))))
+                                 (jump-call L.even?.2 cfp cra a0))))
                 
                 "sequentialize-let: succes-02: tail calls")
-  (check-impose '(module (define L.test.1 (lambda (x.1 x.2 x.3) (begin (set! y.4 (+ x.1 x.2)) (+ x.3 y.4)))) (call L.test.1 1 2 3))
+  (check-impose '(module () (define L.test.1 (lambda (x.1 x.2 x.3) (begin (set! y.4 (+ x.1 x.2)) (+ x.3 y.4)))) (call L.test.1 1 2 3))
                 '(module ((new-frames ()))
                    (define L.test.1
                      ((new-frames ()))
@@ -213,13 +215,13 @@
                             (begin (set! y.4 (+ x.1 x.2))
                                    (begin
                                      (set! a0 (+ x.3 y.4))
-                                     (jump tmp-ra.1 cfp a0)))))
+                                     (jump-return tmp-ra.1 cfp a0)))))
                    (begin (set! tmp-ra.2 cra)
                           (begin (set! a0 1) (set! a1 2) (set! a2 3)
                                  (set! cra tmp-ra.2)
-                                 (jump L.test.1 cfp cra a0 a1 a2))))
+                                 (jump-call L.test.1 cfp cra a0 a1 a2))))
                 "impose-calling-conventions: succes-03: tail calls with fvar args")
-  (check-impose '(module (define L.swap.1
+  (check-impose '(module () (define L.swap.1
                            (lambda (x.1 y.2)
                              (if (< y.2 x.1)
                                  x.1
@@ -232,7 +234,7 @@
                                                (set! x.1 a0)
                                                (set! y.2 a1)
                                                (if (< y.2 x.1)
-                                                   (begin (set! a0 x.1) (jump tmp-ra.1 cfp a0))
+                                                   (begin (set! a0 x.1) (jump-return tmp-ra.1 cfp a0))
                                                    (begin
                                                      (begin 
                                                        (return-point L.rpLabel.2
@@ -240,18 +242,18 @@
                                                                        (set! a0 y.2)
                                                                        (set! a1 x.1)
                                                                        (set! cra L.rpLabel.2)
-                                                                       (jump L.swap.1 cfp cra a0 a1)))
+                                                                       (jump-call L.swap.1 cfp cra a0 a1)))
                                                      (set! z.3 a0))
                                                      (begin 
                                                        (set! a0 z.3)
-                                                       (jump tmp-ra.1 cfp a0))))))
+                                                       (jump-return tmp-ra.1 cfp a0))))))
                    (begin
                      (set! tmp-ra.3 cra)
                      (begin 
                        (set! a0 1)
                        (set! a1 2)
                        (set! cra tmp-ra.3)
-                       (jump L.swap.1 cfp cra a0 a1))))
+                       (jump-call L.swap.1 cfp cra a0 a1))))
                 "impose-calling-conventions: succes-04: value call")
   ;|#
   )

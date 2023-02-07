@@ -2,6 +2,7 @@
 
 (require "common/info.rkt"
          "common/fvar.rkt"
+         "langs/asm-pred-lang.rkt"
          "log.rkt")
 (provide assign-call-undead-variables-full)
 
@@ -42,7 +43,7 @@
 ;
 ;(assign-funcs f)->'(define label? info? tail?)
 ;f: '(define label? info? tail?)
-(define (assign-funcs f)
+(define/contract (assign-funcs f) (-> asm-pred-lang? asm-pred-lang?)
   (match f
     [`(define ,l ,i ,t) `(define ,l ,(assign-info i) ,t)]
     [_ #f]))

@@ -4,6 +4,7 @@
          "common/aloc.rkt"
          "common/fvar.rkt"
          "common/register.rkt"
+         "langs/asm-pred-lang.rkt"
          "log.rkt")
 (provide undead-analysis)
 
@@ -163,7 +164,7 @@
 ;Performs undeadness analysis, decorating the program with undead-set tree. Only the info field of the program is modified.
 ;(undead-analysis p) → Asm-lang-V2-undead?
 ;p:Asm-lang-V2-locals?
-(define (undead-analysis p)
+(define/contract (undead-analysis p) (-> asm-pred-lang? asm-pred-lang?)
   (match p
     [`(module ,i ,f ... ,t) `(module ,(undead-info i t) ,@(map undead-func f) ,t)]
     [_ (logln "failed analysis")]))
@@ -234,7 +235,7 @@
                                  (begin
                                    (set! nfv.16 new-n.10)
                                    (set! cra L.rp.6)
-                                   (jump L.fact.4 cfp cra nfv.16)))
+                                   (jump-return L.fact.4 cfp cra nfv.16)))
                                '((z.3) ()))
                                '((z.3 new-n.10 cfp)
                                  ((z.3) ((cfp nfv.16) (cfp cra nfv.16) (cfp cra nfv.16)))
@@ -242,15 +243,15 @@
   "undead-effect: succes-06: return-point")
 ;undead-tail
   ;succes
-  (check-undead? (undead-tail '(begin (set! a0 x.1) (jump cra)) '((z.1) ())) '((x.1 cra) ((cra) ()) ()) "undead-tail: succes-01: halt")
-  (check-undead? (undead-tail '(begin (set! a0 x.1) (jump L.foo.4)) '(())) '((x.1) (() ())) "undead-tail: succes-02: start halt")
-  (check-undead? (undead-tail '(begin (set! x.1 42) (begin (set! a0 x.1) (jump L.foo.4))) '(())) '(() ((x.1) (() ()))) "undead-tail: succes-03: simple begin")
-  (check-undead? (undead-tail '(begin (set! x.1 5) (set! y.2 6) (set! z.3 (+ x.1 y.2)) (begin (set! a0 z.3) (jump L.foo.4))) '(()))
+  (check-undead? (undead-tail '(begin (set! a0 x.1) (jump-return cra)) '((z.1) ())) '((x.1 cra) ((cra) ()) ()) "undead-tail: succes-01: halt")
+  (check-undead? (undead-tail '(begin (set! a0 x.1) (jump-call L.foo.4)) '(())) '((x.1) (() ())) "undead-tail: succes-02: start halt")
+  (check-undead? (undead-tail '(begin (set! x.1 42) (begin (set! a0 x.1) (jump-call L.foo.4))) '(())) '(() ((x.1) (() ()))) "undead-tail: succes-03: simple begin")
+  (check-undead? (undead-tail '(begin (set! x.1 5) (set! y.2 6) (set! z.3 (+ x.1 y.2)) (begin (set! a0 z.3) (jump-call L.foo.4))) '(()))
                 '(() ((x.1) (x.1 y.2) (z.3) (() ())))
                 "undead-tail: succes-04: simple begin")
   (check-undead? (undead-tail '(if (= x.1 y.2)
-                                  (begin (set! a0 z.3) (jump cra))
-                                  (begin (set! x.1 5) (set! y.2 6) (set! z.3 (+ x.1 y.2)) (begin (set! a0 z.3) (jump cra))))
+                                  (begin (set! a0 z.3) (jump-return cra))
+                                  (begin (set! x.1 5) (set! y.2 6) (set! z.3 (+ x.1 y.2)) (begin (set! a0 z.3) (jump-return cra))))
                              '((z.3) ()))
                 '((x.1 y.2 z.3 cra)
                   ((z.3 cra)
@@ -260,8 +261,8 @@
                 "undead-tail: succes-05: if")
   
   (check-undead? (undead-tail '(if (= x.1 y.2)
-                                  (begin (set! x.1 5) (set! y.2 6) (set! z.3 (+ x.1 y.2)) (begin (set! a0 z.3) (jump cra)))
-                                  (begin (set! a0 z.3) (jump cra)))
+                                  (begin (set! x.1 5) (set! y.2 6) (set! z.3 (+ x.1 y.2)) (begin (set! a0 z.3) (jump-return cra)))
+                                  (begin (set! a0 z.3) (jump-return cra)))
                              '((z.3) ()))
                  '((x.1 y.2 cra z.3)
                    ((cra z.3)
@@ -269,17 +270,17 @@
                     ((cra) ()))
                    ())
                 "undead-effect: succes-06: if change")
-  (check-undead? (undead-tail '(jump L.foo.4) '((z.1) ())) '(() () ()) "undead-tail: succes-07: jump")
-  (check-undead? (undead-tail '(jump cra) '((z.1) ())) '((cra) () ()) "undead-tail: succes-08: jump")
+  (check-undead? (undead-tail '(jump-call L.foo.4) '((z.1) ())) '(() () ()) "undead-tail: succes-07: jump-call")
+  (check-undead? (undead-tail '(jump-return cra) '((z.1) ())) '((cra) () ()) "undead-tail: succes-08: jump-return")
 ;undead-analysis
   ;succes
   (check-undead? (undead-analysis '(module ((locals (x.1)))
                                     (begin
                                       (set! x.1 42)
-                                      (begin (set! a0 x.1) (jump L.foo.4)))))
+                                      (begin (set! a0 x.1) (jump-call L.foo.4)))))
                 '(module
                      ((undead-out ((x.1) (() ()))) (call-undead ()) (locals (x.1)))
-                   (begin (set! x.1 42) (begin (set! a0 x.1) (jump L.foo.4))))
+                   (begin (set! x.1 42) (begin (set! a0 x.1) (jump-call L.foo.4))))
                 "undead-analysis: succes-01: one instruction")
   (check-undead? (undead-analysis '(module ((locals (v.1 w.2 x.3 y.4 z.5 t.6 p.1)))
                                     (begin
@@ -297,7 +298,7 @@
                                       (set! p.1 -1)
                                       (set! t.6 (* t.6 p.1))
                                       (set! z.5 (+ z.5 t.6))
-                                      (begin (set! a0 z.5) (jump L.foo.4)))))
+                                      (begin (set! a0 z.5) (jump-call L.foo.4)))))
                 '(module
                      ((undead-out
                        ((v.1)
@@ -332,25 +333,25 @@
                      (set! p.1 -1)
                      (set! t.6 (* t.6 p.1))
                      (set! z.5 (+ z.5 t.6))
-                     (begin (set! a0 z.5) (jump L.foo.4))))
+                     (begin (set! a0 z.5) (jump-call L.foo.4))))
                 "undead-analysis: succes-02: multiple instructions")
   (check-undead? (undead-analysis '(module ((locals (x.1 y.1)))
                                     (begin
                                       (set! y.1 42)
                                       (set! x.1 5)
-                                      (begin (set! a0 x.1) (jump L.foo.4)))))
+                                      (begin (set! a0 x.1) (jump-call L.foo.4)))))
                 '(module
                      ((undead-out (() (x.1) (() ()))) (call-undead ()) (locals (x.1 y.1)))
-                   (begin (set! y.1 42) (set! x.1 5) (begin (set! a0 x.1) (jump L.foo.4))))
+                   (begin (set! y.1 42) (set! x.1 5) (begin (set! a0 x.1) (jump-call L.foo.4))))
                 "undead-analysis: succes-03: unused variable")
   (check-undead? (undead-analysis '(module ((locals (x.1 y.1)))
                                     (begin
                                       (set! x.1 5)
                                       (set! y.1 42)
-                                      (begin (set! a0 x.1) (jump L.foo.4)))))
+                                      (begin (set! a0 x.1) (jump-return L.foo.4)))))
                 '(module
                      ((undead-out ((x.1) (x.1) (() ()))) (call-undead ()) (locals (x.1 y.1)))
-                   (begin (set! x.1 5) (set! y.1 42) (begin (set! a0 x.1) (jump L.foo.4))))
+                   (begin (set! x.1 5) (set! y.1 42) (begin (set! a0 x.1) (jump-return L.foo.4))))
                 "undead-analysis: succes-04: unused variable")
     (check-undead? (undead-analysis '(module ((locals (x.1)))
                                       (begin
@@ -360,7 +361,7 @@
                                           (begin
                                             (set! z.3 (+ y.2 x.1))
                                             (set! x.1 z.3)))
-                                        (begin (set! a0 x.1) (jump L.foo.4)))))
+                                        (begin (set! a0 x.1) (jump-return L.foo.4)))))
                 '(module
                      ((undead-out ((x.1) ((y.2 x.1) ((z.3) (x.1))) (() ()))) (call-undead ()) (locals (x.1)))
                    (begin
@@ -370,7 +371,7 @@
                        (begin
                          (set! z.3 (+ y.2 x.1))
                          (set! x.1 z.3)))
-                     (begin (set! a0 x.1) (jump L.foo.4))))
+                     (begin (set! a0 x.1) (jump-return L.foo.4))))
                 "undead-analysis: succes-05: begin effect instruction")
   (check-undead? (undead-analysis '(module ((locals (x.1 y.2 z.3)))
                                       (begin
@@ -381,7 +382,7 @@
                                         (begin
                                             (set! z.3 (+ x.1 x.1))
                                             (set! x.1 z.3))
-                                        (begin (set! a0 x.1) (jump L.foo.4)))))
+                                        (begin (set! a0 x.1) (jump-return L.foo.4)))))
                 
                 '(module
                      ((undead-out ((x.1) ((y.2) (x.1)) ((z.3) (x.1)) (() ()))) (call-undead ()) (locals (x.1 y.2 z.3)))
@@ -393,7 +394,7 @@
                      (begin
                        (set! z.3 (+ x.1 x.1))
                        (set! x.1 z.3))
-                     (begin (set! a0 x.1) (jump L.foo.4))))
+                     (begin (set! a0 x.1) (jump-return L.foo.4))))
                 "undead-analysis: succes-06: sequential begin effects")
   (check-undead? (undead-analysis '(module ((locals (x.1 y.2 z.3 a.4 b.5)))
                                     (begin
@@ -413,7 +414,7 @@
                                         (begin
                                           (set! z.3 (+ x.1 x.1))
                                           (set! x.1 z.3)))
-                                      (begin (set! a0 x.1) (jump L.foo.4)))))           
+                                      (begin (set! a0 x.1) (jump-return L.foo.4)))))           
                 '(module
                      ((undead-out ((x.1) (() ((a.4) (a.4 b.5) ((a.4 b.5) (y.2 b.5)) ((b.5) (y.2)) (x.1)) ((z.3) (x.1))) (() ()))) (call-undead ()) (locals (x.1 y.2 z.3 a.4 b.5)))
                    (begin
@@ -433,7 +434,7 @@
                        (begin
                          (set! z.3 (+ x.1 x.1))
                          (set! x.1 z.3)))
-                     (begin (set! a0 x.1) (jump L.foo.4))))
+                     (begin (set! a0 x.1) (jump-return L.foo.4))))
                 "undead-analysis: succes-07: sequential and nested begin effects")
   (check-undead? (undead-analysis '(module ((locals (x.1 y.2 z.3 a.4 b.5)))
                                     (begin
@@ -453,7 +454,7 @@
                                         (begin
                                           (set! z.3 (+ x.1 x.1))
                                           (set! x.1 z.3)
-                                          (begin (set! a0 x.1) (jump L.foo.4)))))))           
+                                          (begin (set! a0 x.1) (jump-return L.foo.4)))))))           
                 '(module
                      ((undead-out ((x.1) (() ((a.4) (a.4 b.5) ((a.4 b.5) (y.2 b.5)) ((b.5) (y.2)) (x.1)) ((z.3) (x.1) (() ()))))) (call-undead ()) (locals (x.1 y.2 z.3 a.4 b.5)))
                    (begin
@@ -473,7 +474,7 @@
                        (begin
                          (set! z.3 (+ x.1 x.1))
                          (set! x.1 z.3)
-                         (begin (set! a0 x.1) (jump L.foo.4))))))
+                         (begin (set! a0 x.1) (jump-return L.foo.4))))))
                 "undead-analysis: succes-08: sequential and nested begin effects with tail in nested")
   (check-undead? (undead-analysis '(module
                                        ((locals (x.1 y.2 b.3 c.4)))
@@ -485,10 +486,10 @@
                                         (set! b.3 (+ b.3 y.2))
                                         (set! c.4 b.3)
                                         (if (= c.4 b.3)
-                                            (begin (set! a0 c.4) (jump L.foo.4))
+                                            (begin (set! a0 c.4) (jump-return L.foo.4))
                                             (begin
                                               (set! x.1 c.4)
-                                              (begin (set! a0 c.4) (jump L.foo.4))))))))                 
+                                              (begin (set! a0 c.4) (jump-return L.foo.4))))))))                 
                 '(module
                      ((undead-out ((x.1) (x.1 y.2) ((b.3 y.2) (b.3) (b.3 c.4) ((c.4) (() ()) ((c.4) (() ())))))) (call-undead ()) (locals (x.1 y.2 b.3 c.4)))
                    (begin
@@ -499,10 +500,10 @@
                        (set! b.3 (+ b.3 y.2))
                        (set! c.4 b.3)
                        (if (= c.4 b.3)
-                           (begin (set! a0 c.4) (jump L.foo.4))
+                           (begin (set! a0 c.4) (jump-return L.foo.4))
                            (begin
                              (set! x.1 c.4)
-                             (begin (set! a0 c.4) (jump L.foo.4)))))))
+                             (begin (set! a0 c.4) (jump-return L.foo.4)))))))
                 "undead-analysis: succes-09: if tail")
   (check-undead? (undead-analysis '(module
                                        ((new-frames ())
@@ -515,23 +516,23 @@
                                          (set! x.1 rdi)
                                          (set! y.2 rsi)
                                          (if (< y.2 x.1)
-                                             (begin (set! a0 x.1) (jump tmp-ra.1 cfp a0))
+                                             (begin (set! a0 x.1) (jump-return tmp-ra.1 cfp a0))
                                              (begin
                                                (return-point L.rp.1
                                                              (begin
                                                                (set! rsi x.1)
                                                                (set! rdi y.2)
                                                                (set! cra L.rp.1)
-                                                               (jump L.swap.1 cfp cra rdi rsi)))
+                                                               (jump-call L.swap.1 cfp cra rdi rsi)))
                                                (set! z.3 a0)
                                                (set! a0 z.3)
-                                               (jump tmp-ra.1 cfp a0)))))
+                                               (jump-return tmp-ra.1 cfp a0)))))
                                      (begin
                                        (set! tmp-ra.2 cra)
                                        (set! rsi 2)
                                        (set! rdi 1)
                                        (set! cra tmp-ra.2)
-                                       (jump L.swap.1 cfp cra rdi rsi))))                 
+                                       (jump-call L.swap.1 cfp cra rdi rsi))))                 
                  '(module
                       ((undead-out
                         ((tmp-ra.2 cfp)
@@ -562,23 +563,23 @@
                         (set! x.1 rdi)
                         (set! y.2 rsi)
                         (if (< y.2 x.1)
-                            (begin (set! a0 x.1) (jump tmp-ra.1 cfp a0))
+                            (begin (set! a0 x.1) (jump-return tmp-ra.1 cfp a0))
                             (begin
                               (return-point L.rp.1
                                             (begin
                                               (set! rsi x.1)
                                               (set! rdi y.2)
                                               (set! cra L.rp.1)
-                                              (jump L.swap.1 cfp cra rdi rsi)))
+                                              (jump-call L.swap.1 cfp cra rdi rsi)))
                               (set! z.3 a0)
                               (set! a0 z.3)
-                              (jump tmp-ra.1 cfp a0)))))
+                              (jump-return tmp-ra.1 cfp a0)))))
                     (begin
                       (set! tmp-ra.2 cra)
                       (set! rsi 2)
                       (set! rdi 1)
                       (set! cra tmp-ra.2)
-                      (jump L.swap.1 cfp cra rdi rsi)))
+                      (jump-call L.swap.1 cfp cra rdi rsi)))
                  "undead-analysis: succes-10: return call")
   (check-undead? (undead-analysis '(module
                                        ((new-frames ())
@@ -591,23 +592,23 @@
                                          (set! x.1 fv0)
                                          (set! y.2 fv1)
                                          (if (< y.2 x.1)
-                                             (begin (set! a0 x.1) (jump tmp-ra.3 cfp a0))
+                                             (begin (set! a0 x.1) (jump-return tmp-ra.3 cfp a0))
                                              (begin
                                                (return-point L.rp.2
                                                              (begin
                                                                (set! nfv.5 x.1)
                                                                (set! nfv.4 y.2)
                                                                (set! cra L.rp.2)
-                                                               (jump L.swap.1 cfp cra nfv.4 nfv.5)))
+                                                               (jump-call L.swap.1 cfp cra nfv.4 nfv.5)))
                                                (set! z.3 a0)
                                                (set! a0 z.3)
-                                               (jump tmp-ra.3 cfp a0)))))
+                                               (jump-return tmp-ra.3 cfp a0)))))
                                      (begin
                                        (set! tmp-ra.6 cra)
                                        (set! fv1 2)
                                        (set! fv0 1)
                                        (set! cra tmp-ra.6)
-                                       (jump L.swap.1 cfp cra fv0 fv1))))                 
+                                       (jump-call L.swap.1 cfp cra fv0 fv1))))                 
                  '(module
                       ((undead-out
                         ((tmp-ra.6 cfp)
@@ -641,23 +642,23 @@
                         (set! x.1 fv0)
                         (set! y.2 fv1)
                         (if (< y.2 x.1)
-                            (begin (set! a0 x.1) (jump tmp-ra.3 cfp a0))
+                            (begin (set! a0 x.1) (jump-return tmp-ra.3 cfp a0))
                             (begin
                               (return-point L.rp.2
                                             (begin
                                               (set! nfv.5 x.1)
                                               (set! nfv.4 y.2)
                                               (set! cra L.rp.2)
-                                              (jump L.swap.1 cfp cra nfv.4 nfv.5)))
+                                              (jump-call L.swap.1 cfp cra nfv.4 nfv.5)))
                               (set! z.3 a0)
                               (set! a0 z.3)
-                              (jump tmp-ra.3 cfp a0)))))
+                              (jump-return tmp-ra.3 cfp a0)))))
                     (begin
                       (set! tmp-ra.6 cra)
                       (set! fv1 2)
                       (set! fv0 1)
                       (set! cra tmp-ra.6)
-                      (jump L.swap.1 cfp cra fv0 fv1)))
+                      (jump-call L.swap.1 cfp cra fv0 fv1)))
                  "undead-analysis: succes-11: return call")
   (check-undead? (undead-analysis '(module
                                        ((new-frames ())
@@ -669,7 +670,7 @@
                                          (set! x.9 fv0)
                                          (set! ra.13 cra)
                                          (if (= x.9 0)
-                                             (begin (set! a0 1) (jump ra.13 cfp a0))
+                                             (begin (set! a0 1) (jump-return ra.13 cfp a0))
                                              (begin
                                                (set! tmp.14 -1)
                                                (set! tmp.15 x.9)
@@ -679,17 +680,17 @@
                                                              (begin
                                                                (set! nfv.16 new-n.10)
                                                                (set! cra L.rp.6)
-                                                               (jump L.fact.4 cfp cra nfv.16)))
+                                                               (jump-call L.fact.4 cfp cra nfv.16)))
                                                (set! factn-1.11 a0)
                                                (set! tmp.17 x.9)
                                                (set! tmp.17 (* tmp.17 factn-1.11))
                                                (set! a0 tmp.17)
-                                               (jump ra.13 cfp a0)))))
+                                               (jump-return ra.13 cfp a0)))))
                                      (begin
                                        (set! ra.12 cra)
                                        (set! fv0 5)
                                        (set! cra ra.12)
-                                       (jump L.fact.4 cfp cra fv0))))                 
+                                       (jump-call L.fact.4 cfp cra fv0))))                 
                  '(module
                       ((undead-out
                         ((ra.12 cfp) (ra.12 cfp fv0) (cfp cra fv0) (cfp cra fv0)))
@@ -719,7 +720,7 @@
                         (set! x.9 fv0)
                         (set! ra.13 cra)
                         (if (= x.9 0)
-                            (begin (set! a0 1) (jump ra.13 cfp a0))
+                            (begin (set! a0 1) (jump-return ra.13 cfp a0))
                             (begin
                               (set! tmp.14 -1)
                               (set! tmp.15 x.9)
@@ -729,17 +730,17 @@
                                             (begin
                                               (set! nfv.16 new-n.10)
                                               (set! cra L.rp.6)
-                                              (jump L.fact.4 cfp cra nfv.16)))
+                                              (jump-call L.fact.4 cfp cra nfv.16)))
                               (set! factn-1.11 a0)
                               (set! tmp.17 x.9)
                               (set! tmp.17 (* tmp.17 factn-1.11))
                               (set! a0 tmp.17)
-                              (jump ra.13 cfp a0)))))
+                              (jump-return ra.13 cfp a0)))))
                     (begin
                       (set! ra.12 cra)
                       (set! fv0 5)
                       (set! cra ra.12)
-                      (jump L.fact.4 cfp cra fv0)))
+                      (jump-call L.fact.4 cfp cra fv0)))
                  "undead-analysis: succes-12: return call")
   ;|#
   )

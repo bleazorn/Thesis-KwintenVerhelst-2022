@@ -1,15 +1,15 @@
 #lang at-exp racket/base
 
 (require
- cpsc411/compiler-lib
+ "../common/langs-lib.rkt"
  cpsc411/langs/redex-gen)
 
 (provide
  (all-defined-out))
 
 @define-grammar/pred[proc-imp-cmf-lang
-  #:literals (info? name? int64? label? aloc?)
-  #:datum-literals (define lambda module let call true false not if * + < <= =
+  #:literals (info? int64? label? aloc?)
+  #:datum-literals (define lambda module call true false not if * + < <= =
    >= > !=)
   [p     (module info (define label (lambda (aloc ...) entry)) ... entry)]
   [info info?]

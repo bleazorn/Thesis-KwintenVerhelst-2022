@@ -110,12 +110,14 @@
   (check-equal? (sequentialize-value '(if (let ([x.1 1]) (true)) (false) (true))) '(if (begin (set! x.1 1) (true)) (false) (true)) "sequentialize-value: succes-02: if")
   (check-equal? (sequentialize-value '(if (true) (let ([x.1 1]) x.1) (true))) '(if (true) (begin (set! x.1 1) x.1) (true)) "sequentialize-value: succes-03: if")
   (check-equal? (sequentialize-value '(if (true) (false) (let ([x.1 1]) x.1))) '(if (true) (false) (begin (set! x.1 1) x.1)) "sequentialize-value: succes-04: if")
+  (check-equal? (sequentialize-value '(call L.fun.4 x.1 y.2 z.3)) '(call L.fun.4 x.1 y.2 z.3) "sequentialize-value: succes-05: call")
 ;sequentialize-tail
   ;succes
   (check-equal? (sequentialize-tail '(if (true) x.1 y.2)) '(if (true) x.1 y.2) "sequentialize-tail: succes-01: if")
   (check-equal? (sequentialize-tail '(if (let ([x.1 1]) (true)) (false) (true))) '(if (begin (set! x.1 1) (true)) (false) (true)) "sequentialize-tail: succes-02: if")
   (check-equal? (sequentialize-tail '(if (true) (let ([x.1 1]) x.1) (true))) '(if (true) (begin (set! x.1 1) x.1) (true)) "sequentialize-tail: succes-03: if")
   (check-equal? (sequentialize-tail '(if (true) (false) (let ([x.1 1]) x.1))) '(if (true) (false) (begin (set! x.1 1) x.1)) "sequentialize-tail: succes-04: if")
+  (check-equal? (sequentialize-tail '(call L.fun.4 x.1 y.2 z.3)) '(call L.fun.4 x.1 y.2 z.3) "sequentialize-tail: succes-05: call")
 ;sequentialize-let
   ;succes
   (check-equal? (sequentialize-let '(module () (if (true) x.1 (let ([x.1 1]) x.1)))) '(module () (if (true) x.1 (begin (set! x.1 1) x.1))) "sequentialize-let: succes-01: if let")

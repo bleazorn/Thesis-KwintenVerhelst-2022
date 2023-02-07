@@ -2,7 +2,8 @@
 
 (require "common/info.rkt"
          "common/fvar.rkt"
-         "common/register.rkt")
+         "common/register.rkt"
+         "langs/asm-pred-lang.rkt")
 (provide allocate-frames-full)
 
 (module+ test
@@ -160,7 +161,7 @@
 ;
 ;(allocate-frames p)->Asm-pred-lang-V6-framed
 ;p: Asm-pred-lang-V6-pre-framed
-(define (allocate-frames-full p)
+(define/contract (allocate-frames-full p) (-> asm-pred-lang? asm-pred-lang?)
   (match p
     [`(module ,i ,f ... ,t) `(module ,(allocate-info i) ,@(map allocate-func f) ,t)]
     [_ "allocate frames failed"]))

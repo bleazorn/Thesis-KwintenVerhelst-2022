@@ -2,7 +2,9 @@
 
 (require "common/info.rkt"
          "common/fvar.rkt"
-         "common/register.rkt")
+         "common/register.rkt"
+         "langs/nested-asm-lang-jumps.rkt"
+         "langs/nested-asm-lang-fvars.rkt")
 (provide change-frame-pointer)
 
 (module+ test
@@ -78,7 +80,7 @@
     [_ #t]))
 
 
-(define (change-frame-pointer p)
+(define/contract (change-frame-pointer p) (-> nested-asm-lang-jumps? nested-asm-lang-fvars?)
   (match p
     [`(module ,i ,f ... ,pro) `(module () ,@(map change-func f) ,(change-tail pro (getInfo i getNewFrames) (getInfo i getAssignment)))]
     [_ "replace locations failed"]))

@@ -2,7 +2,8 @@
 
 (require "common/info.rkt"
          "common/fvar.rkt"
-         "common/register.rkt")
+         "common/register.rkt"
+         "langs/nested-asm-lang-jumps.rkt")
 (provide secure-stack-tokens)
 
 (module+ test
@@ -90,7 +91,7 @@
     [_ #t]))
 
 
-(define (secure-stack-tokens p)
+(define/contract (secure-stack-tokens p) (-> nested-asm-lang-jumps? nested-asm-lang-jumps?)
   (match p
     [`(module ,i ,f ... ,t) `(module () ,@(map secure-func f) ,(secure-info t i))]
     [_ "replace locations failed"]))

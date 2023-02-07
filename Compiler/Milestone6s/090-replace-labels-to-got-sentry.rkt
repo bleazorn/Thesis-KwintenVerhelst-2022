@@ -1,7 +1,9 @@
 #lang racket
 
 (require "common/info.rkt")
-(require "common/fvar.rkt")
+(require "common/fvar.rkt"
+         "langs/nested-asm-lang-jumps.rkt"
+         "langs/nested-asm-lang-fvars.rkt")
 (provide replace-labels-to-got-sentry)
 
 
@@ -79,7 +81,7 @@
     [_ #t]))
 
 
-(define (replace-labels-to-got-sentry p)
+(define/contract (replace-labels-to-got-sentry p) (-> nested-asm-lang-jumps? nested-asm-lang-fvars?)
   (match p
     [`(module ,i ,f ... ,t) (let ([replace-labels (getInfo i getGOTLabels)])
                               `(module ,i ,@(map (lambda (func) (replace-func func replace-labels)) f) ,(replace-tail-begin t replace-labels)))]

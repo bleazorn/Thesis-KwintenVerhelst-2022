@@ -134,10 +134,12 @@
   ;succes
   (check-equal? (normalize-value '(begin (set! z.3 (begin (set! x.1 y.2) x.1)) (+ x.1 y.2))) '(begin (begin (set! x.1 y.2) (set! z.3 x.1)) (+ x.1 y.2)) "normalize-value: succes-05: begin")
   (check-equal? (normalize-value '(if (true) (+ x.1 y.2) (+ x.1 y.2))) '(if (true) (+ x.1 y.2) (+ x.1 y.2)) "normalize-value: succes-06: if")
+  (check-equal? (normalize-value '(call L.fun.4 x.1 y.2 z.3)) '(call L.fun.4 x.1 y.2 z.3) "normalize-value: succes-07: call")
   ;normalize-tail
   ;succes
   (check-equal? (normalize-tail '(begin (set! z.3 (begin (set! x.1 y.2) x.1)) (+ x.1 y.2))) '(begin (begin (set! x.1 y.2) (set! z.3 x.1)) (+ x.1 y.2)) "normalize-tail: succes-05: begin")
   (check-equal? (normalize-tail '(if (true) (+ x.1 y.2) (+ x.1 y.2))) '(if (true) (+ x.1 y.2) (+ x.1 y.2)) "normalize-tail: succes-06: if")
+  (check-equal? (normalize-tail '(call L.fun.4 x.1 y.2 z.3)) '(call L.fun.4 x.1 y.2 z.3) "normalize-tail: succes-07: call")
 
   ;normalize-bind
   ;succes

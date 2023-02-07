@@ -1,5 +1,7 @@
 #lang racket
 
+(require "langs/block-pred-lang.rkt"
+         "langs/block-asm-lang.rkt")
 (provide resolve-predicates)
 
 (module+ test
@@ -68,7 +70,7 @@
 ;
 ;(resolve-predicates p)->Pred-lang-V4-Block
 ;p:Asm-lang-V4-Block
-(define (resolve-predicates p)
+(define/contract (resolve-predicates p) (-> block-pred-lang? block-asm-lang?)
   (match p
     [`(module ,i ,b ...) `(module ,i ,@(map resolve-b b))]
     [_ "resolve predicates failed"]))
@@ -109,19 +111,19 @@
   
   ;resolve-if
   ;succes
-  (check-equal? (resolve-if '(= a0 a1) 'L1 'L2) '(if (= a0 a1) (jump L1) (jump L2)) "resolve-if: succes-01: equal")
-  (check-equal? (resolve-if '(!= a0 a1) 'L1 'L2) '(if (!= a0 a1) (jump L1) (jump L2)) "resolve-if: succes-02: not equal")
-  (check-equal? (resolve-if '(< a0 a1) 'L1 'L2) '(if (< a0 a1) (jump L1) (jump L2)) "resolve-if: succes-03: lesser then")
-  (check-equal? (resolve-if '(> a0 a1) 'L1 'L2) '(if (> a0 a1) (jump L1) (jump L2)) "resolve-if: succes-04: greater then")
-  (check-equal? (resolve-if '(<= a0 a1) 'L1 'L2) '(if (<= a0 a1) (jump L1) (jump L2)) "resolve-if: succes-05: l and e")
-  (check-equal? (resolve-if '(>= a0 a1) 'L1 'L2) '(if (>= a0 a1) (jump L1) (jump L2)) "resolve-if: succes-06: g and e")
+  (check-equal? (resolve-if '(= a0 a1) 'L.foo.1 'L.foo.2) '(if (= a0 a1) (jump L.foo.1) (jump L.foo.2)) "resolve-if: succes-01: equal")
+  (check-equal? (resolve-if '(!= a0 a1) 'L.foo.1 'L.foo.2) '(if (!= a0 a1) (jump L.foo.1) (jump L.foo.2)) "resolve-if: succes-02: not equal")
+  (check-equal? (resolve-if '(< a0 a1) 'L.foo.1 'L.foo.2) '(if (< a0 a1) (jump L.foo.1) (jump L.foo.2)) "resolve-if: succes-03: lesser then")
+  (check-equal? (resolve-if '(> a0 a1) 'L.foo.1 'L.foo.2) '(if (> a0 a1) (jump L.foo.1) (jump L.foo.2)) "resolve-if: succes-04: greater then")
+  (check-equal? (resolve-if '(<= a0 a1) 'L.foo.1 'L.foo.2) '(if (<= a0 a1) (jump L.foo.1) (jump L.foo.2)) "resolve-if: succes-05: l and e")
+  (check-equal? (resolve-if '(>= a0 a1) 'L.foo.1 'L.foo.2) '(if (>= a0 a1) (jump L.foo.1) (jump L.foo.2)) "resolve-if: succes-06: g and e")
 
-  (check-equal? (resolve-if '(true) 'L1 'L2) '(jump L1) "resolve-if: succes-07: true")
-  (check-equal? (resolve-if '(false) 'L1 'L2) '(jump L2) "resolve-if: succes-08: false")
+  (check-equal? (resolve-if '(true) 'L.foo.1 'L.foo.2) '(jump L.foo.1) "resolve-if: succes-07: true")
+  (check-equal? (resolve-if '(false) 'L.foo.1 'L.foo.2) '(jump L.foo.2) "resolve-if: succes-08: false")
 
-  (check-equal? (resolve-if '(not (true)) 'L1 'L2) '(jump L2) "resolve-if: succes-09: not")
-  (check-equal? (resolve-if '(not (not (true))) 'L1 'L2) '(jump L1) "resolve-if: succes-10: not not")
-  (check-equal? (resolve-if '(not (not (not (true)))) 'L1 'L2) '(jump L2) "resolve-if: succes-11: not not not")
+  (check-equal? (resolve-if '(not (true)) 'L.foo.1 'L.foo.2) '(jump L.foo.2) "resolve-if: succes-09: not")
+  (check-equal? (resolve-if '(not (not (true))) 'L.foo.1 'L.foo.2) '(jump L.foo.1) "resolve-if: succes-10: not not")
+  (check-equal? (resolve-if '(not (not (not (true)))) 'L.foo.1 'L.foo.2) '(jump L.foo.2) "resolve-if: succes-11: not not not")
 
   ;resolve-tail
   ;succes
@@ -133,18 +135,18 @@
   (check-equal? (resolve-tail '(begin (set! a0 a1) (set! a0 (+ a1 a2)) (begin (set! a0 a1) (set! a0 (+ a1 a2)) (set! a0 a0) (jump cra))))
                 '(begin (set! a0 a1) (set! a0 (+ a1 a2)) (begin (set! a0 a1) (set! a0 (+ a1 a2)) (set! a0 a0) (jump cra)))
                 "resolve-tail: succes-04: begin")
-  (check-equal? (resolve-tail '(begin (set! a0 a1) (set! a0 (+ a1 a2)) (if (not (not (false))) (jump L1) (jump L2))))
-                '(begin (set! a0 a1) (set! a0 (+ a1 a2)) (jump L2))
+  (check-equal? (resolve-tail '(begin (set! a0 a1) (set! a0 (+ a1 a2)) (if (not (not (false))) (jump L.foo.1) (jump L.foo.2))))
+                '(begin (set! a0 a1) (set! a0 (+ a1 a2)) (jump L.foo.2))
                 "resolve-tail: succes-05: begin")
 
-  (check-equal? (resolve-tail '(if (not (not (true))) (jump L1) (jump L2))) '(jump L1) "resolve-tail: succes-06: if")
-  (check-equal? (resolve-tail '(if (not (not (false))) (jump L1) (jump L2))) '(jump L2) "resolve-tail: succes-07: if")
-  (check-equal? (resolve-tail '(if (not (not (= a0 a1))) (jump L1) (jump L2))) '(if (= a0 a1) (jump L1) (jump L2)) "resolve-tail: succes-08: if")
+  (check-equal? (resolve-tail '(if (not (not (true))) (jump L.foo.1) (jump L.foo.2))) '(jump L.foo.1) "resolve-tail: succes-06: if")
+  (check-equal? (resolve-tail '(if (not (not (false))) (jump L.foo.1) (jump L.foo.2))) '(jump L.foo.2) "resolve-tail: succes-07: if")
+  (check-equal? (resolve-tail '(if (not (not (= a0 a1))) (jump L.foo.1) (jump L.foo.2))) '(if (= a0 a1) (jump L.foo.1) (jump L.foo.2)) "resolve-tail: succes-08: if")
 
   ;resolve-predicates
   ;succes
-  (check-equal? (resolve-predicates '(module (define L0 (if (not (not (false))) (jump L1) (jump L2))) (define L1 (jump L2)) (define L2 (begin (set! a0 a0) (jump cra)))))
-                '(module (define L0 (jump L2)) (define L1 (jump L2)) (define L2 (begin (set! a0 a0) (jump cra))))
+  (check-equal? (resolve-predicates '(module () (define L.foo.0 (if (not (not (false))) (jump L.foo.1) (jump L.foo.2))) (define L.foo.1 (jump L.foo.2)) (define L.foo.2 (begin (set! a0 a0) (jump cra)))))
+                '(module () (define L.foo.0 (jump L.foo.2)) (define L.foo.1 (jump L.foo.2)) (define L.foo.2 (begin (set! a0 a0) (jump cra))))
                 "resolve-predicates: succes-01: mult def")
   ;|#
   )

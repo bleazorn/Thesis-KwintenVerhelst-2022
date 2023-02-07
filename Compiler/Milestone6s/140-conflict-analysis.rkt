@@ -4,6 +4,7 @@
          "common/aloc.rkt"
          "common/fvar.rkt"
          "common/register.rkt"
+         "langs/asm-pred-lang.rkt"
          "log.rkt")
 (provide conflict-analysis)
 
@@ -142,7 +143,7 @@ Any variable defined during a move instruction is in conflict with every variabl
 ;Decorates a program with its conflict graph.
 ;(conflict-analysis p) -> Asm-lang-V2-conflicts?
 ;p: Asm-lang-V2-undead?
-(define (conflict-analysis p)
+(define/contract (conflict-analysis p) (-> asm-pred-lang? asm-pred-lang?)
   (match p
     [`(module ,i ,f ... ,t) `(module ,(conflict-info i t) ,@(map conflict-func f) ,t)]
     [_ #f]))
@@ -155,10 +156,10 @@ Any variable defined during a move instruction is in conflict with every variabl
   ;succes
   (check-equal? (conflict-analysis '(module
                                         ((undead-out ((x.1) (() ()))) (call-undead ()) (locals (x.1)))
-                                      (begin (set! x.1 42) (begin (set! a0 x.1) (jump L.foo.4)))))
+                                      (begin (set! x.1 42) (begin (set! a0 x.1) (jump-call L.foo.4)))))
                 '(module
                      ((conflicts ((a0 ()) (x.1 ()))) (undead-out ((x.1) (() ()))) (call-undead ()) (locals (x.1)))
-                   (begin (set! x.1 42) (begin (set! a0 x.1) (jump L.foo.4))))
+                   (begin (set! x.1 42) (begin (set! a0 x.1) (jump-call L.foo.4))))
                 "conflict-analysis: succes-1: one instruction")
   (check-equal? (conflict-analysis '(module
                                         ((undead-out
@@ -194,7 +195,7 @@ Any variable defined during a move instruction is in conflict with every variabl
                                         (set! p.1 -1)
                                         (set! t.6 (* t.6 p.1))
                                         (set! z.5 (+ z.5 t.6))
-                                        (begin (set! a0 z.5) (jump L.foo.4)))))
+                                        (begin (set! a0 z.5) (jump-call L.foo.4)))))
                 '(module
                      ((conflicts ((a0 ())
                                   (p.1 (z.5 t.6 x.3 w.2 y.4))
@@ -237,7 +238,7 @@ Any variable defined during a move instruction is in conflict with every variabl
                      (set! p.1 -1)
                      (set! t.6 (* t.6 p.1))
                      (set! z.5 (+ z.5 t.6))
-                     (begin (set! a0 z.5) (jump L.foo.4))))
+                     (begin (set! a0 z.5) (jump-call L.foo.4))))
                 "conflict-analysis: succes-2: multiple instructions")
     (check-equal? (conflict-analysis '(module
                                           ((undead-out ((x.1) ((y.2 x.1) ((z.3) (x.1))) (() ()))) (call-undead ()) (locals (x.1)))
@@ -248,7 +249,7 @@ Any variable defined during a move instruction is in conflict with every variabl
                                             (begin
                                               (set! z.3 (+ y.2 x.1))
                                               (set! x.1 z.3)))
-                                          (begin (set! a0 x.1) (jump L.foo.4)))))
+                                          (begin (set! a0 x.1) (jump-call L.foo.4)))))
                 '(module
                      ((conflicts ((a0 ())
                                   (z.3 ())
@@ -262,7 +263,7 @@ Any variable defined during a move instruction is in conflict with every variabl
                        (begin
                          (set! z.3 (+ y.2 x.1))
                          (set! x.1 z.3)))
-                     (begin (set! a0 x.1) (jump L.foo.4))))
+                     (begin (set! a0 x.1) (jump-call L.foo.4))))
                 "conflict-analysis: succes-05: begin effect instruction")
 
   (check-equal? (conflict-analysis '(module
@@ -275,7 +276,7 @@ Any variable defined during a move instruction is in conflict with every variabl
                                         (begin
                                           (set! z.3 (+ x.1 x.1))
                                           (set! x.1 z.3))
-                                        (begin (set! a0 x.1) (jump L.foo.4)))))
+                                        (begin (set! a0 x.1) (jump-call L.foo.4)))))
                 '(module
                      ((conflicts ((a0 ())
                                   (z.3 ())
@@ -290,7 +291,7 @@ Any variable defined during a move instruction is in conflict with every variabl
                      (begin
                        (set! z.3 (+ x.1 x.1))
                        (set! x.1 z.3))
-                     (begin (set! a0 x.1) (jump L.foo.4))))
+                     (begin (set! a0 x.1) (jump-call L.foo.4))))
                 "conflict-analysis: succes-06: sequential begin effects")
   (check-equal? (conflict-analysis '(module
                                         ((undead-out ((x.1) (() ((a.4) (a.4 b.5) ((a.4 b.5) (y.2 b.5)) ((b.5) (y.2)) (x.1)) ((z.3) (x.1))) (() ()))) (call-undead ()) (locals (x.1 y.2 z.3 a.4 b.5)))
@@ -311,7 +312,7 @@ Any variable defined during a move instruction is in conflict with every variabl
                                           (begin
                                             (set! z.3 (+ x.1 x.1))
                                             (set! x.1 z.3)))
-                                        (begin (set! a0 x.1) (jump L.foo.4)))))           
+                                        (begin (set! a0 x.1) (jump-call L.foo.4)))))           
                 '(module
                      ((conflicts ((a0 ())
                                   (b.5 (a.4 y.2))
@@ -337,7 +338,7 @@ Any variable defined during a move instruction is in conflict with every variabl
                        (begin
                          (set! z.3 (+ x.1 x.1))
                          (set! x.1 z.3)))
-                     (begin (set! a0 x.1) (jump L.foo.4))))
+                     (begin (set! a0 x.1) (jump-call L.foo.4))))
                 "conflict-analysis: succes-07: sequential and nested begin effects")
   
     
@@ -360,7 +361,7 @@ Any variable defined during a move instruction is in conflict with every variabl
                                           (begin
                                             (set! z.3 (+ x.1 x.1))
                                             (set! x.1 z.3)
-                                            (begin (set! a0 x.1) (jump L.foo.4)))))))           
+                                            (begin (set! a0 x.1) (jump-call L.foo.4)))))))           
                 '(module
                      ((conflicts ((a0 ())
                                   (b.5 (a.4 y.2))
@@ -386,7 +387,7 @@ Any variable defined during a move instruction is in conflict with every variabl
                        (begin
                          (set! z.3 (+ x.1 x.1))
                          (set! x.1 z.3)
-                         (begin (set! a0 x.1) (jump L.foo.4))))))
+                         (begin (set! a0 x.1) (jump-call L.foo.4))))))
                 "conflict-analysis: succes-08: sequential and nested begin effects with tail in nested")
   (check-equal? (conflict-analysis '(module
                                         ((undead-out ((x.1) (x.1 y.2) ((b.3 y.2) (b.3) (b.3 c.4) ((c.4) (() ()) ((c.4) (() ())))))) (call-undead ()) (locals (x.1 y.2 b.3 c.4)))
@@ -398,10 +399,10 @@ Any variable defined during a move instruction is in conflict with every variabl
                                           (set! b.3 (+ b.3 y.2))
                                           (set! c.4 b.3)
                                           (if (= c.4 b.3)
-                                              (begin (set! a0 c.4) (jump L.foo.4))
+                                              (begin (set! a0 c.4) (jump-call L.foo.4))
                                               (begin
                                                 (set! x.1 c.4)
-                                                (begin (set! a0 c.4) (jump L.foo.4))))))))                 
+                                                (begin (set! a0 c.4) (jump-call L.foo.4))))))))                 
                 '(module
                      ((conflicts ((a0 ())
                                   (c.4 (b.3))
@@ -417,10 +418,10 @@ Any variable defined during a move instruction is in conflict with every variabl
                        (set! b.3 (+ b.3 y.2))
                        (set! c.4 b.3)
                        (if (= c.4 b.3)
-                           (begin (set! a0 c.4) (jump L.foo.4))
+                           (begin (set! a0 c.4) (jump-call L.foo.4))
                            (begin
                              (set! x.1 c.4)
-                             (begin (set! a0 c.4) (jump L.foo.4)))))))
+                             (begin (set! a0 c.4) (jump-call L.foo.4)))))))
                 "conflict-analysis: succes-09: if tail")
   (check-equal? (conflict-analysis '(module
                                         ((locals (tmp-ra.14))
@@ -451,23 +452,23 @@ Any variable defined during a move instruction is in conflict with every variabl
                        (set! x.1 fv0)
                        (set! y.2 fv1)
                        (if (< y.2 x.1)
-                           (begin (set! rax x.1) (jump tmp-ra.15 rbp rax))
+                           (begin (set! rax x.1) (jump-return tmp-ra.15 rbp rax))
                            (begin
                              (return-point L.rp.5
                                            (begin
                                              (set! nfv.17 x.1)
                                              (set! nfv.16 y.2)
                                              (set! r15 L.rp.5)
-                                             (jump L.swap.1 rbp r15 nfv.16 nfv.17)))
+                                             (jump-call L.swap.1 rbp r15 nfv.16 nfv.17)))
                              (set! z.3 rax)
                              (set! rax z.3)
-                             (jump tmp-ra.15 rbp rax)))))
+                             (jump-return tmp-ra.15 rbp rax)))))
                                       (begin
                                         (set! tmp-ra.14 r15)
                                         (set! fv1 2)
                                         (set! fv0 1)
                                         (set! r15 tmp-ra.14)
-                                        (jump L.swap.1 rbp r15 fv0 fv1))))
+                                        (jump-call L.swap.1 rbp r15 fv0 fv1))))
                 '(module
                      ((conflicts
                         ((fv0 (r15 tmp-ra.14 fv1 rbp))
@@ -515,23 +516,23 @@ Any variable defined during a move instruction is in conflict with every variabl
                        (set! x.1 fv0)
                        (set! y.2 fv1)
                        (if (< y.2 x.1)
-                           (begin (set! rax x.1) (jump tmp-ra.15 rbp rax))
+                           (begin (set! rax x.1) (jump-return tmp-ra.15 rbp rax))
                            (begin
                              (return-point L.rp.5
                                            (begin
                                              (set! nfv.17 x.1)
                                              (set! nfv.16 y.2)
                                              (set! r15 L.rp.5)
-                                             (jump L.swap.1 rbp r15 nfv.16 nfv.17)))
+                                             (jump-call L.swap.1 rbp r15 nfv.16 nfv.17)))
                              (set! z.3 rax)
                              (set! rax z.3)
-                             (jump tmp-ra.15 rbp rax)))))
+                             (jump-return tmp-ra.15 rbp rax)))))
                    (begin
                      (set! tmp-ra.14 r15)
                      (set! fv1 2)
                      (set! fv0 1)
                      (set! r15 tmp-ra.14)
-                     (jump L.swap.1 rbp r15 fv0 fv1)))
+                     (jump-call L.swap.1 rbp r15 fv0 fv1)))
                 "conflict-analysis: succes-10: return call")
   ;|#
   )

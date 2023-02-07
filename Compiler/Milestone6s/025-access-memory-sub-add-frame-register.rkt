@@ -1,6 +1,7 @@
 #lang racket
 
 (require "common/fvar.rkt"
+         "langs/paren-cheri-risc-v.rkt"
          "log.rkt")
 (provide access-memory-sub-add-frame-register)
 
@@ -94,7 +95,7 @@
 ;Generates paren-cheri-risc-v code in string if argument matches. Otherwise false.
 ;(generate-cheri-risc-v p) -> string?/boolean?
 ; p: any?
-(define (access-memory-sub-add-frame-register p)
+(define/contract (access-memory-sub-add-frame-register p) (-> paren-cheri-risc-v? paren-cheri-risc-v?)
     (match p
     [`(begin ,i ,s ...) `(begin ,i ,@(foldl (lambda (set n) (append n (access-sets set))) '() s))]
     [_ #f]))

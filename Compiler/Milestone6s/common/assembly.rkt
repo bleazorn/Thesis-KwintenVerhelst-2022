@@ -9,7 +9,14 @@
          permissions
          permissionToInt
          setPerms
-         removePerm)
+         removePerm
+         int64?
+         int32?
+         int16?)
+
+
+(module+ test
+  (require rackunit))
 
 (define indent (make-string 4 #\ ))
 
@@ -78,5 +85,58 @@
 (define (hex->dex h)
   h)
 
+(define (intBinBound i b)
+  (let ([min (- 0 (expt 2 (sub1 b)))]
+        [max (expt 2 (sub1 b))])
+    (and (integer? i) (<= min i) (< i max))))
+
+(define (int16? i)
+  (intBinBound i 16))
+
+(define (int32? i)
+  (intBinBound i 32))
+
+(define (int64? i)
+  (intBinBound i 64))
+  
+
+
+
 (module+ test
-  (require rackunit))
+;int16?
+  ;succes
+  (check-true (int16? 0) "int16?: succes-01: zero")
+  (check-true (int16? 123) "int16?: succes-02: pos")
+  (check-true (int16? -123) "int16?: succes-03: neg")
+  (check-true (int16? 32767) "int16?: succes-04: max")
+  (check-true (int16? -32768) "int16?: succes-05: min")
+  ;failure
+  (check-false (int16? 32768) "int16?: failure-01: max + 1")
+  (check-false (int16? -32769) "int16?: failure-02: min + 1")
+  (check-false (int16? 65536) "int16?: failure-03: double max")
+  (check-false (int16? -65536) "int16?: failure-04: double min")
+;int32?
+  ;succes
+  (check-true (int32? 0) "int32?: succes-01: zero")
+  (check-true (int32? 123) "int32?: succes-02: pos")
+  (check-true (int32? -123) "int32?: succes-03: neg")
+  (check-true (int32? 2147483647) "int32?: succes-04: max")
+  (check-true (int32? -2147483648) "int32?: succes-05: min")
+  ;failure
+  (check-false (int32? 2147483648) "int32?: failure-01: max + 1")
+  (check-false (int32? -2147483649) "int32?: failure-02: min + 1")
+  (check-false (int32? 4294967296) "int32?: failure-03: double max")
+  (check-false (int32? -4294967296) "int32?: failure-04: double min")
+;int64?
+  ;succes
+  (check-true (int64? 0) "int64?: succes-01: zero")
+  (check-true (int64? 123) "int64?: succes-02: pos")
+  (check-true (int64? -123) "int64?: succes-03: neg")
+  (check-true (int64? 9223372036854775807) "int64?: succes-04: max")
+  (check-true (int64? -9223372036854775808) "int64?: succes-05: min")
+  ;failure
+  (check-false (int64? 9223372036854775808) "int64?: failure-01: max + 1")
+  (check-false (int64? -9223372036854775809) "int64?: failure-02: min + 1")
+  (check-false (int64? 18446744073709551616) "int64?: failure-03: double max")
+  (check-false (int64? -18446744073709551616) "int64?: failure-04: double min")
+  )
