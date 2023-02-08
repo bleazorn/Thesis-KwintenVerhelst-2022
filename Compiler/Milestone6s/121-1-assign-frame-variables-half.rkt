@@ -2,6 +2,7 @@
 
 (require "common/info.rkt"
          "common/fvar.rkt"
+         "langs/asm-pred-lang.rkt"
          "log.rkt")
 (provide assign-frame-variables-half)
 
@@ -57,10 +58,12 @@
 ;
 ;(allocate-frames p)->Asm-pred-lang-V6-framed
 ;p: Asm-pred-lang-V6-pre-framed
-(define (assign-frame-variables-half p)
+(define/contract (assign-frame-variables-half p) (-> asm-pred-lang? asm-pred-lang?)
   (match p
     [`(module ,i ,f ... ,pro) `(module ,(assign-info i) ,@(map assign-func f) ,pro)]
     [_ "assign frame variables failed"]))
+
+
 
 (module+ test
   )

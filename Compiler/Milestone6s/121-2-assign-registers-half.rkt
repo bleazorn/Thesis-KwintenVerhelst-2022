@@ -4,6 +4,7 @@
          "common/register.rkt"
          "common/fvar.rkt"
          "common/aloc.rkt"
+         "langs/asm-pred-lang.rkt"
          "log.rkt")
 (provide assign-registers-half)
 
@@ -66,13 +67,13 @@
 ;(assign-info i)->info?
 ;i: info?
 (define (assign-info i)
+  (resetSpilled)
   (let ([loc   (getInfo i getLocals)]
         [conf  (getInfo i getConflicts)]
         [ass    (getInfo i getAssignment)])
     (let* ([nonLocConf (filter (lambda (c) (member (car c) loc)) conf)]
            [newAss (assign-recur loc conf ass nonLocConf)])
-      (addInfo (addInfo (addInfo i (setLocals (getSpilled)))
-                        (setConflicts conf))
+      (addInfo (addInfo i (setLocals (getSpilled)))
                (setAssignment newAss)))))
 
 ;
@@ -87,7 +88,7 @@
 ;Performs graph-colouring register allocation. The pass attempts to fit each of the abstract location declared in the locals set into a register, and if one cannot be found, assigns it a frame variable instead.
 ;(assign-registers p) → Asm-lang-V2-assignments?
 ;p: Asm-lang-V2-conflicts?
-(define (assign-registers-half p)
+(define/contract (assign-registers-half p) (-> asm-pred-lang? asm-pred-lang?)
   (match p
     [`(module ,i ,f ... ,pro) `(module ,(assign-info i) ,@(map assign-func f) ,pro)]
     [_ #f]))

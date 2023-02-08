@@ -121,6 +121,7 @@ sltiu reg, reg, int12		compares < unsigned 12 bit integer
     [`(begin ,i ,s ...) (foldl (lambda (s string) (format "~a~a" string (generate-sets s))) "" s)]
     [_ #f]))
 
+
 (module+ test
   #|
 ;generate-binop

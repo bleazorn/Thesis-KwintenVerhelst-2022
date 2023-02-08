@@ -42,7 +42,7 @@
 ;e: effect?
 (define (cap-effect e)
   (match e
-    [`(set! ,a (,binop ,b ,c))    (cap-binop e)]
+    [`(set! ,a (,binop ,b ,c)) #:when (register? b) (cap-binop e)]
     [`(set! ,a ,b)                (cap-set e)]
     [`(with-label ,l ,eff)        `(with-label ,l ,(cap-effect eff))]
     [`(jump ,l)                   (cap-jump e)]
@@ -57,6 +57,7 @@
   (match p
     [`(begin ,i ,s ...)  `(begin ,i ,@(map cap-effect s))]
     [_ "cap mode on failed"]))
+
 
 (module+ test
   (require rackunit)

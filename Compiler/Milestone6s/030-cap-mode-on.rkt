@@ -47,7 +47,7 @@
 ;e: effect?
 (define (cap-effect e)
   (match e
-    [`(set! ,a (,binop ,b ,c))    (cap-binop e)]
+    [`(set! ,a (,binop ,b ,c)) #:when (register? b) (cap-binop e)]
     [`(set! ,a ,b)                (cap-set e)]
     [`(setLinear! ,a ,b)          `(setLinear! ,a ,b)]
     [`(with-label ,l ,eff)        `(with-label ,l ,(cap-effect eff))]

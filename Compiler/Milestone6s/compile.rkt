@@ -24,7 +24,8 @@
                (logln (format "~a:" fun))
                (pretty-display (format "~a:" fun))
                (let ([res (fun p)])
-                 (pretty-display (cons (car res) (cons '() (cdr res))))
+                 (cond [(list? res) (pretty-display (cons (car res) (cons '() (cdr res))))]
+                       [else (display res)])
                  (display (format "\n\n"))
                  res)))))
 
@@ -150,10 +151,10 @@
   (check-equal? #t #t "test"))
 
 ;#|
-(parameterize ([steps (stkTokens (steps))]
-               [current-frame-base-pointer-register 'csp]
-               [stack-direction '+]
-               ;[steps (halfStack (risc-v (steps)))])
+(parameterize (;[steps (stkTokens (steps))]
+               ;[current-frame-base-pointer-register 'csp]
+               ;[stack-direction '+]
+               [steps (halfStack (risc-v (steps)))]
                [current-parameter-registers '()]
                [current-assignable-registers '()]) 
   (compileStepsDis 2 (sub1 (length (steps))) simpleProgram))

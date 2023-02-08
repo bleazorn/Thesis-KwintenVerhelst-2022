@@ -1,7 +1,8 @@
 #lang racket
 
 (require "common/info.rkt"
-         "common/fvar.rkt")
+         "common/fvar.rkt"
+         "langs/asm-pred-lang.rkt")
 (provide assign-call-undead-variables-half)
 
 (module+ test
@@ -49,7 +50,9 @@
 ;(assign-info i)->info?
 ;i: info?
 (define (assign-info i)
-  (addInfo i (setAssignment (assign-call-undead (getInfo i getCallUndead) (getInfo i getConflicts)))))
+  (let ([call-undead (getInfo i getCallUndead)]
+        [confs (getInfo i getConflicts)])
+    (addInfo i (setAssignment (assign-call-undead call-undead confs)))))
 
 ;
 ;(assign-funcs f)->'(define label? info? tail?)
@@ -60,11 +63,10 @@
     [_ #f]))
 
 
-
 ;
 ;(assign-call-undead-variables p)->Asm-pred-lang-V6-pre-framed
 ;p: Asm-pred-lang-V6-conflicts
-(define (assign-call-undead-variables-half p)
+(define/contract (assign-call-undead-variables-half p) (-> asm-pred-lang? asm-pred-lang?)
   (match p
     [`(module ,i ,f ... ,t) `(module ,(assign-info i) ,@(map assign-funcs f) ,t)]
     [_ "assign call undead variables failed"]))
