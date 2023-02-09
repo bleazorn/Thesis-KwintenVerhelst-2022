@@ -21,17 +21,6 @@
       (set! curStack (cons l curStack))))
 
 ;
-;clear-registers->effect?
-(define clear-registers
-  '(begin (set! t0 0)
-          (set! t1 0)
-          (set! t2 0)
-          (set! t3 0)
-          (set! t4 0)
-          (set! t5 0)
-          (set! t6 0)))
-
-;
 ;(getFrameVar args)->list? list?
 ;args: list?
 (define (getFrameVar args)

@@ -99,7 +99,7 @@
 (define (compile-file file)
   (println (format "test: ~a" (output-file)))
   (parameterize ([steps (setup-steps (steps))]
-                 [current-frame-base-pointer-register 'csp]
+                 [current-stack-base-pointer-register 'csp]
                  [stack-direction '+])
                  ;[current-parameter-registers '()]
                  ;[current-assignable-registers '()]) 
@@ -150,9 +150,9 @@
 (module+ test
   (check-equal? #t #t "test"))
 
-;#|
+#|
 (parameterize (;[steps (stkTokens (steps))]
-               ;[current-frame-base-pointer-register 'csp]
+               ;[current-stack-base-pointer-register 'csp]
                ;[stack-direction '+]
                [steps (halfStack (risc-v (steps)))]
                [current-parameter-registers '()]

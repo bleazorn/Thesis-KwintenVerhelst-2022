@@ -112,10 +112,10 @@
                                      (begin
                                        (set! x.1 42)
                                        (set! x.1 x.1)
-                                       (jump L.foo.4))))
+                                       (jump-call L.foo.4))))
                 '(module
                      ((locals ()) (conflicts ((x.1 ())))  (assignment ((x.1 t0))))
-                   (begin (set! x.1 42) (set! x.1 x.1) (jump L.foo.4)))
+                   (begin (set! x.1 42) (set! x.1 x.1) (jump-call L.foo.4)))
                 "assign-registers: succes-1 one instruction")
   (check-equal? (assign-registers-half '(module ((locals (v.1 w.2 x.3 y.4 z.5 t.6 p.1))
                                             (conflicts
@@ -143,7 +143,7 @@
                                        (set! t.6 (* t.6 p.1))
                                        (set! z.5 (+ z.5 t.6))
                                        (set! z.5 z.5)
-                                       (jump L.foo.4))))
+                                       (jump-call L.foo.4))))
                 '(module
                      ((locals (z.5))
                       (conflicts
@@ -173,7 +173,7 @@
                      (set! t.6 (* t.6 p.1))
                      (set! z.5 (+ z.5 t.6))
                      (set! z.5 z.5)
-                     (jump L.foo.4)))
+                     (jump-call L.foo.4)))
                 "assign-registers: succes-2: multiple instructions")
   )
 ;|#

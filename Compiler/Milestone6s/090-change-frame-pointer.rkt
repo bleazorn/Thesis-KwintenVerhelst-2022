@@ -23,7 +23,7 @@
                                 [callArgs (assoc l frames)])
                             (let ([frameSize (maxFrame (- (add1 sizeFrame) (cond [callArgs (length (second callArgs))]
                                                                                  [else 0])))]
-                                  [fbp (current-frame-base-pointer-register)])
+                                  [fbp (current-stack-base-pointer-register)])
                               `(begin
                                  (set! ,fbp (- ,fbp ,frameSize))
                                  (return-point ,l ,(change-tail t frames assign))

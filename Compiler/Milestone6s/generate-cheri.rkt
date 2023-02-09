@@ -69,7 +69,7 @@
   (match s
     [`(seal ,r ... ,i) #:when (andmap isCapability? r) (let ([addr (createSeal i)])
                                                          (string-append
-                                                            (generate-set `(set! ct6 ((current-frame-base-pointer-register) - addr)))
+                                                            (generate-set `(set! ct6 ((current-stack-base-pointer-register) - addr)))
                                                             (foldl (lambda (x) (string-append (indent-instr (format "CSeal ~a, ~a, ct6" x x)))) "" r)))] 
     [_ #f]))
 
@@ -77,7 +77,7 @@
   (match u
     [`(unseal ,r ... ,i) #:when (andmap isCapability? r) (let ([addr (getSealAddr i)])
                                                            (string-append
-                                                            (generate-set `(set! ct6 ((current-frame-base-pointer-register) - addr)))
+                                                            (generate-set `(set! ct6 ((current-stack-base-pointer-register) - addr)))
                                                             (foldl (lambda (x) (string-append (indent-instr (format "CUnseal ~a, ~a, ct6" x x)))) "" r)))]
     [_ #f]))
 

@@ -30,7 +30,7 @@
   (let ([n (getFvarNumber f)])
     (cond [(ffvar? f) (let ([n (cond [(equal? (stack-direction) '-) (add1 n)]
                                      [else n])])
-                        `(,(current-frame-base-pointer-register) ,(stack-direction) ,(+ (* n (framesize)) offset)))]
+                        `(,(current-stack-base-pointer-register) ,(stack-direction) ,(+ (* n (framesize)) offset)))]
           [(fgvar? f) (let ([n (cond [(equal? (global-direction) '-) (add1 n)]
                                      [else n])])
                         `(,(current-global-register) ,(global-direction) ,(* n (framesize))))]
@@ -56,7 +56,7 @@
   (match e
     [`(begin ,e ...) `(begin ,@(map implement-effect e))]
     [`(if ,p ,e1 ,e2) `(if ,(implement-pred p) ,(implement-effect e1) ,(implement-effect e2))]
-    [`(set! ,a (,binop ,b ,c)) #:when (and (equal? a (current-frame-base-pointer-register)) (equal? b (current-frame-base-pointer-register)))
+    [`(set! ,a (,binop ,b ,c)) #:when (and (equal? a (current-stack-base-pointer-register)) (equal? b (current-stack-base-pointer-register)))
                                (addOffSet binop c) `(set! ,a (,binop ,b ,c))]
     [`(set! ,a (,binop ,b ,c)) `(set! ,(change-fvar a) (,binop ,(change-fvar b) ,(change-fvar c)))]
     [`(set! ,a ,b) `(set! ,(change-fvar a) ,(change-fvar b))]

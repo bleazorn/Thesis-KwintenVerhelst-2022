@@ -129,13 +129,13 @@
                                                      (set! tmp-ra.7 ra)
                                                      (set! x.3 a0)
                                                      (if (begin (set! tmp.10 0) (= x.3 tmp.10))
-                                                         (begin (set! a0 0) (jump tmp-ra.7 cfp a0))
+                                                         (begin (set! a0 0) (jump-return tmp-ra.7 cfp a0))
                                                          (begin
                                                            (set! y.4 (+ x.3 -1))
                                                            (begin
                                                              (set! a0 y.4)
                                                              (set! ra tmp-ra.7)
-                                                             (jump L.even?.2 cfp ra a0))))))
+                                                             (jump-call L.even?.2 cfp ra a0))))))
                                                  (define L.even?.2
                                                    ((conflicts
                                                      ((cfp (ra tmp-ra.8 a0 y.6 x.5 tmp.11))
@@ -158,16 +158,16 @@
                                                      (set! tmp-ra.8 ra)
                                                      (set! x.5 a0)
                                                      (if (begin (set! tmp.11 0) (= x.5 tmp.11))
-                                                         (begin (set! a0 1) (jump tmp-ra.8 cfp a0))
+                                                         (begin (set! a0 1) (jump-return tmp-ra.8 cfp a0))
                                                          (begin
                                                            (set! y.6 (+ x.5 -1))
                                                            (begin
                                                              (set! a0 y.6)
                                                              (set! ra tmp-ra.8)
-                                                             (jump L.odd?.1 cfp ra a0))))))
+                                                             (jump-call L.odd?.1 cfp ra a0))))))
                                                  (begin
                                                    (set! tmp-ra.9 ra)
-                                                   (begin (set! a0 5) (set! ra tmp-ra.9) (jump L.even?.2 cfp ra a0)))))
+                                                   (begin (set! a0 5) (set! ra tmp-ra.9) (jump-call L.even?.2 cfp ra a0)))))
                 '(module ((assignment ())
                           (conflicts
                            ((a0 (ra tmp-ra.9 cfp))
@@ -202,13 +202,13 @@
                        (set! tmp-ra.7 ra)
                        (set! x.3 a0)
                        (if (begin (set! tmp.10 0) (= x.3 tmp.10))
-                           (begin (set! a0 0) (jump tmp-ra.7 cfp a0))
+                           (begin (set! a0 0) (jump-return tmp-ra.7 cfp a0))
                            (begin
                              (set! y.4 (+ x.3 -1))
                              (begin
                                (set! a0 y.4)
                                (set! ra tmp-ra.7)
-                               (jump L.even?.2 cfp ra a0))))))
+                               (jump-call L.even?.2 cfp ra a0))))))
                    (define L.even?.2
                      ((assignment ((tmp-ra.8 fv0)))
                       (conflicts
@@ -232,16 +232,16 @@
                        (set! tmp-ra.8 ra)
                        (set! x.5 a0)
                        (if (begin (set! tmp.11 0) (= x.5 tmp.11))
-                           (begin (set! a0 1) (jump tmp-ra.8 cfp a0))
+                           (begin (set! a0 1) (jump-return tmp-ra.8 cfp a0))
                            (begin
                              (set! y.6 (+ x.5 -1))
                              (begin
                                (set! a0 y.6)
                                (set! ra tmp-ra.8)
-                               (jump L.odd?.1 cfp ra a0))))))
+                               (jump-call L.odd?.1 cfp ra a0))))))
                    (begin
                      (set! tmp-ra.9 ra)
-                     (begin (set! a0 5) (set! ra tmp-ra.9) (jump L.even?.2 cfp ra a0))))
+                     (begin (set! a0 5) (set! ra tmp-ra.9) (jump-call L.even?.2 cfp ra a0))))
                 "assign-call-undead-variables: succes-01: value call")
                 
   ;|#
