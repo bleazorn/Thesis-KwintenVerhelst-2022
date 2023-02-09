@@ -26,8 +26,9 @@
 (define (getSpilled)
   spilled)
 
-(define (addSpilled l)
-  (set! spilled (cons l spilled)))
+(define (addSpilled l call-undead)
+  (cond [(or (isNfv? l) (member l call-undead)) (set! spilled spilled)]
+        [else (set! spilled (cons l spilled))]))
 
 (define (resetSpilled)
   (set! spilled '()))
@@ -48,20 +49,22 @@
 ;loc:list? '(aloc ...)
 ;conf:list? '((aloc? (...)) ...)
 ;assign: list? '((aloc loc) ...)
-(define (assign-recur loc conf assign confDel)
+(define (assign-recur loc conf assign confDel call-undead)
   ;(logln confDel)
   (cond [(null? loc) assign]
         [else (let* ([i (index-of-lowest-conf confDel)]
                      [l (car (list-ref confDel i))])
                 (let ([available (remove* (getRegFromAssign (second (assoc l conf)) assign) (current-assignable-registers))])
-                  (cond [(null? available) (addSpilled l)(assign-recur (remove l loc)
-                                                                       conf
-                                                                       assign
-                                                               (remove-conf l confDel))]
+                  (cond [(null? available) (addSpilled l call-undead)(assign-recur (remove l loc)
+                                                                                   conf
+                                                                                   assign
+                                                                                   (remove-conf l confDel)
+                                                                                   call-undead)]
                         [else (assign-recur (remove l loc)
                                             conf
                                             (cons `(,l ,(car available)) assign)
-                                            (remove-conf l confDel))])))]))
+                                            (remove-conf l confDel)
+                                            call-undead)])))]))
 
 ;
 ;(assign-info i)->info?
@@ -70,9 +73,10 @@
   (resetSpilled)
   (let ([loc   (getInfo i getLocals)]
         [conf  (getInfo i getConflicts)]
-        [ass    (getInfo i getAssignment)])
+        [ass    (getInfo i getAssignment)]
+        [call-undead (getInfo i getCallUndead)])
     (let* ([nonLocConf (filter (lambda (c) (member (car c) loc)) conf)]
-           [newAss (assign-recur loc conf ass nonLocConf)])
+           [newAss (assign-recur loc conf ass nonLocConf call-undead)])
       (addInfo (addInfo i (setLocals (getSpilled)))
                (setAssignment newAss)))))
 

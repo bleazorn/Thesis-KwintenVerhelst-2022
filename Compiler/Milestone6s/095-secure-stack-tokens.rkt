@@ -22,7 +22,6 @@
                             `(begin
                                (set! ,(newFvar parasize) ,(current-return-address-register))
                                (setLinear! ,(newFvar (add1 parasize)) ,(current-frame-base-pointer-register))
-                               (split csp csp cfp ,framesize)
                                (return-point ,l ,(secure-tail t framesize parasize token))
                                (set! cfp ct6)
                                (splice csp csp cfp ,framesize)
@@ -66,7 +65,9 @@
   (match t
     [`(begin ,e ... ,tail) `(begin ,@(map (lambda (eff) (secure-effect eff framesize parasize)) e) ,(secure-tail tail framesize parasize token))]
     [`(if ,p ,t1 ,t2) `(if ,(secure-pred p framesize parasize) ,(secure-tail t1 framesize parasize token) ,(secure-tail t2 framesize parasize token))]
-    [`(jump-call ,trg) `(begin (seal cra cfp ,token) (jump-call ,trg))]
+    [`(jump-call ,trg) `(begin (split csp csp cfp ,framesize)
+                               (seal cra cfp ,token)
+                               (jump-call ,trg))]
     [`(jump-return ,trg) `(invoke ,(current-return-address-register) cfp)]
     [`(invoke ,a ,b) `(invoke ,a ,b)]
     [_ #f]))
@@ -79,7 +80,7 @@
   (let ([frameSize (cond [(> (* (getInfo i getFrameSize) (framesize)) 16384) (* (getInfo i getFrameSize) (framesize))]
                          [else 16384])]
         [parasize (getInfo i getParamSize)])
-    (secure-tail t frameSize parasize 0)))
+    (values (addInfo i (setActualFrameSize frameSize)) (secure-tail t frameSize parasize 0))))
       
 
 ;
@@ -87,17 +88,19 @@
 ;f: '(define label? info? tail?)
 (define (secure-func f)
   (match f
-    [`(define ,l ,i ,t) `(define ,l () ,(secure-info t i))]
+    [`(define ,l ,i ,t) (let-values ([(info tail) (secure-info t i)])
+                          `(define ,l ,info ,tail))]
     [_ #t]))
 
 
 (define/contract (secure-stack-tokens p) (-> nested-asm-lang-jumps? nested-asm-lang-jumps?)
   (match p
-    [`(module ,i ,f ... ,t) `(module () ,@(map secure-func f) ,(secure-info t i))]
+    [`(module ,i ,f ... ,t) (let-values ([(info tail) (secure-info t i)])
+                              `(module ,info ,@(map secure-func f) ,tail))]
     [_ "replace locations failed"]))
 
 
-(secure-stack-tokens '(module ((frameSize 4)
+#;(secure-stack-tokens '(module ((frameSize 4)
                                 (assignment ((tmp-ra.13 fv2) (nfv.15 fv3)))
                                 (conflicts
                                  ((a0 (tmp-ra.13))

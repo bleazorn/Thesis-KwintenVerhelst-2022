@@ -26,7 +26,8 @@
          "091-create-got.rkt"
          "090-replace-labels-to-got.rkt"
          "090-change-frame-pointer.rkt"
-         "080-implement-fvars.rkt"     
+         "080-implement-fvars.rkt"
+         "080-implement-fvars-split.rkt"
          "070-expose-basic-blocks.rkt"
          "060-resolve-predicates.rkt"
          "050-flatten-program.rkt"
@@ -80,11 +81,14 @@
 (define (stkTokens l)
   (let* ([wI (index-where l (curry equal? wrap-cheri-risc-v-run-time))]
          [gI (index-where l (curry equal? access-memory-tempory-register))]
+         [fI (index-where l (curry equal? implement-fvars))]
          [sI (index-where l (curry equal? change-frame-pointer))]
          [iI (index-where l (curry equal? impose-calling-conventions-full))]
          [switchedL (list-set
                      (list-set
-                      (list-set l wI wrap-cheri-risc-v-run-time-secure)
+                      (list-set
+                       (list-set l fI implement-fvars-split)
+                       wI wrap-cheri-risc-v-run-time-secure)
                       gI access-memory-sub-add-frame-register)
                      sI (list replace-labels-to-got
                               create-got

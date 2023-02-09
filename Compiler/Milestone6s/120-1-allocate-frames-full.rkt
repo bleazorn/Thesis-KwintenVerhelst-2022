@@ -9,9 +9,6 @@
 (module+ test
   (require rackunit))
 
-(define (maxFrame n)
-  (* n (framesize)))
-
 #|
 ;
 ;(allocate-return l t frames ass)->effect? assignment?
@@ -126,13 +123,10 @@
   (map (lambda (f) `(,f ,(freshfvar))) (sort frame sortFrame)))
 
 (define (allocate-frames startFva frames)
-  (for/fold ([maxFrame 0]
-             [assigned '()])
+  (for/fold ([assigned '()])
             ([frame frames])
     (let ([frame-vars (second frame)])
-      (values (cond [(< maxFrame (length frame-vars)) (length frame-vars)]
-                    [else maxFrame])
-              (append assigned (allocate-frame startFva frame-vars))))))
+      (append assigned (allocate-frame startFva frame-vars)))))
 
 ;
 ;(allocate-info i t)->tail? info?
@@ -145,9 +139,9 @@
         [allFva (getInfo i getAllocatedFvars)])
     (let* ([all-assigned-fvars (append (filter fvar? (map second ass)) (filter fvar? (map car confs)) allFva)]  ;ass: not in temp regs cons: paras start method allFva: other ways
            [startFva (maxFvarNumber all-assigned-fvars)])
-      (let-values ([(maxFrame newAss) (allocate-frames startFva frames)])
+      (let ([newAss (allocate-frames startFva frames)])
         (addInfo
-         (addInfo i (setFrameSize (+ (add1 startFva) maxFrame)))
+         (addInfo i (setFrameSize (add1 startFva)))
          (setAssignment (append ass newAss)))))))
   
 ;

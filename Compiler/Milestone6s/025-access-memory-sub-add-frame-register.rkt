@@ -18,10 +18,12 @@
   ((access-address-binop binop) 0 (- 0 n)))
 
 (define (access-before-set r binop n)
-  `(set! ,r (+ ,r ,(access-before binop n))))
+  `((set! s5 ,(access-before binop n))
+    (set! ,r (+ ,r s5))))
 
 (define (access-after-set r binop n)
-  `(set! ,r (+ ,r ,(access-after binop n))))
+  `((set! s5 ,(access-after binop n))
+    (set! ,r (+ ,r s5))))
 
    
 ;
@@ -30,12 +32,12 @@
 (define (access-set s)
   (logln s)
   (match s
-    [`(set! (,r ,binop ,n) ,b) #:when (access-address-binop binop) `(,(access-before-set r binop n)
+    [`(set! (,r ,binop ,n) ,b) #:when (access-address-binop binop) `(,@(access-before-set r binop n)
                                                                      (set! (,r - ,0) ,b)
-                                                                     ,(access-after-set r binop n))]
-    [`(set! ,a (,r ,binop ,n)) #:when (access-address-binop binop) `(,(access-before-set r binop n)
+                                                                     ,@(access-after-set r binop n))]
+    [`(set! ,a (,r ,binop ,n)) #:when (access-address-binop binop) `(,@(access-before-set r binop n)
                                                                      (set! ,a (,r - ,0))
-                                                                     ,(access-after-set r binop n))]
+                                                                     ,@(access-after-set r binop n))]
     [_ `(,s)]))
 
 ;
@@ -43,12 +45,12 @@
 ;s: set?
 (define (access-set-linear s)
   (match s
-    [`(setLinear! (,r ,binop ,n) ,b) #:when (access-address-binop binop) `(,(access-before-set r binop n)
+    [`(setLinear! (,r ,binop ,n) ,b) #:when (access-address-binop binop) `(,@(access-before-set r binop n)
                                                                            (setLinear! (,r - ,0) ,b)
-                                                                           ,(access-after-set r binop n))]
-    [`(setLinear! ,a (,r ,binop ,n)) #:when (access-address-binop binop) `(,(access-before-set r binop n)
+                                                                           ,@(access-after-set r binop n))]
+    [`(setLinear! ,a (,r ,binop ,n)) #:when (access-address-binop binop) `(,@(access-before-set r binop n)
                                                                            (setLinear! ,a (,r - ,0))
-                                                                           ,(access-after-set r binop n))]
+                                                                           ,@(access-after-set r binop n))]
     [_ `(,s)]))
 
 ;
@@ -56,9 +58,9 @@
 ;s: set?
 (define (access-jump s)
   (match s
-    [`(jump (,r ,binop ,n)) #:when (access-address-binop binop) `(,(access-before-set r binop n)
+    [`(jump (,r ,binop ,n)) #:when (access-address-binop binop) `(,@(access-before-set r binop n)
                                                                   `(set! ct5 (,r - ,0))
-                                                                  ,(access-after-set r binop n)
+                                                                  ,@(access-after-set r binop n)
                                                                   (jump ct5))]
     [_ `(,s)]))
 

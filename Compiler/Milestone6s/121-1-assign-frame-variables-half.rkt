@@ -9,6 +9,19 @@
 (module+ test
   (require rackunit))
 
+
+;
+;(getMaxFvar a ass conf)->fvar?
+;a: aloc?
+;ass: list? '((aloc loc) ...)
+;conf:list? '((aloc? (...)) ...)
+(define (getMaxFvar a ass conf)
+  (let ([conflictedAssFvars (filter fvar? (map second (filter (lambda (as) (member (first as) (second (assoc a conf)))) ass)))]
+        [conflictedFvars (filter fvar? (second (assoc a conf)))])
+    ;(logln (append conflictedAssFvars conflictedFvars))
+    (getFirstAvailableFvar (append conflictedAssFvars conflictedFvars))))
+
+
 ;
 ;(assign-recur loc ass conf confDel)->list? '((aloc loc) ...)
 ;loc:list? '(aloc ...)
@@ -26,17 +39,6 @@
                       (cons `(,l ,fvar) ass)
                       conf
                       (remove-conf l confDel)))))
-
-;
-;(getMaxFvar a ass conf)->fvar?
-;a: aloc?
-;ass: list? '((aloc loc) ...)
-;conf:list? '((aloc? (...)) ...)
-(define (getMaxFvar a ass conf)
-  (let ([conflictedAssFvars (filter fvar? (map second (filter (lambda (as) (member (first as) (second (assoc a conf)))) ass)))]
-        [conflictedFvars (filter fvar? (second (assoc a conf)))])
-    ;(logln (append conflictedAssFvars conflictedFvars))
-    (getFirstAvailableFvar (append conflictedAssFvars conflictedFvars))))
 
 ;
 ;(assign-info i)->info?

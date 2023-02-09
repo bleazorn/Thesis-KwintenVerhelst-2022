@@ -4,6 +4,8 @@
          aloc?			
          label?			
          isTmp?
+         isNfv?
+         isTmpRa?
          resetfresh
          freshAloc		
          freshtmp		
@@ -75,6 +77,24 @@
 
 (define (freshRPLabel)
   (freshLabel "rpLabel"))
+
+(define (isNfv? t)
+  (if (symbol? t)
+      (let* ([symv (symbol->string t)]
+             [indexes (indexes-of (string->list symv) #\.)])
+        (if (and (and (equal? (length indexes) 1) (string->number (substring symv (first indexes)))) (equal? "nfv" (substring symv 0 (first indexes))))
+            #t 
+            #f))
+      #f))
+
+(define (isTmpRa? t)
+  (if (symbol? t)
+      (let* ([symv (symbol->string t)]
+             [indexes (indexes-of (string->list symv) #\.)])
+        (if (and (and (equal? (length indexes) 1) (string->number (substring symv (first indexes)))) (equal? "tmp-ra" (substring symv 0 (first indexes))))
+            #t 
+            #f))
+      #f))
 
 (module+ test
 ;name?
