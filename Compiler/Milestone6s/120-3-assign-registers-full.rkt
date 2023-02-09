@@ -49,7 +49,7 @@
 (define (getARegister conflictedRegisters assigned)
   (let ([available (remove* conflictedRegisters (current-assignable-registers))])
     (if (null? available)
-        (getFirstAvailableFvar (map fvar? assigned))
+        (getFirstAvailableFvar (filter fvar? assigned))
         (car available))))
 
 ;

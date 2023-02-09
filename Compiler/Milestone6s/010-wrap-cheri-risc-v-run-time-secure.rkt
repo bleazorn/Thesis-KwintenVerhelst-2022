@@ -35,7 +35,7 @@
                                                       (indent-instr (format "cllc ct0, L.pcJump"))
                                                       (indent-instr (format "li t5, 259"))
                                                       (indent-instr (format "CAndPerm ct0, ct0, t5"))
-                                                      (indent-instr (format " cjalr ct0, ct0"))
+                                                      (indent-instr (format "cjalr ct0, ct0"))
                                                       "L.pcJump:\n"
                                                       "//Call Setup\n"
                                                       (indent-instr (format "li t0, 16384"))

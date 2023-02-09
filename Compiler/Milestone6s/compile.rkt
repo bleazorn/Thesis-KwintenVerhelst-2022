@@ -99,10 +99,11 @@
 (define (compile-file file)
   (println (format "test: ~a" (output-file)))
   (parameterize ([steps (setup-steps (steps))]
-                 [current-stack-base-pointer-register 'csp]
-                 [stack-direction '+])
-                 ;[current-parameter-registers '()]
-                 ;[current-assignable-registers '()]) 
+                 ;[current-stack-base-pointer-register 'csp]
+                 ;[stack-direction '+]
+                 [current-parameter-registers '()]
+                 [current-assignable-registers '()]
+                 )
     (write-program (read-program-from-file file))))
 
 ;######################################################################
@@ -144,20 +145,20 @@
   )
 
 (define bigProgram
-  '(module (define fun1 (lambda (x1) (call fun2 -385 375))) (define fun2 (lambda (x1 x2) (if (let ((x3 (* x1 x1)) (x4 506) (x5 (- -510 x2))) (<= x3 x5)) (call fun5 -293 209 x1) (* -79 182)))) (define fun5 (lambda (x1 x2 x3) (call fun3 x3 x3))) (define fun3 (lambda (x1 x2) (let ((x3 x1) (x4 (if (false) (call fun4 x1 x1 x2) x1)) (x5 (call fun4 x1 x1 x1)) (x6 (if (true) (let ((x4 (let ((x5 (+ x2 x1)) (x6 (if (false) (* x1 x1) (let ((x10 (if (true) (let ((x14 (if (not (if (true) (< x2 x1) (false))) (call fun4 x1 x1 -110) (call fun2 174 x1)))) (let ((x15 (call fun1 x14)) (x16 (let ((x17 (let ((x21 (call fun2 111 x14)) (x22 (call fun2 x14 x14))) (call fun1 x22))) (x18 (if (not (= x14 x14)) (- x14 43) (if (= x14 x14) (* x14 x14) (let ((x23 (if (true) (call fun3 29 x14) (call fun4 -426 x14 x14))) (x24 (let ((x27 (let ((x31 (call fun1 x14)) (x32 (call fun5 x14 x14 x14))) (call fun5 -326 x32 -132))) (x28 x14) (x29 (call fun4 x14 x14 446)) (x30 (let ((x33 x14) (x34 (if (let ((x37 x14)) (if (true) (not (true)) (let ((x38 x37) (x39 (call fun2 x37 x37)) (x40 (call fun5 x37 -69 x37))) (> x40 x38)))) (let ((x41 x14)) (if (false) (if (false) (call fun4 338 -268 x41) (- x41 308)) (- -70 x41))) (* x14 x14))) (x35 (+ x14 -383)) (x36 -81)) (* x36 -44)))) (- x30 x27))) (x25 (- x14 x14)) (x26 x14)) 376)))) (x19 (+ -138 x14)) (x20 x14)) (+ x20 -6)))) x15)) (- -279 -195))) (x11 x2) (x12 x1) (x13 -326)) 414))) (x7 (* x1 428)) (x8 x1) (x9 (- x1 -292))) x9))) -19) x2)) (x7 438)) (- x5 -7)))) (define fun4 (lambda (x1 x2 x3) (call fun1 x2))) (if (if (true) (let ((x1 (call fun1 -446)) (x2 -351) (x3 -99) (x4 -392)) (false)) (< -286 76)) (* -364 382) -139))
+  '(module (define fun4 (lambda (x1) (if (let ((x2 (call fun5 x1 x1 x1 x1))) (< x2 x2)) (call fun1 x1) (let ((x5 (if (= 231 x1) (call fun2 x1) (let ((x9 (let ((x10 (let ((x15 (call fun4 x1)) (x16 (if (if (true) (if (false) (!= x1 x1) (not (if (= x1 x1) (let ((x18 213)) (if (let ((x19 (call fun5 x18 295 x18 x18)) (x20 (* x18 x18)) (x21 (call fun1 x18)) (x22 (call fun3 x18)) (x23 (call fun5 x18 x18 6 x18))) (let ((x2 x19) (x3 (call fun1 x20)) (x4 (* 295 x20)) (x5 x19)) (< x5 x5))) (false) (< x18 x18))) (if (false) (= x1 x1) (true))))) (let ((x6 (let ((x9 (call fun2 x1))) (if (let ((x10 (- x9 x9)) (x11 x9) (x12 (let ((x13 x9) (x14 (let ((x15 x9) (x16 (if (!= x9 x9) (let ((x18 (call fun4 x9)) (x19 (call fun5 x9 x9 -491 x9)) (x20 (call fun1 x9)) (x21 (if (!= x9 x9) (if (<= x9 x9) (- -28 -156) (call fun3 x9)) (call fun1 406))) (x22 (call fun2 x9))) (* x18 477)) (* x9 x9))) (x17 (call fun2 -81))) (- x15 x15)))) (let ((x23 (call fun4 x13)) (x24 (call fun3 x13))) (call fun5 x24 314 x23 x24))))) (if (let ((x25 (- x11 x12)) (x26 (let ((x28 x10) (x29 (if (let ((x32 (if (true) (call fun3 x10) (let ((x35 (call fun5 216 x11 x10 x11)) (x36 (let ((x39 442) (x40 (call fun4 x10)) (x41 (let ((x43 (* x10 x12)) (x44 x10)) (* -169 x43))) (x42 (- 443 -168))) (* 305 505))) (x37 x10) (x38 (- x12 x11))) (* 290 x36)))) (x33 (* x12 x12)) (x34 (+ x12 x11))) (true)) x10 x10)) (x30 x10) (x31 -209)) (+ 429 x28))) (x27 (- 296 -49))) (false)) (< x12 61) (= 69 x12))) x9 (- -311 x9)))) (x7 23) (x8 (- 427 x1))) (false))) (* x1 x1) (+ -43 x1))) (x17 (+ x1 x1))) (* -278 x16))) (x11 (+ x1 x1)) (x12 (- x1 40)) (x13 x1) (x14 (* -272 x1))) (+ x13 x14)))) (- x9 -266)))) (x6 x1) (x7 -507) (x8 (* x1 x1))) x5)))) (define fun3 (lambda (x1) (call fun5 x1 x1 x1 -326))) (define fun5 (lambda (x1 x2 x3 x4) (call fun5 x3 -504 -142 x4))) (define fun1 (lambda (x1) (call fun2 x1))) (define fun2 (lambda (x1) x1)) (let ((x1 (+ 73 -159)) (x2 (+ -198 449)) (x3 (call fun1 298)) (x4 (call fun1 -328)) (x5 (if (false) (- -103 -143) (if (not (true)) (let ((x2 (let ((x4 -270) (x5 (call fun4 -26)) (x6 (- 143 41)) (x7 (+ -305 -174))) (* x6 276))) (x3 -26)) x3) 398)))) (- x1 x4)))
   )
 
 (module+ test
   (check-equal? #t #t "test"))
 
-#|
-(parameterize (;[steps (stkTokens (steps))]
+;#|
+(parameterize ([steps (steps)]
                ;[current-stack-base-pointer-register 'csp]
                ;[stack-direction '+]
-               [steps (halfStack (risc-v (steps)))]
-               [current-parameter-registers '()]
-               [current-assignable-registers '()]) 
-  (compileStepsDis 2 (sub1 (length (steps))) simpleProgram))
+               ;[steps (halfStack (risc-v (steps)))]
+               ;[current-parameter-registers '()]
+               [current-assignable-registers '()])
+  (compileStepsDis 0 (sub1 (length (steps))) swapProgram))
 ;|#
 ;(compileStepsDis 2 (sub1 (length (steps))) simpleProgram)
 ;(interp-values-lang bigProgram)

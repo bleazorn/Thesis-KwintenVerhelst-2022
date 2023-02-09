@@ -49,7 +49,7 @@
   (make-parameter 'cfp))
 
 (define (frame-base-pointer-register? v)
-  (or (equal? v (current-stack-base-pointer-register)) (equal? v (current-global-register)) (equal? v 'fp)))
+  (or (equal? v (current-stack-base-pointer-register)) (equal? v (current-global-register)) (equal? v 'fp) (equal? v (current-stack-register))))
 
 (define current-stack-base-pointer-register
   (make-parameter 'cfp))

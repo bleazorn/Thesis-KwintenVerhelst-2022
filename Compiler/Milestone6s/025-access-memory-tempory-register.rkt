@@ -1,6 +1,7 @@
 #lang racket
 
 (require "common/fvar.rkt"
+         "common/register.rkt"
          "langs/paren-cheri-risc-v.rkt")
 (provide access-memory-tempory-register)
 
@@ -11,7 +12,7 @@
     [_ #f]))
 
 (define (access-tempory-set r binop n)
-  `(set! ct10 (+ ,r ,(access-address-binop binop) 0 n)))
+  `(set! ,(current-stack-register) (+ ,r ,((access-address-binop binop) 0 n))))
 
 ;
 ;(access-set s)->list? '(set? ...)
@@ -19,9 +20,9 @@
 (define (access-set s)
   (match s
     [`(set! (,r ,binop ,n) ,b) #:when (access-address-binop binop) `(,(access-tempory-set r binop n)
-                                                                     (set! (ct10 - 0) ,b))]
+                                                                     (set! (,(current-stack-register) - 0) ,b))]
     [`(set! ,a (,r ,binop ,n)) #:when (access-address-binop binop) `(,(access-tempory-set r binop n)
-                                                                     (set! ,a (ct10 - 0)))]
+                                                                     (set! ,a (,(current-stack-register) - 0)))]
     [_ `(,s)]))
 
 ;
@@ -30,9 +31,9 @@
 (define (access-set-linear s)
   (match s
     [`(setLinear! (,r ,binop ,n) ,b) #:when (access-address-binop binop) `(,(access-tempory-set r binop n)
-                                                                           (setLinear! (ct10 - 0) ,b))]
+                                                                           (setLinear! (,(current-stack-register) - 0) ,b))]
     [`(setLinear! ,a (,r ,binop ,n)) #:when (access-address-binop binop) `(,(access-tempory-set r binop n)
-                                                                           (setLinear! ,a (ct10 - 0)))]
+                                                                           (setLinear! ,a (,(current-stack-register) - 0)))]
     [_ `(,s)]))
 
 ;
@@ -41,7 +42,7 @@
 (define (access-jump s)
   (match s
     [`(jump (,r ,binop ,n)) #:when (access-address-binop binop) `(,(access-tempory-set r binop n)
-                                                                  (set! ct5 (ct10 - 0))
+                                                                  (set! ct5 (,(current-stack-register) - 0))
                                                                   (jump ct5))]
     [_ `(,s)]))
 
@@ -78,7 +79,46 @@
 ;Generates paren-cheri-risc-v code in string if argument matches. Otherwise false.
 ;(generate-cheri-risc-v p) -> string?/boolean?
 ; p: any?
-(define/contract (access-memory-tempory-register p) (-> paren-cheri-risc-v? paren-cheri-risc-v?)
+(define (access-memory-tempory-register p) ;(-> paren-cheri-risc-v? paren-cheri-risc-v?)
     (match p
     [`(begin ,i ,s ...) `(begin ,i ,@(foldl (lambda (set n) (append n (access-sets set))) '() s))]
     [_ #f]))
+
+
+#;(access-memory-tempory-register '(begin
+                                   ()
+                                   (with-label L.tmp.0 (set! (cfp - 16) cra))
+                                   (set! cfp (+ cfp -16))
+                                   (set! a0 5)
+                                   (set! cra L.rpLabel.12)
+                                   (jump L.even?.2)
+                                   (with-label L.rpLabel.12 (set! cfp (+ cfp 16)))
+                                   (jump (cfp - 16))
+                                   (with-label L.even?.2 (set! (cfp - 16) cra))
+                                   (set! t1 a0)
+                                   (set! t0 0)
+                                   (jump-if L.tmp.17 (= t1 t0))
+                                   (jump L.tmp.18)
+                                   (with-label L.tmp.17 (set! a0 200))
+                                   (jump (cfp - 16))
+                                   (with-label L.tmp.18 (set! t0 (+ t1 -1)))
+                                   (set! cfp (+ cfp -16))
+                                   (set! a0 t0)
+                                   (set! cra L.rpLabel.10)
+                                   (jump L.odd?.1)
+                                   (with-label L.rpLabel.10 (set! cfp (+ cfp 16)))
+                                   (jump (cfp - 16))
+                                   (with-label L.odd?.1 (set! (cfp - 16) cra))
+                                   (set! t1 a0)
+                                   (set! t0 0)
+                                   (jump-if L.tmp.15 (= t1 t0))
+                                   (jump L.tmp.16)
+                                   (with-label L.tmp.15 (set! a0 150))
+                                   (jump (cfp - 16))
+                                   (with-label L.tmp.16 (set! t0 (+ t1 -1)))
+                                   (set! cfp (+ cfp -16))
+                                   (set! a0 t0)
+                                   (set! cra L.rpLabel.8)
+                                   (jump L.even?.2)
+                                   (with-label L.rpLabel.8 (set! cfp (+ cfp 16)))
+                                   (jump (cfp - 16))))
