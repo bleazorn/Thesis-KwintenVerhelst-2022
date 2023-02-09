@@ -18,7 +18,6 @@
 ;p: pred?
 ;assign: list? '((aloc loc) ...)
 (define (change-return-point e frames assign)
-  (println (format "ttt: ~a" (stack-direction)))
   (match e
    [`(return-point ,l ,t) (let ([sizeFrame (maxFvarNumber (filter fvar? (map second assign)))]
                                 [callArgs (assoc l frames)])

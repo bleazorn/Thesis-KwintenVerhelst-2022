@@ -11,43 +11,65 @@
 (module+ test
   (require rackunit))
 
-;
-;(get-conflicted-assignments con assign)->list? '(loc ...)
-;con: list? '(aloc ...)
-;assign: list? '((aloc loc) ...)
-(define (get-conflicted-assignments con assign)
-  (map second (filter (lambda (a) (member (car a) con)) assign)))
+(define nonAssFrameVar "delFrameVar")
+
+(define (isNonAssFrameVar? v)
+  (let ([vs (symbol->string v)])
+    (cond [(>= (string-length vs) (string-length nonAssFrameVar)) (equal? nonAssFrameVar (substring (symbol->string v) 0 (string-length nonAssFrameVar)))]
+          [else #f])))
+
+(define (newNonAssFrameVar)
+  (freshAloc nonAssFrameVar))
+
+(define spilled '())
+
+(define (getSpilled)
+  spilled)
+
+(define (addSpilled l)
+  (set! spilled (cons l spilled)))
+
+(define (resetSpilled)
+  (set! spilled '()))
+
 
 ;
-;(get-assignment conflictedRegisters)->loc
+;(getRegFromAssign con assign)->list? '(loc ...)
+;con: list? '(aloc ...)
+;assign: list? '((aloc loc) ...)
+(define (getRegFromAssign con assign)
+  (foldl (lambda (c regs) (let ([l (assoc c assign)])
+                            (cond [l (cons (second l) regs)]
+                                  [else regs])))
+         '() con))
+
+;
+;(getARegister conflictedRegisters)->loc
 ;conflictedRegisters: list? '(loc ...)
-(define (get-assignment conflicted-assignments)
-  (let ([conflicted-registers (filter register? conflicted-assignments)]
-        [conflicted-fvars (filter fvar? conflicted-assignments)])
-    (let ([available (remove* conflicted-registers (current-assignable-registers))])
-      (if (null? available)
-          (getFirstAvailableFvar conflicted-fvars)
-          (car available)))))
+(define (getARegister conflictedRegisters assigned)
+  (let ([available (remove* conflictedRegisters (current-assignable-registers))])
+    (if (null? available)
+        (getFirstAvailableFvar (filter fvar? assigned))
+        (car available))))
 
 ;
 ;(assign-recur loc conf assign)->list? '((aloc loc) ...)
 ;loc:list? '(aloc ...)
 ;conf:list? '((aloc? (...)) ...)
 ;assign: list? '((aloc loc) ...)
-(define (assign-recur loc conf assign confDel already-assigned-fvars)
+(define (assign-recur loc conf assign confDel assigned)
   ;(logln confDel)
   (if (null? loc)
       '()
       (let* ([i (index-of-lowest-conf confDel)]
              [c (list-ref confDel i)]
              [l (car c)]
-             [conflicted-assignments (append (get-conflicted-assignments (second (assoc l conf)) assign) already-assigned-fvars)]
-             [new-loc (get-assignment conflicted-assignments)])
-        (cons `(,l ,new-loc) (assign-recur (remove l loc)
+             [reg (getARegister (getRegFromAssign (second (assoc l conf)) assign) assigned)])
+        (cons `(,l ,reg) (assign-recur (remove l loc)
                                        conf
-                                       (cons `(,l ,new-loc) assign)
+                                       (cons `(,l ,reg) assign)
                                        (remove-conf l confDel)
-                                       already-assigned-fvars)))))
+                                       (cons reg assigned))))))
 
 ;
 ;(assign-info i)->info?
@@ -60,10 +82,9 @@
         [allFva (getInfo i getAllocatedFvars)])
     ;remove new-frames and call-undead locs from getting assigned
     (let* ([frameLocs (foldl (lambda (f ls) (append ls (second f))) '() frames)]
-           [assLocs (remove* (append frameLocs calls) locs)]                                        ;framelocs: allocated frames   calls: call-undead-variable
-           [all-assigned-fvars (remove-duplicates (append (filter fvar? (map car confs)) allFva))])
+           [assLocs (remove* (append frameLocs calls) locs)])
       (let* ([nonLocConf (filter (lambda (c) (member (car c) assLocs)) confs)]
-             [newAss (assign-recur assLocs confs '() nonLocConf all-assigned-fvars)])
+             [newAss (assign-recur assLocs confs '() nonLocConf allFva)])
         (addInfo i (setAssignment newAss))))))
 
 ;
@@ -82,6 +103,15 @@
   (match p
     [`(module ,i ,f ... ,pro) `(module ,(assign-info i) ,@(map assign-func f) ,pro)]
     [_ #f]))
+  
+(define testConf '((p.1 (z.5 t.6 y.4 x.3 w.2 v.1))
+                   (t.6 (p.1 z.5 v.1))
+                   (z.5 (p.1 t.6 w.2 y.4 v.1))
+                   (y.4 (z.5 x.3 p.1 w.2))
+                   (x.3 (y.4 p.1 w.2))
+                   (w.2 (z.5 y.4 p.1 x.3 v.1))
+                   (v.1 (w.2 t.6 p.1 z.5))))
+;(assign-recur '(v.1 w.2 x.3 y.4 z.5 t.6 p.1) testConf '() testConf)
   
 (module+ test
 ;assign-registers

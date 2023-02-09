@@ -98,12 +98,11 @@
 
 (define (compile-file file)
   (println (format "test: ~a" (output-file)))
-  (parameterize (;[steps (setup-steps (steps))]
+  (parameterize ([steps (setup-steps (steps))]
                  ;[current-stack-base-pointer-register 'csp]
                  ;[stack-direction '+]
-                 [steps (steps)]
-                 ;[current-parameter-registers '()]
-                 ;[current-assignable-registers '()]
+                 [current-parameter-registers '()]
+                 [current-assignable-registers '()]
                  )
     (write-program (read-program-from-file file))))
 
@@ -152,14 +151,14 @@
 (module+ test
   (check-equal? #t #t "test"))
 
-#|
-(parameterize ([steps (risc-v (steps))]
+;#|
+(parameterize ([steps (steps)]
                ;[current-stack-base-pointer-register 'csp]
-               [stack-direction '+]
+               ;[stack-direction '+]
                ;[steps (halfStack (risc-v (steps)))]
-               [current-parameter-registers '()]
+               ;[current-parameter-registers '()]
                [current-assignable-registers '()])
-  (compileStepsDis 2 (sub1 (length (steps))) swapProgram))
+  (compileStepsDis 0 (sub1 (length (steps))) swapProgram))
 ;|#
 ;(compileStepsDis 2 (sub1 (length (steps))) simpleProgram)
 ;(interp-values-lang bigProgram)

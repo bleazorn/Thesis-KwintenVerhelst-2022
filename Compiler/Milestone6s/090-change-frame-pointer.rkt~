@@ -18,6 +18,7 @@
 ;p: pred?
 ;assign: list? '((aloc loc) ...)
 (define (change-return-point e frames assign)
+  (println (format "ttt: ~a" (stack-direction)))
   (match e
    [`(return-point ,l ,t) (let ([sizeFrame (maxFvarNumber (filter fvar? (map second assign)))]
                                 [callArgs (assoc l frames)])
@@ -25,9 +26,9 @@
                                                                                  [else 0])))]
                                   [fbp (current-stack-base-pointer-register)])
                               `(begin
-                                 (set! ,fbp (- ,fbp ,frameSize))
+                                 (set! ,fbp (,(stack-direction) ,fbp ,frameSize))
                                  (return-point ,l ,(change-tail t frames assign))
-                                 (set! ,fbp (+ ,fbp ,frameSize)))))]
+                                 (set! ,fbp (,(opposite-direction (stack-direction)) ,fbp ,frameSize)))))]
     [_ #f]))
 
 ;
@@ -86,98 +87,78 @@
     [_ "replace locations failed"]))
 
 
-#;(change-frame-pointer '(module ((frameSize 1)
-                                   (assignment ((tmp-ra.11 fv0)))
-                                   (conflicts
-                                    ((a0 (tmp-ra.11 cra cfp))
-                                     (cfp (tmp-ra.11 cra a0))
-                                     (cra (cfp a0))
-                                     (tmp-ra.11 (cfp a0))))
-                                   (undead-out
-                                    ((tmp-ra.11 cfp)
-                                     (((tmp-ra.11 cfp a0) ((cfp a0) (cfp cra a0) (cfp cra a0)))
-                                      (cfp a0))))
-                                   (call-undead (tmp-ra.11))
-                                   (locals (tmp-ra.11))
-                                   (new-frames ())
-                                   (paramSize 0))
-                         (define L.odd?.1
-                           ((frameSize 1)
-                            (assignment ((y.4 t0) (tmp.13 t0) (x.3 t1) (tmp-ra.7 fv0)))
-                            (conflicts
-                             ((cfp (tmp-ra.7 cra a0 y.4 x.3 tmp.13))
-                              (a0 (tmp-ra.7 cra cfp))
-                              (cra (cfp a0))
-                              (y.4 (cfp tmp-ra.7))
-                              (tmp.13 (tmp-ra.7 cfp x.3))
-                              (x.3 (tmp-ra.7 cfp tmp.13))
-                              (tmp-ra.7 (cfp a0 y.4 x.3 tmp.13))))
-                            (undead-out
-                             ((a0 tmp-ra.7 cfp)
-                              (tmp-ra.7 cfp x.3)
-                              (((tmp.13 tmp-ra.7 cfp x.3) (tmp-ra.7 cfp x.3))
-                               ((tmp-ra.7 cfp a0) (cfp a0))
-                               ((tmp-ra.7 cfp y.4)
-                                (((tmp-ra.7 cfp a0) ((cfp a0) (cfp cra a0) (cfp cra a0)))
-                                 (cfp a0))))))
-                            (call-undead (tmp-ra.7))
-                            (locals (tmp-ra.7 x.3 tmp.13 y.4))
-                            (new-frames ())
-                            (paramSize 0))
-                           (begin
-                             (set! fv0 cra)
-                             (set! t1 a0)
-                             (if (begin (set! t0 0) (= t1 t0))
-                                 (begin (set! a0 150) (jump-return fv0))
-                                 (begin
-                                   (set! t0 (+ t1 -1))
-                                   (begin
-                                     (return-point
-                                      L.rpLabel.8
-                                      (begin (set! a0 t0) (set! cra L.rpLabel.8) (jump-call L.even?.2)))
-                                     (jump-return fv0))))))
-                         (define L.even?.2
-                           ((frameSize 1)
-                            (assignment ((y.6 t0) (tmp.14 t0) (x.5 t1) (tmp-ra.9 fv0)))
-                            (conflicts
-                             ((cfp (tmp-ra.9 cra a0 y.6 x.5 tmp.14))
-                              (a0 (tmp-ra.9 cra cfp))
-                              (cra (cfp a0))
-                              (y.6 (cfp tmp-ra.9))
-                              (tmp.14 (tmp-ra.9 cfp x.5))
-                              (x.5 (tmp-ra.9 cfp tmp.14))
-                              (tmp-ra.9 (cfp a0 y.6 x.5 tmp.14))))
-                            (undead-out
-                             ((a0 tmp-ra.9 cfp)
-                              (tmp-ra.9 cfp x.5)
-                              (((tmp.14 tmp-ra.9 cfp x.5) (tmp-ra.9 cfp x.5))
-                               ((tmp-ra.9 cfp a0) (cfp a0))
-                               ((tmp-ra.9 cfp y.6)
-                                (((tmp-ra.9 cfp a0) ((cfp a0) (cfp cra a0) (cfp cra a0)))
-                                 (cfp a0))))))
-                            (call-undead (tmp-ra.9))
-                            (locals (tmp-ra.9 x.5 tmp.14 y.6))
-                            (new-frames ())
-                            (paramSize 0))
-                           (begin
-                             (set! fv0 cra)
-                             (set! t1 a0)
-                             (if (begin (set! t0 0) (= t1 t0))
-                                 (begin (set! a0 200) (jump-return fv0))
-                                 (begin
-                                   (set! t0 (+ t1 -1))
-                                   (begin
-                                     (return-point
-                                      L.rpLabel.10
-                                      (begin (set! a0 t0) (set! cra L.rpLabel.10) (jump-call L.odd?.1)))
-                                     (jump-return fv0))))))
-                         (begin
-                           (set! fv0 cra)
-                           (begin
-                             (return-point
-                              L.rpLabel.12
-                              (begin (set! a0 5) (set! cra L.rpLabel.12) (jump-call L.even?.2)))
-                             (jump-return fv0)))))
+#;(parameterize ([stack-direction '+])
+               (change-frame-pointer '(module ((frameSize 1)
+            (assignment ((tmp-ra.7 fv0)))
+            (conflicts
+             ((a1 (cra cfp a0))
+              (a0 (tmp-ra.7 cra a1 cfp))
+              (cfp (tmp-ra.7 cra a1 a0))
+              (cra (cfp a0 a1))
+              (tmp-ra.7 (cfp a0))))
+            (undead-out
+             ((tmp-ra.7 cfp)
+              (((tmp-ra.7 cfp a0)
+                ((cfp a0) (cfp a0 a1) (cfp cra a0 a1) (cfp cra a0 a1)))
+               (cfp a0))))
+            (call-undead (tmp-ra.7))
+            (locals (tmp-ra.7))
+            (new-frames ())
+            (paramSize 0))
+  (define L.swap.1
+    ((frameSize 4)
+     (assignment ((z.4 fv0) (y.3 fv1) (x.2 fv2) (tmp-ra.5 fv3)))
+     (conflicts
+      ((cfp (tmp-ra.5 a0 z.4 cra a1 x.2 y.3))
+       (a1 (cra cfp a0 x.2 tmp-ra.5))
+       (a0 (tmp-ra.5 cfp cra a1 x.2))
+       (cra (cfp a0 a1))
+       (z.4 (tmp-ra.5 cfp))
+       (y.3 (x.2 cfp tmp-ra.5))
+       (x.2 (cfp a0 y.3 tmp-ra.5 a1))
+       (tmp-ra.5 (cfp a0 z.4 x.2 y.3 a1))))
+     (undead-out
+      ((a0 a1 tmp-ra.5 cfp)
+       (a1 x.2 tmp-ra.5 cfp)
+       (x.2 tmp-ra.5 cfp y.3)
+       ((x.2 tmp-ra.5 cfp y.3)
+        ((tmp-ra.5 cfp a0) (cfp a0))
+        ((((a0 tmp-ra.5 cfp)
+           ((x.2 cfp a0) (cfp a0 a1) (cfp cra a0 a1) (cfp cra a0 a1)))
+          (z.4 tmp-ra.5 cfp))
+         ((tmp-ra.5 cfp a0) (cfp a0))))))
+     (call-undead (tmp-ra.5))
+     (locals (tmp-ra.5 x.2 y.3 z.4))
+     (new-frames ())
+     (paramSize 0))
+    (begin
+      (set! fv3 cra)
+      (set! fv2 a0)
+      (set! fv1 a1)
+      (if (< fv1 fv2)
+        (begin (set! a0 fv2) (jump-return fv3))
+        (begin
+          (begin
+            (return-point
+             L.rpLabel.6
+             (begin
+               (set! a0 fv1)
+               (set! a1 fv2)
+               (set! cra L.rpLabel.6)
+               (jump-call L.swap.1)))
+            (set! fv0 a0))
+          (begin (set! a0 fv0) (jump-return fv3))))))
+  (begin
+    (set! fv0 cra)
+    (begin
+      (return-point
+       L.rpLabel.8
+       (begin
+         (set! a0 1)
+         (set! a1 2)
+         (set! cra L.rpLabel.8)
+         (jump-call L.swap.1)))
+      (jump-return fv0))))))
 
 
 (module+ test

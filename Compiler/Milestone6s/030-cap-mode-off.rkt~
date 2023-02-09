@@ -21,8 +21,8 @@
 ;e: effect?
 (define (cap-set e)
   (match e
-    [`(set! (,a ,binop ,n) ,b)                                                 `(set! (,(makeReg a) ,binop ,n) ,(makeReg b))]
-    [`(set! ,a (,b ,binop ,n))                                                 `(set! ,(makeReg a) (,(makeReg b) ,binop ,n))]
+    [`(set! (,a - ,n) ,b)                                                 `(set! (,(makeReg a) - ,n) ,(makeReg b))]
+    [`(set! ,a (,b - ,n))                                                 `(set! ,(makeReg a) (,(makeReg b) - ,n))]
     [`(set! ,r ,a) #:when (label? a)                                      `(set! ,(makeReg r) ,a)]
     [`(set! ,r ,a) #:when (and (integer? a) (or (> a 2048) (<= a -2048))) `(set! ,(makeReg r) ,a)]
     [`(set! ,a ,b) `(set! ,(makeReg a) ,(makeReg b))]
@@ -34,7 +34,7 @@
 (define (cap-jump e)
   (match e
     [`(jump ,r) #:when (register? r) `(jump ,(makeReg r))]
-    [`(jump (,r ,binop ,n)) #:when (register? r) `(jump (,(makeReg r) ,binop ,n))]
+    [`(jump (,r - ,n)) #:when (register? r) `(jump (,(makeReg r) - ,n))]
     [_ e]))    
 
 ;

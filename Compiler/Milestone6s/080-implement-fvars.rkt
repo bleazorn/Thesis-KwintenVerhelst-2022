@@ -28,12 +28,14 @@
 ;fvar: any?
 (define (change-fvar f)
   (let ([n (getFvarNumber f)])
-    (cond [(ffvar? f) (let ([n (cond [(equal? (stack-direction) '-) (add1 n)]
-                                     [else n])])
-                        `(,(current-stack-base-pointer-register) ,(stack-direction) ,(+ (* n (framesize)) offset)))]
-          [(fgvar? f) (let ([n (cond [(equal? (global-direction) '-) (add1 n)]
-                                     [else n])])
-                        `(,(current-global-register) ,(global-direction) ,(* n (framesize))))]
+    (cond [(ffvar? f) (let ([new-n (cond [(equal? (stack-direction) '-) (+ (* (add1 n) (framesize)) offset)]
+                                         [(equal? (stack-direction) '+) (- (* n (framesize)) offset)]
+                                         [else n])])
+                        `(,(current-stack-base-pointer-register) ,(stack-direction) ,new-n))]
+          [(fgvar? f) (let ([new-n (cond [(equal? (global-direction) '-) (* (add1 n) (framesize))]
+                                     [(equal? (global-direction) '+) (* n (framesize))]
+                                     [else (* n (framesize))])])
+                        `(,(current-global-register) ,(global-direction) ,new-n))]
           [else f])))
 
 ;
@@ -56,7 +58,7 @@
   (match e
     [`(begin ,e ...) `(begin ,@(map implement-effect e))]
     [`(if ,p ,e1 ,e2) `(if ,(implement-pred p) ,(implement-effect e1) ,(implement-effect e2))]
-    [`(set! ,a (,binop ,b ,c)) #:when (and (equal? a (current-stack-base-pointer-register)) (equal? b (current-stack-base-pointer-register)))
+    [`(set! ,a (,binop ,b ,c)) #:when (and (equal? a (current-stack-base-pointer-register)) (equal? b (current-stack-base-pointer-register)) (integer? c))
                                (addOffSet binop c) `(set! ,a (,binop ,b ,c))]
     [`(set! ,a (,binop ,b ,c)) `(set! ,(change-fvar a) (,binop ,(change-fvar b) ,(change-fvar c)))]
     [`(set! ,a ,b) `(set! ,(change-fvar a) ,(change-fvar b))]
@@ -100,181 +102,9 @@
     [_ "implement fvars failed"]))
 
 
-#;(implement-fvars '(module ((got-labels ((L.odd?.1 0) (L.even?.2 2))))
-       (define L.odd?.1
-         ()
-         (begin
-           (set! cs1 ct6)
-           (begin
-             (set! fv3 cra)
-             (set! fv0 fv0)
-             (if (begin (set! fv0 0) (= fv0 fv0))
-                 (begin
-                   (set! a0 150)
-                   (begin
-                     (set! a1 0)
-                     (set! a2 0)
-                     (set! a3 0)
-                     (set! a4 0)
-                     (set! t0 0)
-                     (set! t1 0)
-                     (set! t2 0)
-                     (set! t3 0)
-                     (set! t4 0)
-                     (set! t5 0)
-                     (set! t6 0)
-                     (invoke cra cfp)))
-                 (begin
-                   (set! fv0 (+ fv0 -1))
-                   (begin
-                     (begin
-                       (set! fv1 cra)
-                       (setLinear! fv2 csp)
-                       (split csp csp cfp 16384)
-                       (return-point
-                        L.rpLabel.8
-                        (begin
-                          (set! fv4 fv0)
-                          (set! cra L.rpLabel.8)
-                          (begin
-                            (seal cra cfp 166909)
-                            (begin
-                              (set! t0 0)
-                              (set! t1 0)
-                              (set! t2 0)
-                              (set! t3 0)
-                              (set! t4 0)
-                              (set! t5 0)
-                              (set! t6 0)
-                              (begin
-                                (set! ct0 gv2)
-                                (set! ct6 gv3)
-                                (invoke ct0 ct6))))))
-                       (set! cfp ct6)
-                       (splice csp csp cfp 16384)
-                       (set! cra fv1)
-                       (setLinear! csp fv2))
-                     (begin
-                       (set! a1 0)
-                       (set! a2 0)
-                       (set! a3 0)
-                       (set! a4 0)
-                       (set! t0 0)
-                       (set! t1 0)
-                       (set! t2 0)
-                       (set! t3 0)
-                       (set! t4 0)
-                       (set! t5 0)
-                       (set! t6 0)
-                       (invoke cra cfp))))))))
-       (define L.even?.2
-         ()
-         (begin
-           (set! cs1 ct6)
-           (begin
-             (set! fv3 cra)
-             (set! fv0 fv0)
-             (if (begin (set! fv0 0) (= fv0 fv0))
-                 (begin
-                   (set! a0 200)
-                   (begin
-                     (set! a1 0)
-                     (set! a2 0)
-                     (set! a3 0)
-                     (set! a4 0)
-                     (set! t0 0)
-                     (set! t1 0)
-                     (set! t2 0)
-                     (set! t3 0)
-                     (set! t4 0)
-                     (set! t5 0)
-                     (set! t6 0)
-                     (invoke cra cfp)))
-                 (begin
-                   (set! fv0 (+ fv0 -1))
-                   (begin
-                     (begin
-                       (set! fv1 cra)
-                       (setLinear! fv2 csp)
-                       (split csp csp cfp 16384)
-                       (return-point
-                        L.rpLabel.11
-                        (begin
-                          (set! fv4 fv0)
-                          (set! cra L.rpLabel.11)
-                          (begin
-                            (seal cra cfp 171343)
-                            (begin
-                              (set! t0 0)
-                              (set! t1 0)
-                              (set! t2 0)
-                              (set! t3 0)
-                              (set! t4 0)
-                              (set! t5 0)
-                              (set! t6 0)
-                              (begin
-                                (set! ct0 gv0)
-                                (set! ct6 gv1)
-                                (invoke ct0 ct6))))))
-                       (set! cfp ct6)
-                       (splice csp csp cfp 16384)
-                       (set! cra fv1)
-                       (setLinear! csp fv2))
-                     (begin
-                       (set! a1 0)
-                       (set! a2 0)
-                       (set! a3 0)
-                       (set! a4 0)
-                       (set! t0 0)
-                       (set! t1 0)
-                       (set! t2 0)
-                       (set! t3 0)
-                       (set! t4 0)
-                       (set! t5 0)
-                       (set! t6 0)
-                       (invoke cra cfp))))))))
-       (begin
-         (set! cs1 ct6)
-         (begin
-           (set! fv2 cra)
-           (begin
-             (begin
-               (set! fv0 cra)
-               (setLinear! fv1 csp)
-               (split csp csp cfp 16384)
-               (return-point
-                L.rpLabel.14
-                (begin
-                  (set! fv3 5)
-                  (set! cra L.rpLabel.14)
-                  (begin
-                    (seal cra cfp 169357)
-                    (begin
-                      (set! t0 0)
-                      (set! t1 0)
-                      (set! t2 0)
-                      (set! t3 0)
-                      (set! t4 0)
-                      (set! t5 0)
-                      (set! t6 0)
-                      (begin (set! ct0 gv2) (set! ct6 gv3) (invoke ct0 ct6))))))
-               (set! cfp ct6)
-               (splice csp csp cfp 16384)
-               (set! cra fv0)
-               (setLinear! csp fv1))
-             (begin
-               (set! a1 0)
-               (set! a2 0)
-               (set! a3 0)
-               (set! a4 0)
-               (set! t0 0)
-               (set! t1 0)
-               (set! t2 0)
-               (set! t3 0)
-               (set! t4 0)
-               (set! t5 0)
-               (set! t6 0)
-               (invoke cra cfp)))))))
+
+
+
 
 (module+ test
   (define (check-fvar? f a b o m)

@@ -55,8 +55,8 @@ sltiu reg, reg, int12		compares < unsigned 12 bit integer
 ;s: set?
 (define (generate-set s)
   (match s
-    [`(set! (,r ,binop ,n) ,b) #:when (register? r) (indent-instr (format "sw ~a, ~a~a(~a)" b binop n r))]      ;store
-    [`(set! ,a (,r ,binop ,n)) #:when (register? r) (indent-instr (format "lw ~a, ~a~a(~a)" a binop n r))]      ;load
+    [`(set! (,r - ,n) ,b) (indent-instr (format "sw ~a, ~a(~a)" b n r))]                                        ;store
+    [`(set! ,a (,r - ,n)) (indent-instr (format "lw ~a, ~a(~a)" a n r))]                                        ;load
     [`(set! ,a (,binop ,b ,c)) (generate-binop s)]                                                              ;binop
     [`(set! ,a ,b) #:when (int12? b) (indent-instr (format "addi ~a, zero, ~a" a b))]                           ;add int12
     [`(set! ,a ,b) #:when (and (integer? b) (not (int12? b))) (indent-instr (format "li ~a, ~a" a b))]          ;add int32
@@ -69,10 +69,10 @@ sltiu reg, reg, int12		compares < unsigned 12 bit integer
 ;j: set?
 (define (generate-jump j)
   (match j
-    [`(jump ,l) #:when (register? l) (indent-instr (format "jr ~a" l))]                         ;jump register
-    [`(jump (,r ,binop ,n)) (string-append (indent-instr (format "lwu s9, ~a~a(~a)" binop n r)) ;jump addr
+    [`(jump ,l) #:when (register? l) (indent-instr (format "jr ~a" l))]            ;jump register
+    [`(jump (,r - ,n)) (string-append (indent-instr (format "lwu s9, ~a(~a)" n r)) ;jump addr
                                       (indent-instr (format "jr s9")))]
-    [`(jump ,l) #:when (label? l) (indent-instr (format "j ~a" l))]                             ;jump label
+    [`(jump ,l) #:when (label? l) (indent-instr (format "j ~a" l))]                ;jump label
     [_ #f]))
 
 ;
