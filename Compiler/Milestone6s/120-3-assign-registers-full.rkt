@@ -11,46 +11,23 @@
 (module+ test
   (require rackunit))
 
-(define nonAssFrameVar "delFrameVar")
-
-(define (isNonAssFrameVar? v)
-  (let ([vs (symbol->string v)])
-    (cond [(>= (string-length vs) (string-length nonAssFrameVar)) (equal? nonAssFrameVar (substring (symbol->string v) 0 (string-length nonAssFrameVar)))]
-          [else #f])))
-
-(define (newNonAssFrameVar)
-  (freshAloc nonAssFrameVar))
-
-(define spilled '())
-
-(define (getSpilled)
-  spilled)
-
-(define (addSpilled l)
-  (set! spilled (cons l spilled)))
-
-(define (resetSpilled)
-  (set! spilled '()))
-
-
 ;
-;(getRegFromAssign con assign)->list? '(loc ...)
+;(get-conflicted-assignments con assign)->list? '(loc ...)
 ;con: list? '(aloc ...)
 ;assign: list? '((aloc loc) ...)
-(define (getRegFromAssign con assign)
-  (foldl (lambda (c regs) (let ([l (assoc c assign)])
-                            (cond [l (cons (second l) regs)]
-                                  [else regs])))
-         '() con))
+(define (get-conflicted-assignments con assign)
+  (map second (filter (lambda (a) (member (car a) con)) assign)))
 
 ;
-;(getARegister conflictedRegisters)->loc
+;(get-assignment conflictedRegisters)->loc
 ;conflictedRegisters: list? '(loc ...)
-(define (getARegister conflictedRegisters assigned)
-  (let ([available (remove* conflictedRegisters (current-assignable-registers))])
-    (if (null? available)
-        (getFirstAvailableFvar (filter fvar? assigned))
-        (car available))))
+(define (get-assignment conflicted-assignments assigned)
+  (let ([conflicted-registers (filter register? conflicted-assignments)]
+        [conflicted-fvars (filter fvar? conflicted-assignments)])
+    (let ([available (remove* conflicted-registers (current-assignable-registers))])
+      (if (null? available)
+          (getFirstAvailableFvar conflicted-fvars)
+          (car available)))))
 
 ;
 ;(assign-recur loc conf assign)->list? '((aloc loc) ...)
@@ -64,7 +41,7 @@
       (let* ([i (index-of-lowest-conf confDel)]
              [c (list-ref confDel i)]
              [l (car c)]
-             [reg (getARegister (getRegFromAssign (second (assoc l conf)) assign) assigned)])
+             [reg (get-assignment (get-conflicted-assignments (second (assoc l conf)) assign) assigned)])
         (cons `(,l ,reg) (assign-recur (remove l loc)
                                        conf
                                        (cons `(,l ,reg) assign)

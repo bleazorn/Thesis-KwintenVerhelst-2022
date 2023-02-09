@@ -5,6 +5,7 @@
 (provide framesize
          stack-direction
          global-direction
+         opposite-direction
          fvar?
          ffvar?
          fgvar?
@@ -31,6 +32,11 @@
 
 (define global-direction
   (make-parameter '+))
+
+(define (opposite-direction binop)
+  (match binop
+    ['+ '-]
+    ['- '+]))
 
 (define (fvar? v)
   (if (symbol? v)
