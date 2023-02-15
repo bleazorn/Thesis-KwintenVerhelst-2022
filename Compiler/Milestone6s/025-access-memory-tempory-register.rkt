@@ -2,27 +2,25 @@
 
 (require "common/fvar.rkt"
          "common/register.rkt"
+         "common/assembly.rkt"
          "langs/paren-cheri-risc-v.rkt")
 (provide access-memory-tempory-register)
 
-(define (access-address-binop binop)
-  (match binop
-    ['- -]
-    ['+ +]
-    [_ #f]))
-
 (define (access-tempory-set r binop n)
-  `(set! ,(current-stack-register) (+ ,r ,((access-address-binop binop) 0 n))))
+  (cond [(int12? n) `((set! ,(current-stack-register) (,binop ,r ,n)))]
+        [else (let ([temp-reg (car (current-auxiliary-registers))])
+                `((set! ,temp-reg ,n)
+                  (set! ,(current-stack-register) (,binop ,r ,temp-reg))))]))
 
 ;
 ;(access-set s)->list? '(set? ...)
 ;s: set?
 (define (access-set s)
   (match s
-    [`(set! (,r ,binop ,n) ,b) #:when (access-address-binop binop) `(,(access-tempory-set r binop n)
-                                                                     (set! (,(current-stack-register) - 0) ,b))]
-    [`(set! ,a (,r ,binop ,n)) #:when (access-address-binop binop) `(,(access-tempory-set r binop n)
-                                                                     (set! ,a (,(current-stack-register) - 0)))]
+    [`(set! (,r ,binop ,n) ,b) #:when (addr-binop? binop) `(,@(access-tempory-set r binop n)
+                                                            (set! (,(current-stack-register) - 0) ,b))]
+    [`(set! ,a (,r ,binop ,n)) #:when (addr-binop? binop) `(,@(access-tempory-set r binop n)
+                                                            (set! ,a (,(current-stack-register) - 0)))]
     [_ `(,s)]))
 
 ;
@@ -30,10 +28,10 @@
 ;s: set?
 (define (access-set-linear s)
   (match s
-    [`(setLinear! (,r ,binop ,n) ,b) #:when (access-address-binop binop) `(,(access-tempory-set r binop n)
-                                                                           (setLinear! (,(current-stack-register) - 0) ,b))]
-    [`(setLinear! ,a (,r ,binop ,n)) #:when (access-address-binop binop) `(,(access-tempory-set r binop n)
-                                                                           (setLinear! ,a (,(current-stack-register) - 0)))]
+    [`(setLinear! (,r ,binop ,n) ,b) #:when (addr-binop? binop) `(,@(access-tempory-set r binop n)
+                                                                  (setLinear! (,(current-stack-register) - 0) ,b))]
+    [`(setLinear! ,a (,r ,binop ,n)) #:when (addr-binop? binop) `(,@(access-tempory-set r binop n)
+                                                                  (setLinear! ,a (,(current-stack-register) - 0)))]
     [_ `(,s)]))
 
 ;
@@ -41,9 +39,9 @@
 ;s: set?
 (define (access-jump s)
   (match s
-    [`(jump (,r ,binop ,n)) #:when (access-address-binop binop) `(,(access-tempory-set r binop n)
-                                                                  (set! ct5 (,(current-stack-register) - 0))
-                                                                  (jump ct5))]
+    [`(jump (,r ,binop ,n)) #:when (addr-binop? binop) `(,@(access-tempory-set r binop n)
+                                                         (set! ,(current-jump-register) (,(current-stack-register) - 0))
+                                                         (jump ,(current-jump-register)))]
     [_ `(,s)]))
 
 ;

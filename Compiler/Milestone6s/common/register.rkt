@@ -20,6 +20,7 @@
          isCapability?
          makeReg
          makeCap
+         addr-binop?
          addr?
          isRegAddress?
          isCapAddress?)

@@ -8,12 +8,12 @@
  (all-defined-out))
 
 @define-grammar/pred[paren-cheri-risc-v
-  #:literals (info? int64? int16? label? register? frame-base-pointer-register? dispoffset?)
+  #:literals (info? int64? int12? label? register? frame-base-pointer-register? dispoffset?)
   #:datum-literals (begin set! jump with-label compare jump-if * + < <= = split splice seal unseal sentry invoke setLinear! 
    >= > !=)
   [p     (begin info s ...)]
   [info info?]
-  [s (set! addr int16)
+  [s (set! addr int12)
      (set! addr trg)
      (set! reg loc)
      (set! reg triv)
@@ -43,5 +43,5 @@
   [fbp   frame-base-pointer-register?]
   [dispoffset dispoffset?]
   [int64 int64?]
-  [int16 int16?]
+  [int12 int12?]
 ]

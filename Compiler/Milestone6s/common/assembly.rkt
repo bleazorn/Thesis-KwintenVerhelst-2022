@@ -12,7 +12,7 @@
          removePerm
          int64?
          int32?
-         int16?)
+         int12?)
 
 
 (module+ test
@@ -90,8 +90,8 @@
         [max (expt 2 (sub1 b))])
     (and (integer? i) (<= min i) (< i max))))
 
-(define (int16? i)
-  (intBinBound i 16))
+(define (int12? i)
+  (intBinBound i 12))
 
 (define (int32? i)
   (intBinBound i 32))
@@ -103,18 +103,18 @@
 
 
 (module+ test
-;int16?
+;int12?
   ;succes
-  (check-true (int16? 0) "int16?: succes-01: zero")
-  (check-true (int16? 123) "int16?: succes-02: pos")
-  (check-true (int16? -123) "int16?: succes-03: neg")
-  (check-true (int16? 32767) "int16?: succes-04: max")
-  (check-true (int16? -32768) "int16?: succes-05: min")
+  (check-true (int12? 0) "int12?: succes-01: zero")
+  (check-true (int12? 123) "int12?: succes-02: pos")
+  (check-true (int12? -123) "int12?: succes-03: neg")
+  (check-true (int12? 2047) "int12?: succes-04: max")
+  (check-true (int12? -2048) "int12?: succes-05: min")
   ;failure
-  (check-false (int16? 32768) "int16?: failure-01: max + 1")
-  (check-false (int16? -32769) "int16?: failure-02: min + 1")
-  (check-false (int16? 65536) "int16?: failure-03: double max")
-  (check-false (int16? -65536) "int16?: failure-04: double min")
+  (check-false (int12? 2048) "int12?: failure-01: max + 1")
+  (check-false (int12? -2049) "int12?: failure-02: min + 1")
+  (check-false (int12? 4096) "int12?: failure-03: double max")
+  (check-false (int12? -4097) "int12?: failure-04: double min")
 ;int32?
   ;succes
   (check-true (int32? 0) "int32?: succes-01: zero")

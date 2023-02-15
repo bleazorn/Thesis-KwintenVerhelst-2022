@@ -44,8 +44,6 @@ sltiu reg, reg, int12		compares < unsigned 12 bit integer
     ['- (+ 0 n)]
     [_ #f]))
 
-(define (int12? n)
-  (and (integer? n) (and (< n 2048) (>= n -2048))))
 
 ;Generates the addition or multiplication cheri-risc-v code in string if argument matches. Otherwise false.
 ;(generate-binop bin) -> string?/boolean?
@@ -56,6 +54,11 @@ sltiu reg, reg, int12		compares < unsigned 12 bit integer
                          (indent-instr (format "CIncOffsetImm ~a, ~a, ~a" a b c))]                ;cap cap int
    [`(set! ,a (+ ,b ,c)) #:when (and (isCapability? a) (isCapability? b))
                          (indent-instr (format "CIncOffset ~a, ~a, ~a" a b c))]                   ;cap cap reg
+   [`(set! ,a (- ,b ,c)) #:when (and (isCapability? a) (isCapability? b) (int12? c))
+                         (indent-instr (format "CIncOffsetImm ~a, ~a, ~a" a b (- 0 c)))]          ;cap cap int
+   [`(set! ,a (- ,b ,c)) #:when (and (isCapability? a) (isCapability? b))
+                         (string-append (indent-instr (format "sub ~a, zero, ~a" c c))
+                                        (indent-instr (format "CIncOffset ~a, ~a, ~a" a b c)))]   ;cap cap reg
    [`(set! ,a (+ ,b ,c)) #:when (int12? c) (indent-instr (format "addi ~a, ~a, ~a" a b c))]       ;reg reg int
    [`(set! ,a (+ ,b ,c)) (indent-instr (format "add ~a, ~a, ~a" a b c))]                          ;reg reg reg
    [`(set! ,a (- ,b ,c)) (indent-instr (format "sub ~a, ~a, ~a" a b c))]                          ;reg reg reg
@@ -273,7 +276,7 @@ sltiu reg, reg, int12		compares < unsigned 12 bit integer
   (check-equal? (generate-jump-if '(jump-if foo (>= t0 t1))) "    bge t0, t1, foo\n" "generate-jump-if: succes-6: >=")
 ;generate-sets
   ;succes
-  (check-equal? (generate-sets '(with-label foo (set! a0 (+ t0 50)))) "foo:\n    addi s6, s6, 1\n    addi a0, t0, 50\n"               "generate-sets: succes-01: set label")
+  (check-equal? (generate-sets '(with-label foo (set! a0 (+ t0 50)))) "    .global foo\nfoo:\n    addi s6, s6, 1\n    addi a0, t0, 50\n"               "generate-sets: succes-01: set label")
   (check-equal? (generate-sets '(jump L.foo.5))                       "    cllc cs11, L.foo.5\n    cjr cs11\n"    "generate-sets: succes-02: jump")
   (check-equal? (generate-sets '(compare a0 (= t0 t1)))               "    sub a0, t0, t1\n    sltiu a0, a0, 1\n" "generate-sets: succes-03: compare")
   (check-equal? (generate-sets '(jump-if foo (= t0 t1)))              "    beq t0, t1, foo\n"                     "generate-sets: succes-04: jump-if")
@@ -285,16 +288,19 @@ sltiu reg, reg, int12		compares < unsigned 12 bit integer
   (check-equal? (generate-sets '(st! a0)) #f      "generate-sets: failure-4: te weinig argumenten")
   (check-equal? (generate-sets 'a) #f             "generate-sets: failure-5: verkeerd argument")
 ;generate-cheri-risc-v
-  (check-equal? (generate-cheri-risc-v '(begin (set! a0 (+ t0 450)))) "    addi a0, t0, 450\n" "generate-cheri-risc-v: succes-1: een enkele instructie")
+  (check-equal? (generate-cheri-risc-v '(begin () (set! a0 (+ t0 450)))) '(begin () "    addi a0, t0, 450\n") "generate-cheri-risc-v: succes-1: een enkele instructie")
   (check-equal? (generate-cheri-risc-v
                  '(begin
+                    ()
                     (set! a0 50)
                     (set! t0 a0)
                     (set! t0 (+ t0 t0))
                     (set! sp t0)
                     (set! sp (* sp sp))
                     (set! a1 2000)))
-                "    addi a0, zero, 50\n    addi t0, a0, 0\n    add t0, t0, t0\n    addi sp, t0, 0\n    mul sp, sp, sp\n    addi a1, zero, 2000\n"
+               '(begin
+                  ()
+                  "    addi a0, zero, 50\n    addi t0, a0, 0\n    add t0, t0, t0\n    addi sp, t0, 0\n    mul sp, sp, sp\n    addi a1, zero, 2000\n")
                 "generate-cheri-risc-v: succes-2: meerdere instructies")
   
 ;failure 

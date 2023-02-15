@@ -1,29 +1,29 @@
 #lang racket
 
 (require "common/fvar.rkt"
+         "common/register.rkt"
+         "common/assembly.rkt"
          "langs/paren-cheri-risc-v.rkt"
          "log.rkt")
 (provide access-memory-sub-add-frame-register)
 
-(define (access-address-binop binop)
+
+(define (opposite-binop binop)
   (match binop
-    ['- -]
-    ['+ +]
+    ['+ '-]
+    ['- '+]
     [_ #f]))
 
-(define (access-before binop n)
-  ((access-address-binop binop) 0 n))
 
-(define (access-after binop n)
-  ((access-address-binop binop) 0 (- 0 n)))
-
-(define (access-before-set r binop n)
-  `((set! s5 ,(access-before binop n))
-    (set! ,r (+ ,r s5))))
-
-(define (access-after-set r binop n)
-  `((set! s5 ,(access-after binop n))
-    (set! ,r (+ ,r s5))))
+(define (access-set-before-after set-reg set r binop n)
+  (cond [(int12? n) `((set! ,r (,binop ,r ,n))
+                      ,set
+                      (set! ,r (,(opposite-binop binop) ,r ,n)))]
+        [else  (let ([temp-reg (car (remove (makeReg set-reg) (current-auxiliary-registers)))])
+                 `((set! ,temp-reg ,n)
+                   (set! ,r (,binop ,r ,temp-reg))
+                   ,set
+                   (set! ,r (,(opposite-binop binop) ,r ,temp-reg))))]))
 
    
 ;
@@ -32,12 +32,8 @@
 (define (access-set s)
   (logln s)
   (match s
-    [`(set! (,r ,binop ,n) ,b) #:when (access-address-binop binop) `(,@(access-before-set r binop n)
-                                                                     (set! (,r - ,0) ,b)
-                                                                     ,@(access-after-set r binop n))]
-    [`(set! ,a (,r ,binop ,n)) #:when (access-address-binop binop) `(,@(access-before-set r binop n)
-                                                                     (set! ,a (,r - ,0))
-                                                                     ,@(access-after-set r binop n))]
+    [`(set! (,r ,binop ,n) ,b) #:when (addr-binop? binop) (access-set-before-after b `(set! (,r - ,0) ,b) r binop n)]
+    [`(set! ,a (,r ,binop ,n)) #:when (addr-binop? binop) (access-set-before-after a `(set! ,a (,r - ,0)) r binop n)]
     [_ `(,s)]))
 
 ;
@@ -45,12 +41,8 @@
 ;s: set?
 (define (access-set-linear s)
   (match s
-    [`(setLinear! (,r ,binop ,n) ,b) #:when (access-address-binop binop) `(,@(access-before-set r binop n)
-                                                                           (setLinear! (,r - ,0) ,b)
-                                                                           ,@(access-after-set r binop n))]
-    [`(setLinear! ,a (,r ,binop ,n)) #:when (access-address-binop binop) `(,@(access-before-set r binop n)
-                                                                           (setLinear! ,a (,r - ,0))
-                                                                           ,@(access-after-set r binop n))]
+    [`(setLinear! (,r ,binop ,n) ,b) #:when (addr-binop? binop) (access-set-before-after b `(setLinear! (,r - ,0) ,b) r binop n)]
+    [`(setLinear! ,a (,r ,binop ,n)) #:when (addr-binop? binop) (access-set-before-after a `(setLinear! ,a (,r - ,0)) r binop n)]
     [_ `(,s)]))
 
 ;
@@ -58,10 +50,8 @@
 ;s: set?
 (define (access-jump s)
   (match s
-    [`(jump (,r ,binop ,n)) #:when (access-address-binop binop) `(,@(access-before-set r binop n)
-                                                                  `(set! ct5 (,r - ,0))
-                                                                  ,@(access-after-set r binop n)
-                                                                  (jump ct5))]
+    [`(jump (,r ,binop ,n)) #:when (addr-binop? binop) `(,@(access-set-before-after (current-jump-register) `(set! ,(current-jump-register) (,r - ,0)) r binop n)
+                                                         (jump ,(current-jump-register)))]
     [_ `(,s)]))
 
 ;

@@ -100,8 +100,8 @@
   (println (format "test: ~a" (output-file)))
   (parameterize (;[steps (setup-steps (steps))]
                  ;[current-stack-base-pointer-register 'csp]
-                 [stack-direction '+]
-                 [steps (halfStack (steps))]
+                 ;[stack-direction '+]
+                 [steps (risc-v (steps))]
                  ;[current-parameter-registers '()]
                  ;[current-assignable-registers '()]
                  )
@@ -152,11 +152,11 @@
 (module+ test
   (check-equal? #t #t "test"))
 
-;#|
+#|
 (parameterize (;[steps (setup-steps (steps))]
                  ;[current-stack-base-pointer-register 'csp]
                  [stack-direction '+]
-                 [steps (halfStack (steps))]
+                 [steps (stkTokens (steps))]
                  [current-parameter-registers '()]
                  [current-assignable-registers '()]
                  )

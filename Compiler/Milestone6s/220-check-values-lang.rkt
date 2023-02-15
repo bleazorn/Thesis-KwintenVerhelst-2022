@@ -124,6 +124,9 @@
         (cond [(= 3 leng) (check-exn exn:fail? (thunk ((first l) (second l)) (third l)))]
               [(= 4 leng) (check-exn exn:fail? (thunk ((first l) (second l) (third l)) (fourth l)))]
               [(= 5 leng) (check-exn exn:fail? (thunk ((first l) (second l) (third l) (fourth l)) (fifth l)))]))))
+
+  (define (check-values-lang? p t)
+    (check-equal? (check-values-lang p) (cons (car p) (cons '() (cdr p))) t))
 ;check-name
   ;succes
   (check-check? check-name 'y '(x y z) "check-name: succes-01: name exists")
@@ -220,44 +223,44 @@
 
 ;check-values-lang
   ;succes
-  (check-check? check-values-lang '(module (let ([x 5]
-                                                 [y 6])
-                                             x))
+  (check-values-lang? '(module (let ([x 5]
+                                     [y 6])
+                                 x))
                 "check-values-lang: succes-01: one let")
-  (check-check? check-values-lang '(module (let ([x 5]
-                                                 [y 6])
-                                             (let ([y x])
-                                               y)))
+  (check-values-lang? '(module (let ([x 5]
+                                     [y 6])
+                                 (let ([y x])
+                                   y)))
                 "check-values-lang: succes-02: two lets")
-  (check-check? check-values-lang '(module (let ()
-                           5))
+  (check-values-lang? '(module (let ()
+                                 5))
                 "check-values-lang: succes-03: empty let")
-  (check-check? check-values-lang '(module (let ([x 5]
-                                                 [y 4])
-                                             (if (= x y)
-                                                 (+ x y)
-                                                 (* x y))))
+  (check-values-lang? '(module (let ([x 5]
+                                     [y 4])
+                                 (if (= x y)
+                                     (+ x y)
+                                     (* x y))))
                 "check-values-lang: succes-04: if")
-  (check-check? check-values-lang '(module
-                                       (define odd?
-                                         (lambda (x)
-                                           (if (= x 0)
-                                               0
-                                               (let ([y (+ x -1)])
-                                                 (call even? y)))))
-                                     (define even?
-                                       (lambda (x)
-                                         (if (= x 0)
-                                             1
-                                             (let ([y (+ x -1)])
-                                               (call odd? y)))))
-                                     (call even? 5))
+  (check-values-lang? '(module
+                           (define odd?
+                             (lambda (x)
+                               (if (= x 0)
+                                   0
+                                   (let ([y (+ x -1)])
+                                     (call even? y)))))
+                         (define even?
+                           (lambda (x)
+                             (if (= x 0)
+                                 1
+                                 (let ([y (+ x -1)])
+                                   (call odd? y)))))
+                         (call even? 5))
                 "check-values-lang: succes-05: tail call") 
   ;failure
   (check-error? check-values-lang '(module
-                     (let ([x 5]
-                           [y x])
-                       y))
+                                       (let ([x 5]
+                                             [y x])
+                                         y))
              "check-values-lang: failure-01: no bound 'x in enviroment yet")
   #;(check-error? '(module
                        (let ([x 5]

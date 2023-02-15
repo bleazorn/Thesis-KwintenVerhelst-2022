@@ -15,7 +15,7 @@
          addr?
          int64?
          int32?
-         int16?
+         int12?
          frame-base-pointer-register?
          dispoffset?)
 
