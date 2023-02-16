@@ -25,6 +25,10 @@ Default calling convention is vanilla riscv.
           #:once-any
           [("-s" "--stktokens") "Compile with the StkStokens Calling Convention"
                                 (cc 'stktokens)]
+          [("-r" "--risc-v") "Compile with normal risc-v"
+                                (cc 'risc-v)]
+          [("-t" "--tail-calls") "Compile with the tail-calls register allocation"
+                                (cc 'tail-calls)]
           #:args (filename)
           filename)])
     (compile-file file-to-compile)))

@@ -30,7 +30,7 @@
     [`(set! ,r ,a) #:when (label? a)                                      `(set! ,(makeCap r) ,a)]
     [`(set! ,r ,a) #:when (and (integer? a) (or (> a 2048) (<= a -2048))) `(set! ,(makeReg r) ,a)]
     [`(set! ,a ,b) #:when (or (and (isCapability? a) (isNonCapRegister? b)) (and (isNonCapRegister? a) (isCapability? b)))
-                   `(set! ,(makeReg a) ,(makeReg b))]
+                   `(set! ,(makeCap a) ,(makeCap b))]
     [_ e]))
 
 ;

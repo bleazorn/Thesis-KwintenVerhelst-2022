@@ -84,6 +84,8 @@
   (match (cc)
     ['vanilla-riscv steps]
     ['stktokens     (stkTokens steps)]
+    ['risc-v        (risc-v steps)]
+    ['tail-calls    (halfStack steps)]
     [unknown        (error "unsupported calling convention: " unknown)]))
 
 (define (setup-passes steps)
@@ -96,12 +98,22 @@
 
 (define setup-steps (compose setup-passes setup-cc))
 
+(define (setup-stack-register)
+  (match (cc)
+    ['stktokens 'csp]
+    [_ 'cfp]))
+
+(define (setup-stack-direction)
+  (match (cc)
+    ['stktokens '+]
+    [_ '-]))
+    
+
 (define (compile-file file)
   (println (format "test: ~a" (output-file)))
-  (parameterize (;[steps (setup-steps (steps))]
-                 ;[current-stack-base-pointer-register 'csp]
-                 ;[stack-direction '+]
-                 [steps (risc-v (steps))]
+  (parameterize ([steps (setup-steps (steps))]
+                 [current-stack-base-pointer-register (setup-stack-register)]
+                 [stack-direction (setup-stack-direction)]
                  ;[current-parameter-registers '()]
                  ;[current-assignable-registers '()]
                  )
@@ -155,10 +167,10 @@
 #|
 (parameterize (;[steps (setup-steps (steps))]
                  ;[current-stack-base-pointer-register 'csp]
-                 [stack-direction '+]
-                 [steps (stkTokens (steps))]
-                 [current-parameter-registers '()]
-                 [current-assignable-registers '()]
+                 ;[stack-direction '+]
+                 [steps (halfStack (steps))]
+                 ;[current-parameter-registers '()]
+                 ;[current-assignable-registers '()]
                  )
   (println (steps))
   (compileStepsDis 2 (sub1 (length (steps))) swapProgram))
