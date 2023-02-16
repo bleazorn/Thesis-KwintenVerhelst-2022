@@ -75,6 +75,7 @@ sltiu reg, reg, int12		compares < unsigned 12 bit integer
     [`(set! ,a (,r ,binop ,n)) #:when (and (isCapability? a) (register? r))     (indent-instr (format "lc.cap ~a, ~a(~a)" a (generate-address-number binop n) r))]     ;load
     [`(set! ,a (,r ,binop ,n)) #:when (and (isNonCapRegister? a) (register? r)) (indent-instr (format "lw.cap ~a, ~a(~a)" a (generate-address-number binop n) r))]
     [`(set! ,a (,binop ,b ,c)) (generate-binop s)]                                                                              ;binop
+    [`(set! ,a ,b) #:when (and (isCapability? a) (special-register? b)) (indent-instr (format "CSpecialr ~a, ~a" a b))]        ;special register
     [`(set! ,a ,b) #:when (and (isCapability? a) (int12? b))     (indent-instr (format "CIncOffsetImm ~a, cnull, ~a" a b))]     ;add int12
     [`(set! ,a ,b) #:when (and (isNonCapRegister? a) (int12? b)) (indent-instr (format "addi ~a, zero, ~a" a b))]               ;add int12
     [`(set! ,a ,b) #:when (and (integer? b) (not (int12? b))) (indent-instr (format "li ~a, ~a" a b))]                          ;add int32

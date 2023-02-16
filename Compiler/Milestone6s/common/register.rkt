@@ -18,6 +18,7 @@
          register?
          isNonCapRegister?
          isCapability?
+         special-register?
          makeReg
          makeCap
          addr-binop?
@@ -85,6 +86,9 @@
 (define current-invoke-data-register
   (make-parameter 'ct6))
 
+(define special-registers
+  (make-parameter '(pcc)))
+
 
 ;Returns given symbol if it is a name for a register in paren-cheri-risc-v, otherwise returns false
 ;(check-reg res) -> symbol?/boolean?
@@ -140,6 +144,9 @@
 
 (define (x86Register? reg)
   (member reg '(r9 r15 rax rbx rbp rdi rsi)))
+
+(define (special-register? reg)
+  (member (makeCap reg) (special-registers)))
 
 (define (makeCap reg)
   (if (isNonCapRegister? reg)
