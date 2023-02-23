@@ -25,6 +25,10 @@ Default calling convention is vanilla riscv.
           #:once-any
           [("-s" "--stktokens") "Compile with the StkStokens Calling Convention"
                                 (cc 'stktokens)]
+          [("-e" "--stktokenssentry") "Compile with the StkStokens Calling Convention"
+                                (cc 'stkTokens-sentry)]
+          [("-c" "--cherilinkage") "Compile with the cheri-linkage Calling Convention"
+                                (cc 'cheri-linkage-seal)]
           [("-r" "--risc-v") "Compile with normal risc-v"
                                 (cc 'risc-v)]
           [("-t" "--tail-calls") "Compile with the tail-calls register allocation"

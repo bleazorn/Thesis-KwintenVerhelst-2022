@@ -8,8 +8,8 @@
  (all-defined-out))
 
 @define-grammar/pred[nested-asm-lang-fvars
-  #:literals (info? int64? label? register? fvar?)
-  #:datum-literals (define module set! jump return-point true false not if * + < <= = split splice seal unseal sentry invoke setLinear!
+  #:literals (info? int64? label? register? fvar? frame-base-pointer-register? dispoffset?)
+  #:datum-literals (define module set! jump return-point true false not if * + < <= = split splice seal unseal sentry invoke setLinear! set-addr!
    >= > !=)
   [p     (module info (define label info tail) ... tail)]
   [info info?]
@@ -33,15 +33,20 @@
           (seal reg ... int64)
           (unseal reg ... int64)
           (sentry reg)
-          (setLinear! loc triv)]
+          (setLinear! loc triv)
+          (set-addr! loc loc)]
   [opand int64 loc]
   [triv  opand label]
-  [loc   reg fvar]
+  [loc   reg fvar addr]
   [trg   label loc]
   [binop * + -]
   [relop < <= = >= > !=]
+  [memory-direction + -]
   [label label?]
   [reg   register?]
   [fvar  fvar?]
+  [addr  (fbp memory-direction dispoffset)]
+  [fbp   frame-base-pointer-register?]
+  [dispoffset dispoffset?]
   [int64 int64?]
 ]

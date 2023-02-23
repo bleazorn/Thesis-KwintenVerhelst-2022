@@ -4,7 +4,7 @@
          "common/fvar.rkt"
          "common/register.rkt"
          "langs/nested-asm-lang-jumps.rkt")
-(provide secure-stack-tokens)
+(provide secure-stktokens)
 
 (module+ test
   (require rackunit))
@@ -18,15 +18,17 @@
 ;assign: list? '((aloc loc) ...)
 (define (secure-return-point e framesize parasize)
   (match e
-   [`(return-point ,l ,t) (let([token (random 132057 231056)])
+   [`(return-point ,l ,t) (let([token (random 0 99)])
                             `(begin
                                (set! ,(newFvar parasize) ,(current-return-address-register))
                                (setLinear! ,(newFvar (add1 parasize)) ,(current-frame-base-pointer-register))
+                               (set! ,(newFvar (add1 (add1 parasize))) ,(current-seal-location-register))
                                (return-point ,l ,(secure-tail t framesize parasize token))
                                (set! cfp ct6)
                                (splice csp csp cfp ,framesize)
-                               (set! ,(current-return-address-register) ,(newFvar parasize))
-                               (setLinear! ,(current-frame-base-pointer-register) ,(newFvar (add1 parasize)))))]
+                               (set! ,(current-seal-location-register) ,(newFvar (add1 (add1 parasize))))
+                               (setLinear! ,(current-frame-base-pointer-register) ,(newFvar (add1 parasize)))
+                               (set! ,(current-return-address-register) ,(newFvar parasize))))]
     [_ #f]))
 
 ;
@@ -93,7 +95,7 @@
     [_ #t]))
 
 
-(define/contract (secure-stack-tokens p) (-> nested-asm-lang-jumps? nested-asm-lang-jumps?)
+(define/contract (secure-stktokens p) (-> nested-asm-lang-jumps? nested-asm-lang-jumps?)
   (match p
     [`(module ,i ,f ... ,t) (let-values ([(info tail) (secure-info t i)])
                               `(module ,info ,@(map secure-func f) ,tail))]

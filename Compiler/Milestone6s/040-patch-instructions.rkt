@@ -115,6 +115,7 @@
     [`(set! ,a (,binop ,b ,c)) #:when (or (register? b) (addr? b)) (patch-binop a b c binop)]
     [`(set! ,a ,b) (patch-set e)]
     [`(setLinear! ,a ,b) `((setLinear! ,a ,b))]
+    [`(set-addr! ,a ,b) `((set-addr! ,a ,b))]
     [`(with-label ,l ,b) (patch-with-label e)]
     [`(jump ,l) `((jump ,l))]
     [`(compare ,a (,relop ,b ,c)) (patch-compare e)]

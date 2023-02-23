@@ -124,11 +124,11 @@
                                                                                   (begin ,@(map (lambda (arg par) `(set! ,par ,arg)) (append (reverse fraArg) regArg) (append (reverse fraPara) regPara))
                                                                                          (set! ,(current-return-address-register) ,rp-label)
                                                                                          (jump-call ,n ,(current-frame-base-pointer-register) ,(current-return-address-register) ,@regPara ,@fraPara)))
-                                                                    (jump-return ,tmp-ra ,(current-frame-base-pointer-register) ,(current-return-value-register)))))]              
+                                                                    (jump-return ,tmp-ra ,(current-frame-base-pointer-register)))))]              
                              [(integer? n) n]
                              [else #f])]
     [val `(begin (set! ,(current-return-value-register) ,val)
-                 (jump-return ,tmp-ra ,(current-frame-base-pointer-register) ,(current-return-value-register)))]))
+                 (jump-return ,tmp-ra ,(current-frame-base-pointer-register)))]))
 
 ;
 ;(impose-entry e)->tail? info?

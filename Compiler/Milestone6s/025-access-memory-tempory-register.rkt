@@ -60,6 +60,7 @@
   (match s 
     [`(set! ,a ,b) (access-set s)]                                 ;set
     [`(setLinear! ,a ,b) (access-set-linear s)]                    ;setLinear
+    [`(set-addr! ,a ,b) `((set-addr! ,a ,b))]
     [`(with-label ,l ,a) (access-with-label s)]                    ;set label 
     [`(jump ,l) (access-jump s)]                                   ;unconditional jump
     [`(compare ,a (,relop ,b ,c)) `((compare ,a (,relop ,b ,c)))]  ;compare
@@ -77,46 +78,7 @@
 ;Generates paren-cheri-risc-v code in string if argument matches. Otherwise false.
 ;(generate-cheri-risc-v p) -> string?/boolean?
 ; p: any?
-(define (access-memory-tempory-register p) ;(-> paren-cheri-risc-v? paren-cheri-risc-v?)
+(define/contract (access-memory-tempory-register p) (-> paren-cheri-risc-v? paren-cheri-risc-v?)
     (match p
     [`(begin ,i ,s ...) `(begin ,i ,@(foldl (lambda (set n) (append n (access-sets set))) '() s))]
     [_ #f]))
-
-
-#;(access-memory-tempory-register '(begin
-                                   ()
-                                   (with-label L.tmp.0 (set! (cfp - 16) cra))
-                                   (set! cfp (+ cfp -16))
-                                   (set! a0 5)
-                                   (set! cra L.rpLabel.12)
-                                   (jump L.even?.2)
-                                   (with-label L.rpLabel.12 (set! cfp (+ cfp 16)))
-                                   (jump (cfp - 16))
-                                   (with-label L.even?.2 (set! (cfp - 16) cra))
-                                   (set! t1 a0)
-                                   (set! t0 0)
-                                   (jump-if L.tmp.17 (= t1 t0))
-                                   (jump L.tmp.18)
-                                   (with-label L.tmp.17 (set! a0 200))
-                                   (jump (cfp - 16))
-                                   (with-label L.tmp.18 (set! t0 (+ t1 -1)))
-                                   (set! cfp (+ cfp -16))
-                                   (set! a0 t0)
-                                   (set! cra L.rpLabel.10)
-                                   (jump L.odd?.1)
-                                   (with-label L.rpLabel.10 (set! cfp (+ cfp 16)))
-                                   (jump (cfp - 16))
-                                   (with-label L.odd?.1 (set! (cfp - 16) cra))
-                                   (set! t1 a0)
-                                   (set! t0 0)
-                                   (jump-if L.tmp.15 (= t1 t0))
-                                   (jump L.tmp.16)
-                                   (with-label L.tmp.15 (set! a0 150))
-                                   (jump (cfp - 16))
-                                   (with-label L.tmp.16 (set! t0 (+ t1 -1)))
-                                   (set! cfp (+ cfp -16))
-                                   (set! a0 t0)
-                                   (set! cra L.rpLabel.8)
-                                   (jump L.even?.2)
-                                   (with-label L.rpLabel.8 (set! cfp (+ cfp 16)))
-                                   (jump (cfp - 16))))

@@ -15,6 +15,8 @@
          current-global-register
          current-invoke-jump-register
          current-invoke-data-register
+         current-seal-register
+         current-seal-location-register
          register?
          isNonCapRegister?
          isCapability?
@@ -24,7 +26,8 @@
          addr-binop?
          addr?
          isRegAddress?
-         isCapAddress?)
+         isCapAddress?
+         seal-location)
 
 (module+ test
   (require rackunit))
@@ -51,7 +54,8 @@
   (make-parameter 'cfp))
 
 (define (frame-base-pointer-register? v)
-  (or (equal? v (current-stack-base-pointer-register)) (equal? v (current-global-register)) (equal? v 'fp) (equal? v (current-stack-register))))
+  ;(or (equal? v (current-stack-base-pointer-register)) (equal? v (current-global-register)) (equal? v 'fp) (equal? v (current-stack-register))))
+  (register? v))
 
 (define current-stack-base-pointer-register
   (make-parameter 'cfp))
@@ -85,6 +89,12 @@
   
 (define current-invoke-data-register
   (make-parameter 'ct6))
+
+(define current-seal-register
+  (make-parameter 'cs2))
+
+(define current-seal-location-register
+  (make-parameter 'cs1))
 
 (define special-registers
   (make-parameter '(pcc)))
@@ -196,6 +206,9 @@
   (match a
     [`(,r ,binop ,n) #:when (and (isCapability? r) (integer? n) (addr-binop? binop)) a]
     [_ #f]))
+
+(define seal-location
+  20)
 
 
 

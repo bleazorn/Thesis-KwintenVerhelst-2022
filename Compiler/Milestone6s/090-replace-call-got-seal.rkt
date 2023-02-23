@@ -5,7 +5,7 @@
          "common/register.rkt"
          "langs/nested-asm-lang-jumps.rkt"
          "langs/nested-asm-lang-fvars.rkt")
-(provide replace-labels-to-got)
+(provide replace-call-got-seal)
 
 
 ;
@@ -13,7 +13,7 @@
 ;trg: label?
 ;replace-labels: list? '(label? ...)
 (define (replace-label trg replace-labels)
-  (let ([loc (second (assoc trg replace-labels))])
+  (let ([loc (* 2 (second (assoc trg replace-labels)))])
     `(begin
        (set! ,(current-invoke-jump-register) ,(newGvar loc))
        (set! ,(current-invoke-data-register) ,(newGvar (add1 loc)))
@@ -60,6 +60,7 @@
     [`(begin ,e ... ,tail) `(begin ,@(map (lambda (eff) (replace-effect eff replace-labels)) e) ,(replace-tail tail replace-labels))]
     [`(if ,p ,t1 ,t2) `(if ,(replace-pred p replace-labels) ,(replace-tail t1 replace-labels) ,(replace-tail t2 replace-labels))]
     [`(jump-call ,trg) (replace-label trg replace-labels)]
+    [`(jump-return ,trg) `(jump-return ,trg)]
     [`(invoke ,a ,b) `(invoke ,a ,b)]
     [_ #f]))
 
@@ -68,8 +69,7 @@
 ;t: tail?
 ;replace-labels: list? '(label? ...)
 (define (replace-tail-begin t replace-labels)
-  `(begin (set! cs1 ct6)
-          ,(replace-tail t replace-labels)))
+  (replace-tail t replace-labels))
 
      
 ;
@@ -81,15 +81,11 @@
     [_ #t]))
 
 
-(define/contract (replace-labels-to-got p) (-> nested-asm-lang-jumps? nested-asm-lang-fvars?)
+(define/contract (replace-call-got-seal p) (-> nested-asm-lang-jumps? nested-asm-lang-fvars?)
   (match p
     [`(module ,i ,f ... ,t) (let ([replace-labels (getInfo i getGOTLabels)])
                               `(module ,i ,@(map (lambda (func) (replace-func func replace-labels)) f) ,(replace-tail-begin t replace-labels)))]
     [_ "replace locations failed"]))
-
-(define/contract (re p) (-> nested-asm-lang-fvars? nested-asm-lang-fvars?)
-  p)
-
 
 
 

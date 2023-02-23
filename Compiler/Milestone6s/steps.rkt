@@ -21,10 +21,15 @@
          "121-2-assign-registers-half.rkt"
          "121-1-assign-frame-variables-half.rkt"
          "100-replace-locations.rkt"
-         "095-secure-stack-tokens.rkt"
+         "095-secure-stktokens.rkt"
+         "095-secure-cheri-linkage.rkt"
          "094-clean-registers.rkt"
+         "093-add-stktokens-sentry.rkt"
+         "093-add-stktokens-seal.rkt"
+         "092-change-return-seal.rkt"
          "091-create-got.rkt"
-         "090-replace-labels-to-got.rkt"
+         "090-replace-call-got-sentry.rkt"
+         "090-replace-call-got-seal.rkt"
          "090-change-frame-pointer.rkt"
          "080-implement-fvars.rkt"
          "080-implement-fvars-split.rkt"
@@ -39,7 +44,10 @@
          "020-generate-cheri-risc-v.rkt"
          "020-generate-risc-v.rkt"
          "010-wrap-cheri-risc-v-run-time.rkt"
-         "010-wrap-cheri-risc-v-run-time-secure.rkt"
+         "010-wrap-cheri-risc-v-run-time-stkTokens.rkt"
+         "010-wrap-cheri-risc-v-run-time-stkTokens-sentry.rkt"
+         "010-wrap-cheri-risc-v-run-time-cheri-linkage-seal.rkt"
+         "010-wrap-cheri-risc-v-run-time-cheri-linkage-trampoline.rkt"
          "010-wrap-risc-v-run-time.rkt"
          "000-wrap-cheri-risc-v-boilerplate.rkt"
          "000-wrap-risc-v-boilerplate.rkt"
@@ -47,6 +55,9 @@
 
 (provide steps
          stkTokens
+         stkTokens-sentry
+         cheri-linkage-seal
+         cheri-linkage-trampoline
          halfStack
          risc-v)
 
@@ -87,19 +98,75 @@
          [switchedL (list-set
                      (list-set
                       (list-set
-                       (list-set l fI implement-fvars-split)
-                       wI wrap-cheri-risc-v-run-time-secure)
-                      gI access-memory-sub-add-frame-register)
-                     sI (list replace-labels-to-got
+                       (list-set l wI wrap-cheri-risc-v-run-time-stkTokens)
+                       gI access-memory-sub-add-frame-register)
+                      fI implement-fvars-split)
+                     sI (list replace-call-got-seal
                               create-got
+                              add-stktokens-seal
+                              change-return-seal
                               clean-registers
-                              secure-stack-tokens
+                              secure-stktokens
                              ))]
          [tL (take switchedL iI)]
          [dL (drop switchedL iI)])
     (flatten (append tL
             (list call-convention-secure)
             dL))))
+
+(define (stkTokens-sentry l)
+  (let* ([wI (index-where l (curry equal? wrap-cheri-risc-v-run-time))]
+         [gI (index-where l (curry equal? access-memory-tempory-register))]
+         [fI (index-where l (curry equal? implement-fvars))]
+         [sI (index-where l (curry equal? change-frame-pointer))]
+         [iI (index-where l (curry equal? impose-calling-conventions-full))]
+         [switchedL (list-set
+                     (list-set
+                      (list-set
+                       (list-set l wI wrap-cheri-risc-v-run-time-stkTokens-sentry)
+                       gI access-memory-sub-add-frame-register)
+                      fI implement-fvars-split)
+                     sI (list replace-call-got-sentry
+                              create-got
+                              add-stktokens-sentry
+                              clean-registers
+                              secure-stktokens
+                             ))]
+         [tL (take switchedL iI)]
+         [dL (drop switchedL iI)])
+    (flatten (append tL
+            (list call-convention-secure)
+            dL))))
+
+;cheri-linkage
+(define (cheri-linkage-seal l)
+  (let* ([wI (index-where l (curry equal? wrap-cheri-risc-v-run-time))]
+         [sI (index-where l (curry equal? change-frame-pointer))]
+         [iI (index-where l (curry equal? impose-calling-conventions-full))]
+         [switchedL (list-set
+                     (list-set l wI wrap-cheri-risc-v-run-time-cheri-linkage-seal)
+                     sI (list replace-call-got-sentry
+                              create-got
+                              change-return-seal
+                              clean-registers
+                              secure-cheri-linkage
+                              ))]
+         [tL (take switchedL iI)]
+         [dL (drop switchedL iI)])
+    (flatten (append tL
+            (list call-convention-secure)
+            dL))))
+
+(define (cheri-linkage-trampoline l)
+  (let* ([wI (index-where l (curry equal? wrap-cheri-risc-v-run-time))]
+         [sI (index-where l (curry equal? change-frame-pointer))])
+         (flatten (list-set
+                   (list-set l wI wrap-cheri-risc-v-run-time-cheri-linkage-trampoline)
+                   sI (list replace-call-got-sentry
+                            create-got
+                            clean-registers
+                            secure-cheri-linkage
+                            )))))
 
 ;half stack
 (define (halfStack l)

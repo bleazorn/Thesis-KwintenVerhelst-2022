@@ -72,6 +72,7 @@
     [`(set! ,a (,binop ,b ,c)) `(set! ,(change-fvar a) (,binop ,(change-fvar b) ,(change-fvar c)))]
     [`(set! ,a ,b) `(set! ,(change-fvar a) ,(change-fvar b))]
     [`(setLinear! ,a ,b) `(setLinear! ,(change-fvar a) ,(change-fvar b))]
+    [`(set-addr! ,a ,b) `(set-addr! ,(change-fvar a) ,(change-fvar b))]
     [`(seal ,r ... ,s) `(seal ,@r ,s)]
     [`(unseal ,r ... ,s) `(unseal ,@r ,s)]
     [`(split ,a ,b ,c ,d) `(split ,a ,b ,c ,d)]

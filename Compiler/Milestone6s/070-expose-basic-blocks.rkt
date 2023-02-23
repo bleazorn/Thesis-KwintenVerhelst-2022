@@ -40,6 +40,7 @@
                                           pD e1D e2D))))]
     [`(set! ,a ,b)         (values (cons e `((jump ,l))) '())]
     [`(setLinear! ,a ,b)   (values (cons e `((jump ,l))) '())]
+    [`(set-addr! ,a ,b)   (values (cons e `((jump ,l))) '())]
     [`(seal ,r ... ,s)     (values (cons e `((jump ,l))) '())]
     [`(unseal ,r ... ,s)   (values (cons e `((jump ,l))) '())]
     [`(split ,a ,b ,c ,d)  (values (cons e `((jump ,l))) '())]
@@ -60,6 +61,8 @@
                              [`(set! ,a ,b)        (let-values ([(rP rD) (expose-begin-split rest-eff)])
                                                      (values (cons eff rP) rD))]
                              [`(setLinear! ,a ,b)        (let-values ([(rP rD) (expose-begin-split rest-eff)])
+                                                     (values (cons eff rP) rD))]
+                             [`(set-addr! ,a ,b)        (let-values ([(rP rD) (expose-begin-split rest-eff)])
                                                      (values (cons eff rP) rD))]
                              [`(seal ,r ... ,s)    (let-values ([(rP rD) (expose-begin-split rest-eff)])
                                                      (values (cons eff rP) rD))]

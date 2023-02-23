@@ -54,11 +54,11 @@
 ;tail: tail?
 (define (call-tail-info info tail)
   (let ([parasize (cond [(null? (getInfo info getParamSize)) 0]
-                        [else (getInfo info getParamSize)])]
-        [newTail (call-tail tail #f)])
+                        [else (getInfo info getParamSize)])])
+        ;[newTail (call-tail tail #f)])
     (setfvar (sub1 parasize))
-    (values (addInfo info (setAllocatedFvars `(,(newFvar parasize) ,(newFvar (add1 parasize)))))
-            newTail)))
+    (values (addInfo info (setAllocatedFvars `(,(newFvar parasize) ,(newFvar (add1 parasize)) ,(newFvar (add1 (add1 parasize))))))
+            tail)))
        
 
 ;
@@ -89,7 +89,7 @@
                                                     (set! x.1 2)
                                                     (begin (set! y.2 3) (set! y.2 (+ y.2 2)))
                                                     (begin (set! a0 (+ x.1 y.2)) (jump-return tmp-ra.1 cfp a0))))))
-                '(module ((allocatedFvars (fv0 fv1)) (new-frames ()) (paramSize 0))
+                '(module ((allocatedFvars (fv0 fv1 fv2)) (new-frames ()) (paramSize 0))
                    (begin (set! tmp-ra.1 cra)
                           (begin
                             (set! x.1 2)
@@ -135,9 +135,9 @@
                                                      L.rpLabel.6
                                                      (begin (set! a0 5) (set! cra L.rpLabel.6) (jump-call L.even?.2 cfp cra a0)))
                                                     (jump-return tmp-ra.5 cfp a0)))))
-                '(module ((allocatedFvars (fv0 fv1)) (new-frames ()) (paramSize 0))
+                '(module ((allocatedFvars (fv0 fv1 fv2)) (new-frames ()) (paramSize 0))
                    (define L.odd?.1
-                     ((allocatedFvars (fv2 fv3)) (new-frames ()) (paramSize 2))
+                     ((allocatedFvars (fv2 fv3 fv4)) (new-frames ()) (paramSize 2))
                      (begin
                        (set! tmp-ra.1 cra)
                        (set! x.3 a0)
@@ -153,7 +153,7 @@
                                        (jump-call L.even?.2 cfp cra a0)))
                                     (jump-return tmp-ra.1 cfp a0))))))
                    (define L.even?.2
-                     ((allocatedFvars (fv3 fv4)) (new-frames ()) (paramSize 3))
+                     ((allocatedFvars (fv3 fv4 fv5)) (new-frames ()) (paramSize 3))
                      (begin
                        (set! tmp-ra.3 cra)
                        (set! x.5 a0)
@@ -201,9 +201,9 @@
                                                   (set! cra L.rpLabel.3)
                                                   (jump-call L.test.1 cfp cra a0 a1 a2)))
                                                (jump-return tmp-ra.2 cfp a0)))))
-                '(module ((allocatedFvars (fv0 fv1)) (new-frames ()) (paramSize 0))
+                '(module ((allocatedFvars (fv0 fv1 fv2)) (new-frames ()) (paramSize 0))
                    (define L.test.1
-                     ((allocatedFvars (fv0 fv1)) (new-frames ()) (paramSize 0))
+                     ((allocatedFvars (fv0 fv1 fv2)) (new-frames ()) (paramSize 0))
                      (begin
                        (set! tmp-ra.1 cra)
                        (set! x.1 a0)
@@ -262,9 +262,9 @@
                                                   (set! cra L.rpLabel.4)
                                                   (jump-call L.swap.1 cfp cra a0 a1)))
                                                (jump-return tmp-ra.3 cfp a0)))))
-                '(module ((allocatedFvars (fv0 fv1)) (new-frames ()) (paramSize 0))
+                '(module ((allocatedFvars (fv0 fv1 fv2)) (new-frames ()) (paramSize 0))
                    (define L.swap.1
-                     ((allocatedFvars (fv0 fv1)) (new-frames ()) (paramSize 0))
+                     ((allocatedFvars (fv0 fv1 fv2)) (new-frames ()) (paramSize 0))
                      (begin
                        (set! tmp-ra.1 cra)
                        (set! x.1 a0)
@@ -300,4 +300,3 @@
                 "call-convention-secure: succes-04: value call")
   ;|#
   )
-

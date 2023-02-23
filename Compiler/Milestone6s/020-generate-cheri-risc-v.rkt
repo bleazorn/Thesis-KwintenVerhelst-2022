@@ -78,7 +78,8 @@ sltiu reg, reg, int12		compares < unsigned 12 bit integer
     [`(set! ,a ,b) #:when (and (isCapability? a) (special-register? b)) (indent-instr (format "CSpecialr ~a, ~a" a b))]        ;special register
     [`(set! ,a ,b) #:when (and (isCapability? a) (int12? b))     (indent-instr (format "CIncOffsetImm ~a, cnull, ~a" a b))]     ;add int12
     [`(set! ,a ,b) #:when (and (isNonCapRegister? a) (int12? b)) (indent-instr (format "addi ~a, zero, ~a" a b))]               ;add int12
-    [`(set! ,a ,b) #:when (and (integer? b) (not (int12? b))) (indent-instr (format "li ~a, ~a" a b))]                          ;add int32
+    [`(set! ,a ,b) #:when (and (register? a) (integer? b) (>= b (expt 2 31))) (indent-instr (format "li ~a, 0x~a" a (dec->hex-string b)))]    ;TODO: DElete this hack
+    [`(set! ,a ,b) #:when (and (register? a) (integer? b) (int32? b)) (indent-instr (format "li ~a, ~a" a b))]                                ;add int32
     [`(set! ,a ,b) #:when (label? b) (indent-instr (format "cllc ~a, ~a" a b))]                                                 ;add label
     [`(set! ,a ,b) #:when (and (isCapability? a) (isCapability? b))         (indent-instr (format "cmove ~a, ~a" a b))]         ;move
     [`(set! ,a ,b) #:when (and (isNonCapRegister? a) (isNonCapRegister? b)) (indent-instr (format "addi ~a, ~a, 0" a b))]       ;move
@@ -161,7 +162,8 @@ sltiu reg, reg, int12		compares < unsigned 12 bit integer
 (define (generate-seal s)
   (match s
     [`(seal ,r ... ,i) #:when (andmap isCapability? r) (let ([sealInstr (foldl (lambda (x s) (string-append s (indent-instr (format "cseal ~a, ~a, cs2" x x)))) "" r)])
-                                                         (string-append (indent-instr  (format "li t6, ~a" i))
+                                                         (string-append (indent-instr  (format "lc.cap cs2, 0(~a)" (current-seal-location-register)))
+                                                                        (indent-instr  (format "li t6, ~a" i))
                                                                         (indent-instr  (format "csetoffset cs2, cs2, t6"))
                                                                         sealInstr))]
     [_ #f]))
@@ -208,6 +210,7 @@ sltiu reg, reg, int12		compares < unsigned 12 bit integer
     [`(sentry ,r) (indent-instr (format "CSealEntry ~a, ~a" r r))] ;sentry
     [`(invoke ,a ,b) (string-append (indent-instr (format "CMove ~a, ~a" 'ct6 b))
                                     (indent-instr (format "CInvoke ~a, ~a" a 'ct6)))] ;invoke
+    [`(set-addr! ,a ,b) (indent-instr (format "CSetAddr ~a, ~a, ~a" a a b))]
     [_ #f]))
 
 ;Generates paren-cheri-risc-v code in string if argument matches. Otherwise false.

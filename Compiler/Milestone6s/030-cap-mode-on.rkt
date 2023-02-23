@@ -50,6 +50,7 @@
     [`(set! ,a (,binop ,b ,c)) #:when (register? b) (cap-binop e)]
     [`(set! ,a ,b)                (cap-set e)]
     [`(setLinear! ,a ,b)          `(setLinear! ,a ,b)]
+    [`(set-addr! ,a ,b)          `(set-addr! ,a ,b)]
     [`(with-label ,l ,eff)        `(with-label ,l ,(cap-effect eff))]
     [`(jump ,l)                   (cap-jump e)]
     [`(compare ,a (,relop ,b ,c)) `(compare ,(makeReg a) (,relop ,(makeReg b) ,(makeReg c)))]

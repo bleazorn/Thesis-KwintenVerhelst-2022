@@ -72,5 +72,5 @@
 
 (define/contract (clean-registers p) (-> nested-asm-lang-jumps? nested-asm-lang-jumps?)
   (match p
-    [`(module ,i ,f ... ,t) `(module ,i ,@(map clean-func f) ,(clean-info t i))]
+    [`(module ,i ,f ... ,t) p]; `(module ,i ,@(map clean-func f) ,(clean-info t i))]
     [_ "replace locations failed"]))

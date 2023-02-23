@@ -10,7 +10,7 @@
 
 ;(define emulatorLoc "T/sail-cheri-riscv/c_emulator/cheri_riscv_sim_RV64")
 (define emulatorLoc "T/sail-borrowed-cap/sail-cheri-riscv/ocaml_emulator/cheri_riscv_ocaml_sim_RV64")
-(define flags "-s -o tmpTest.S")
+(define flags "-c -o tmpTest.S")
 (define (check-program-file program result)
   (define-values (sp out in err)
     (subprocess #f #f #f "/bin/bash" "./tester.sh" program (number->string result) emulatorLoc flags))
@@ -68,7 +68,7 @@
 
 ;RandomTest
   ;#|
-  (randomTesting 50)
+  (randomTesting 5)
   ;|#
   
 ;Milestone 2 en 3
@@ -102,7 +102,7 @@
   (check-Program '(module (let ([x 50] [y 50]) (let ([z (if (= x y) (let ([k 40]) k) (* x y))]) z))) 40 "Program: succes-18: value if")
   ;|#
 ;Milestone 5
-  #|
+  ;#|
   (check-Program '(module
                       (define odd?
                         (lambda (x)

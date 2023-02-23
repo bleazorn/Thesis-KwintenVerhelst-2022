@@ -14,6 +14,7 @@
                  (indent-instr ".p2align 6")        
                  (indent-instr ".global main")
                  (indent-instr ".option capmode")
+                 (indent-instr ".section .text.main")
                  p))
 
 (module+ test

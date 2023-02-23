@@ -9,7 +9,7 @@
 
 @define-grammar/pred[para-asm-lang
   #:literals (info? int64? label? register? frame-base-pointer-register? dispoffset?)
-  #:datum-literals (begin set! jump with-label compare jump-if * + < <= = split splice seal unseal sentry invoke setLinear!
+  #:datum-literals (begin set! jump with-label compare jump-if * + < <= = split splice seal unseal sentry invoke setLinear! set-addr!
    >= > !=)
   [p     (begin info s ...)]
   [info info?]
@@ -25,7 +25,8 @@
      (unseal reg ... int64)
      (sentry reg)
      (invoke reg reg)
-     (setLinear! loc triv)]
+     (setLinear! loc triv)
+     (set-addr! loc loc)]
   [opand int64 loc]
   [triv  opand label]
   [loc   reg addr]
