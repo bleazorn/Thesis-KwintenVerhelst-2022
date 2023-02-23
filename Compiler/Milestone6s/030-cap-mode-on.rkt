@@ -118,8 +118,8 @@
   (check-equal? (cap-set '(set! ca0 50000)) '(set! a0 50000) "cap-set: succes-14: cap in32")
 
   (check-equal? (cap-set '(set! a0 a0)) '(set! a0 a0) "cap-set: succes-15: reg reg")
-  (check-equal? (cap-set '(set! a0 ca0)) '(set! a0 a0) "cap-set: succes-16: reg cap")
-  (check-equal? (cap-set '(set! ca0 a0)) '(set! a0 a0) "cap-set: succes-17: cap reg")
+  (check-equal? (cap-set '(set! a0 ca0)) '(set! ca0 ca0) "cap-set: succes-16: reg cap")
+  (check-equal? (cap-set '(set! ca0 a0)) '(set! ca0 ca0) "cap-set: succes-17: cap reg")
   (check-equal? (cap-set '(set! ca0 ca0)) '(set! ca0 ca0) "cap-set: succes-18: cap cap")
 ;cap-jump
   ;succes
@@ -133,9 +133,9 @@
 ;cap-effect
   ;succes
   (check-equal? (cap-effect '(set! ca0 (+ a0 ca0))) '(set! a0 (+ a0 a0)) "cap-effect: succes-01: add cap reg cap")
-  (check-equal? (cap-effect '(set! ca0 a0)) '(set! a0 a0) "cap-effect: succes-02: cap reg")
+  (check-equal? (cap-effect '(set! ca0 a0)) '(set! ca0 ca0) "cap-effect: succes-02: cap reg")
 
-  (check-equal? (cap-effect '(with-label L.foo.1 (set! ca0 a0))) '(with-label L.foo.1 (set! a0 a0)) "cap-effect: succes-03: with reg reg")
+  (check-equal? (cap-effect '(with-label L.foo.1 (set! ca0 a0))) '(with-label L.foo.1 (set! ca0 ca0)) "cap-effect: succes-03: with reg reg")
   (check-equal? (cap-effect '(jump a0)) '(jump ca0) "cap-effect: succes-04: jump reg")
 
   (check-equal? (cap-effect '(compare a0 (= a0 a0))) '(compare a0 (= a0 a0)) "cap-effect: succes-05: comp reg reg reg")
@@ -151,7 +151,7 @@
   (check-equal? (cap-effect '(jump-if L.foo.1 (> ca0 ca0))) '(jump-if L.foo.1 (> a0 a0)) "cap-effect: succes-14: jump-if cap cap")
 ;set-cap-mode
   ;succes
-  (check-equal? (cap-mode-on '(begin (set! a0 a0) (set! a0 (* ca0 a0)) (set! a0 (+ a0 a0)) (set! ca0 a0)))
+  (check-equal? (cap-mode-on '(begin (set! a0 a0) (set! a0 (* ca0 a0)) (set! a0 (+ a0 a0)) (set! a0 a0)))
                 '(begin (set! a0 a0) (set! a0 (* a0 a0)) (set! a0 (+ a0 a0)) (set! a0 a0))
                 "set-cap-mode: succes-01: simple program")
 
