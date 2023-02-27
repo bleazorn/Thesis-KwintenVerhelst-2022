@@ -3,7 +3,7 @@
 (require "common/fvar.rkt"
          "common/info.rkt"
          "common/register.rkt"
-         "common/langs-lib.rkt"
+         "common/aloc.rkt"
          "langs/imp-cmf-lang.rkt")
 
 (provide call-convention-secure)
@@ -16,7 +16,7 @@
 ;p: pred?
 (define (call-pred p)
   (match p
-    [`(begin ,e ... ,pred) `(begin ,@(map call-effect e) ,(call-pred pred))]
+    [`(begin ,e ... ,pred) `(begin ,@(filter-not null? (map call-effect e)) ,(call-pred pred))]
     [`(if ,p1 ,p2 ,p3) `(if ,(call-pred p1) ,(call-pred p2) ,(call-pred p3))]
     [`(,relop ,a ,b) p]
     ['(true) '(true)]
@@ -30,22 +30,25 @@
 ;e: effect?
 (define (call-effect e)
   (match e
-    [`(begin ,e ...) `(begin ,@(map call-effect e))]
+    [`(begin ,e ...) `(begin ,@(filter-not null? (map call-effect e)))]
     [`(if ,p ,e1 ,e2) `(if ,(call-pred p) ,(call-effect e1) ,(call-effect e2))]
+    [`(set! ,a ,v) #:when (and (isTmpRa? a) (equal? v (current-return-address-register))) '()]
     [`(set! ,a ,v) e]
-    [`(return-point ,l ,t) `(return-point ,l ,(call-tail t #t))]
+    [`(return-point ,l ,t) `(return-point ,l ,(call-tail t))]
     [_ #f]))
 
 ;
 ;(call-tail t return-p)->tail?
 ;t: tail?
 ;return-p: boolean?
-(define (call-tail t return-p)
+(define (call-tail t)
   (match t
-    [`(begin ,e ... ,tail) `(begin ,@(map call-effect e) ,(call-tail tail return-p))]
-    [`(if ,p ,t1 ,t2) `(if ,(call-pred p) ,(call-tail t1 return-p) ,(call-tail t2 return-p))]
+    [`(begin ,e ... ,tail) `(begin ,@(filter-not null? (map call-effect e)) ,(call-tail tail))]
+    [`(if ,p ,t1 ,t2) `(if ,(call-pred p) ,(call-tail t1) ,(call-tail t2))]
     [`(jump-call ,l ,a ...) `(jump-call ,l ,@a)]                                                   ;Call
-    [`(jump-return ,l ,a ...) `(jump-return ,l ,@a)]                                               ;Return
+    [`(jump-return ,l ,a ...) `(jump-return ,(current-return-address-register)
+                                            ,@a
+                                            ,(current-seal-location-register))]                    ;Return
     [_ #f]))
 
 ;
@@ -55,10 +58,9 @@
 (define (call-tail-info info tail)
   (let ([parasize (cond [(null? (getInfo info getParamSize)) 0]
                         [else (getInfo info getParamSize)])])
-        ;[newTail (call-tail tail #f)])
     (setfvar (sub1 parasize))
     (values (addInfo info (setAllocatedFvars `(,(newFvar parasize) ,(newFvar (add1 parasize)) ,(newFvar (add1 (add1 parasize))))))
-            tail)))
+            (call-tail tail))))
        
 
 ;
@@ -80,6 +82,7 @@
                               `(module ,info ,@(map call-func f) ,tail))]
     [_ #f]))
 
+
 (module+ test
 ;call-convention-secure
   ;succes
@@ -90,11 +93,11 @@
                                                     (begin (set! y.2 3) (set! y.2 (+ y.2 2)))
                                                     (begin (set! a0 (+ x.1 y.2)) (jump-return tmp-ra.1 cfp a0))))))
                 '(module ((allocatedFvars (fv0 fv1 fv2)) (new-frames ()) (paramSize 0))
-                   (begin (set! tmp-ra.1 cra)
+                   (begin 
                           (begin
                             (set! x.1 2)
                             (begin (set! y.2 3) (set! y.2 (+ y.2 2)))
-                            (begin (set! a0 (+ x.1 y.2)) (jump-return tmp-ra.1 cfp a0)))))
+                            (begin (set! a0 (+ x.1 y.2)) (jump-return cra cfp a0 cs1)))))
                 "call-convention-secure: succes-01: no tail calls")
   (check-equal? (call-convention-secure '(module ((new-frames ()) (paramSize 0))
                                            (define L.odd?.1
@@ -139,10 +142,10 @@
                    (define L.odd?.1
                      ((allocatedFvars (fv2 fv3 fv4)) (new-frames ()) (paramSize 2))
                      (begin
-                       (set! tmp-ra.1 cra)
+                       
                        (set! x.3 a0)
                        (if (= x.3 0)
-                           (begin (set! a0 0) (jump-return tmp-ra.1 cfp a0))
+                           (begin (set! a0 0) (jump-return cra cfp a0 cs1))
                            (begin
                              (set! y.4 (+ x.3 -1))
                              (begin (return-point
@@ -151,14 +154,14 @@
                                        (set! a0 y.4)
                                        (set! cra L.rpLabel.2)
                                        (jump-call L.even?.2 cfp cra a0)))
-                                    (jump-return tmp-ra.1 cfp a0))))))
+                                    (jump-return cra cfp a0 cs1))))))
                    (define L.even?.2
                      ((allocatedFvars (fv3 fv4 fv5)) (new-frames ()) (paramSize 3))
                      (begin
-                       (set! tmp-ra.3 cra)
+                       
                        (set! x.5 a0)
                        (if (= x.5 0)
-                           (begin (set! a0 1) (jump-return tmp-ra.3 cfp a0))
+                           (begin (set! a0 1) (jump-return cra cfp a0 cs1))
                            (begin
                              (set! y.6 (+ x.5 -1))
                              (begin (return-point
@@ -167,13 +170,13 @@
                                        (set! a0 y.6)
                                        (set! cra L.rpLabel.4)
                                        (jump-call L.odd?.1 cfp cra a0)))
-                                    (jump-return tmp-ra.3 cfp a0))))))
+                                    (jump-return cra cfp a0 cs1))))))
                    (begin
-                     (set! tmp-ra.5 cra)
+                     
                      (begin (return-point
                              L.rpLabel.6
                              (begin (set! a0 5) (set! cra L.rpLabel.6) (jump-call L.even?.2 cfp cra a0)))
-                     (jump-return tmp-ra.5 cfp a0))))
+                     (jump-return cra cfp a0 cs1))))
                 
                 "call-convention-secure: succes-02: tail calls")
   (check-equal? (call-convention-secure '(module ((new-frames ()) (paramSize 0))
@@ -205,7 +208,7 @@
                    (define L.test.1
                      ((allocatedFvars (fv0 fv1 fv2)) (new-frames ()) (paramSize 0))
                      (begin
-                       (set! tmp-ra.1 cra)
+                       
                        (set! x.1 a0)
                        (set! x.2 a1)
                        (set! x.3 a2)
@@ -213,9 +216,9 @@
                          (set! y.4 (+ x.1 x.2))
                          (begin
                            (set! a0 (+ x.3 y.4))
-                           (jump-return tmp-ra.1 cfp a0)))))
+                           (jump-return cra cfp a0 cs1)))))
                    (begin
-                     (set! tmp-ra.2 cra)
+                     
                      (begin
                        (return-point
                         L.rpLabel.3
@@ -225,7 +228,7 @@
                           (set! a2 3)
                           (set! cra L.rpLabel.3)
                           (jump-call L.test.1 cfp cra a0 a1 a2)))
-                       (jump-return tmp-ra.2 cfp a0))))
+                       (jump-return cra cfp a0 cs1))))
                 "call-convention-secure: succes-03: tail calls with fvar args")
   (check-equal? (call-convention-secure '(module ((new-frames ()) (paramSize 0))
                                            (define L.swap.1
@@ -266,13 +269,13 @@
                    (define L.swap.1
                      ((allocatedFvars (fv0 fv1 fv2)) (new-frames ()) (paramSize 0))
                      (begin
-                       (set! tmp-ra.1 cra)
+                       
                        (set! x.1 a0)
                        (set! y.2 a1)
                        (if (< y.2 x.1)
                            (begin
                              (set! a0 x.1)
-                             (jump-return tmp-ra.1 cfp a0))
+                             (jump-return cra cfp a0 cs1))
                            (begin
                              (begin
                                (return-point
@@ -285,9 +288,9 @@
                                (set! z.3 a0))
                              (begin
                                (set! a0 z.3)
-                               (jump-return tmp-ra.1 cfp a0))))))
+                               (jump-return cra cfp a0 cs1))))))
                    (begin
-                     (set! tmp-ra.3 cra)
+                     
                      (begin
                        (return-point
                         L.rpLabel.4
@@ -296,7 +299,7 @@
                           (set! a1 2)
                           (set! cra L.rpLabel.4)
                           (jump-call L.swap.1 cfp cra a0 a1)))
-                       (jump-return tmp-ra.3 cfp a0))))
+                       (jump-return cra cfp a0 cs1))))
                 "call-convention-secure: succes-04: value call")
   ;|#
   )
