@@ -1,0 +1,54 @@
+resolve-predicates
+
+p	::=	(module b ... b)
+
+b	::=	(define label tail)
+
+pred	::=	(relop loc loc)
+	|	(true)
+	|	(false)
+	|	(not pred)
+
+tail	::=	(jump trg)
+	|	(begin effect ... tail)
+	|	(if pred (jump trg) (jump trg))
+ 	 	 	 	 
+effect	::=	(set! loc triv)
+	|	(set! loc (binop loc loc))
+	|	(set! loc (+ loc integer))
+ 	 	 
+trg	::=	loc
+	|	label
+
+triv	::= 	trg			
+	| 	integer
+
+opand	::= 	integer
+	|	loc
+	 	 
+loc 	::=	reg
+	|	addr
+ 	 		 	 
+binop	::=	+
+ 	|	*
+	|	-
+
+relop	::=	 <
+ 	 |	 <=
+ 	 |	 =
+ 	 |	 >=
+ 	 |	 >
+ 	 |	 !=
+ 	 	 	 	 
+reg	::=	register?			
+
+addr	::= 	(fbp - dispoff)
+
+fbp	::=	frame-base-pointer-register?
+
+dispoff	::=	dispoffset?
+
+label	::=	label?
+ 	 	 	 	 
+integer	::=	int32?
+
