@@ -17,6 +17,7 @@
          current-invoke-data-register
          current-seal-register
          current-seal-location-register
+         current-seal-got-call-register
          register?
          isNonCapRegister?
          isCapability?
@@ -94,6 +95,9 @@
   (make-parameter 'cs2))
 
 (define current-seal-location-register
+  (make-parameter 'cs1))
+
+(define current-seal-got-call-register
   (make-parameter 'cs1))
 
 (define special-registers

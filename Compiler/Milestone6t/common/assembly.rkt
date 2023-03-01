@@ -12,7 +12,8 @@
          removePerm
          int64?
          int32?
-         int12?)
+         int12?
+         seal-token-size)
 
 
 (module+ test
@@ -98,6 +99,9 @@
 
 (define (int64? i)
   (intBinBound i 64))
+
+(define seal-token-size
+  100)
   
 
 

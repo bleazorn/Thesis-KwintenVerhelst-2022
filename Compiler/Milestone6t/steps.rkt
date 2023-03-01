@@ -110,7 +110,6 @@
                       cI add-saved-registers-stkTokens)
                      sI (list replace-call-got-seal
                               create-got
-                              add-stktokens-seal
                               change-return-seal
                               clean-registers
                               secure-stktokens

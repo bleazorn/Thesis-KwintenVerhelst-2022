@@ -3,6 +3,7 @@
 (require "common/info.rkt"
          "common/fvar.rkt"
          "common/register.rkt"
+         "common/assembly.rkt"
          "langs/nested-asm-lang-jumps.rkt")
 (provide secure-stktokens)
 
@@ -18,13 +19,12 @@
 ;assign: list? '((aloc loc) ...)
 (define (secure-return-point e framesize parasize)
   (match e
-   [`(return-point ,l ,t) (let([token (random 0 99)])
+   [`(return-point ,l ,t) (let([token (random 0 seal-token-size)])
                             `(begin
                                (set! ,(newFvar parasize) ,(current-return-address-register))
                                (setLinear! ,(newFvar (add1 parasize)) ,(current-frame-base-pointer-register))
                                (set! ,(newFvar (add1 (add1 parasize))) ,(current-seal-location-register))
                                (return-point ,l ,(secure-tail t framesize parasize token))
-                               (set! cfp ct6)
                                (splice csp csp cfp ,framesize)
                                (set! ,(current-seal-location-register) ,(newFvar (add1 (add1 parasize))))
                                (setLinear! ,(current-frame-base-pointer-register) ,(newFvar (add1 parasize)))
@@ -70,7 +70,7 @@
     [`(jump-call ,trg) `(begin (split csp csp cfp ,framesize)
                                (seal cra cfp ,token)
                                (jump-call ,trg))]
-    [`(jump-return ,trg) `(invoke ,(current-return-address-register) cfp)]
+    [`(jump-return ,trg) `(jump-return ,trg)]
     [`(invoke ,a ,b) `(invoke ,a ,b)]
     [_ #f]))
 

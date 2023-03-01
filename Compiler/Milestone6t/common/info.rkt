@@ -16,6 +16,7 @@
          getAllocatedFvars
          getGOTLabels
          getActualFrameSize
+         getAllocatedRegisters
          setNewFrames
          setLocals
          setCallUndead
@@ -27,6 +28,7 @@
          setAllocatedFvars
          setGOTLabels
          setActualFrameSize
+         setAllocatedRegisters
          remove-conf
          index-of-lowest-conf
          isInfo?)
@@ -40,7 +42,7 @@
 
 (define (isInfo? a)
   (or (getNewFrames a) (getLocals a) (getCallUndead a) (getUndead-out a) (getConflicts a) (getAssignment a)
-      (getParamSize a) (getFrameSize a) (getAllocatedFvars a) (getGOTLabels a) (getActualFrameSize a)))
+      (getParamSize a) (getFrameSize a) (getAllocatedFvars a) (getGOTLabels a) (getActualFrameSize a) (getAllocatedRegisters a)))
 
 (define (getInfo i p)
   (let ([inf (filter p i)])
@@ -111,6 +113,11 @@
     [`(actual-frame-size ,a) a]
     [_ #f]))
 
+(define (getAllocatedRegisters a)
+  (match a
+    [`(allocated-registers ,a) a]
+    [_ #f]))
+
 (define (setNewFrames f)
   `(new-frames ,f))
 
@@ -143,6 +150,9 @@
 
 (define (setActualFrameSize a)
   `(actual-frame-size ,a))
+
+(define (setAllocatedRegisters a)
+  `(allocated-registers ,a))
 ;
 ;(remove-conf l conf)-> conflicts? '((aloc (aloc ...)) ...) 
 ;l: aloc?

@@ -118,6 +118,12 @@
     ['stktokens        '+]
     ['stkTokens-sentry '+]
     [_                 '-]))
+
+(define (setup-seal-call-register)
+  (match (cc)
+    ['stktokens        'cs1]
+    ['stkTokens-sentry 'cs1]
+    [_                 'cs1]))
     
 
 (define (compile-file file)
@@ -125,6 +131,7 @@
   (parameterize ([steps                               (setup-steps (steps))]
                  [current-stack-base-pointer-register (setup-stack-register)]
                  [current-frame-base-pointer-register (setup-frame-register)]
+                 [current-seal-got-call-register      (setup-seal-call-register)]
                  [stack-direction                     (setup-stack-direction)]
                  ;[current-parameter-registers '()]
                  ;[current-assignable-registers '()]
@@ -177,17 +184,26 @@
 (module+ test
   (check-equal? #t #t "test"))
 
-#|
-(parameterize (;[steps (setup-steps (steps))]
+;#|
+#|(parameterize (;[steps (setup-steps (steps))]
                [current-stack-base-pointer-register 'csp]
                ;[current-frame-base-pointer-register 'csp]
                [stack-direction '+]
                [steps (stkTokens (steps))]
                ;[current-parameter-registers '()]
                ;[current-assignable-registers '()]
+                 ) |#
+(parameterize ([cc 'stktokens])
+  (parameterize ([steps                               (setup-steps (steps))]
+                 [current-stack-base-pointer-register (setup-stack-register)]
+                 [current-frame-base-pointer-register (setup-frame-register)]
+                 [current-seal-got-call-register      (setup-seal-call-register)]
+                 [stack-direction                     (setup-stack-direction)]
+                 ;[current-parameter-registers '()]
+                 ;[current-assignable-registers '()]
                  )
-  (println (steps))
-  (compileStepsDis 2 (sub1 (length (steps))) simpleProgram))
+    (println (steps))
+    (compileStepsDis 2 (sub1 (length (steps))) swapProgram)))
 ;|#
 ;(compileStepsDis 2 (sub1 (length (steps))) simpleProgram)
 ;(interp-values-lang bigProgram)

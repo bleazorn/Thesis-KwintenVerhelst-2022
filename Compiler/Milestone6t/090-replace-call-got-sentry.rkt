@@ -66,24 +66,17 @@
 
 
 ;
-;(replace-tail t assign)->tail?
-;t: tail?
-;replace-labels: list? '(label? ...)
-(define (replace-tail-begin t replace-labels)
-  (replace-tail t replace-labels))
-
-;
 ;(replace-func f)->'(define label? tail?)
 ;f: '(define label? info? tail?)
 (define (replace-func f replace-labels)
   (match f
-    [`(define ,l ,i ,t) `(define ,l ,i  ,(replace-tail-begin t replace-labels))]
+    [`(define ,l ,i ,t) `(define ,l ,i  ,(replace-tail t replace-labels))]
     [_ #t]))
 
 
 (define/contract (replace-call-got-sentry p) (-> nested-asm-lang-jumps? nested-asm-lang-fvars?)
   (match p
     [`(module ,i ,f ... ,t) (let ([replace-labels (getInfo i getGOTLabels)])
-                              `(module ,i ,@(map (lambda (func) (replace-func func replace-labels)) f) ,(replace-tail-begin t replace-labels)))]
+                              `(module ,i ,@(map (lambda (func) (replace-func func replace-labels)) f) ,(replace-tail t replace-labels)))]
     [_ "replace locations failed"]))
 

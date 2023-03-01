@@ -9,6 +9,16 @@
 (module+ test
   (require rackunit))
 
+(define (secure-return-point e parasize)
+  (match e
+    [`(return-point ,l ,t) `(begin
+                              (set! ,(newFvar parasize) ,(current-return-address-register))
+                              (set! ,(newFvar (add1 parasize)) ,(current-frame-base-pointer-register))
+                              (return-point ,l ,(secure-tail t parasize))
+                              (set! ,(current-frame-base-pointer-register) ,(newFvar (add1 parasize)))
+                              (set! ,(current-return-address-register) ,(newFvar parasize)))]
+    [_ #f]))
+
 ;
 ;(secure-pred p)->pred?
 ;p: pred?
@@ -36,12 +46,7 @@
     [`(unseal ,r ... ,s) `(unseal ,@r ,s)]
     [`(split ,a ,b ,c ,d) `(split ,a ,b ,c ,d)]
     [`(splice ,a ,b ,c ,d) `(splice ,a ,b ,c ,d)]
-    [`(return-point ,l ,t) `(begin
-                               (set! ,(newFvar parasize) ,(current-return-address-register))
-                               (set! ,(newFvar (add1 parasize)) ,(current-frame-base-pointer-register))
-                               (return-point ,l ,(secure-tail t parasize))
-                               (set! ,(current-frame-base-pointer-register) ,(newFvar (add1 parasize)))
-                               (set! ,(current-return-address-register) ,(newFvar parasize)))]
+    [`(return-point ,l ,t) (secure-return-point e parasize)]
     [_ #f]))
 
 ;

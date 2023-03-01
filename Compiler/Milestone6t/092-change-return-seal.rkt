@@ -9,23 +9,23 @@
 ;
 ;(change-pred p)->pred?
 ;p: pred?
-(define (change-pred p parasize)
+(define (change-pred p)
   (match p
-    [`(begin ,e ... ,pred) `(begin ,@(map (lambda (eff) (change-effect eff parasize)) e) ,(change-pred pred parasize))]
-    [`(if ,p1 ,p2 ,p3) `(if ,(change-pred p1 parasize) ,(change-pred p2 parasize) ,(change-pred p3 parasize))]
+    [`(begin ,e ... ,pred) `(begin ,@(map change-effect e) ,(change-pred pred))]
+    [`(if ,p1 ,p2 ,p3) `(if ,(change-pred p1) ,(change-pred p2) ,(change-pred p3))]
     [`(,relop ,a ,b) `(,relop ,a ,b)]
     ['(true) '(true)]
     ['(false) '(false)]
-    [`(not ,pred) `(not ,(change-pred pred parasize))]
+    [`(not ,pred) `(not ,(change-pred pred))]
     [_ #f]))
 
 ;
 ;(change-effect e)->effect?
 ;e->effect?
-(define (change-effect e parasize)
+(define (change-effect e)
   (match e
-    [`(begin ,e ...) `(begin ,@(map (lambda (eff) (change-effect eff parasize)) e))]
-    [`(if ,p ,e1 ,e2) `(if ,(change-pred p parasize) ,(change-effect e1 parasize) ,(change-effect e2 parasize))]
+    [`(begin ,e ...) `(begin ,@(map change-effect e))]
+    [`(if ,p ,e1 ,e2) `(if ,(change-pred p) ,(change-effect e1) ,(change-effect e2))]
     [`(set! ,a (,binop ,b ,c)) `(set! ,a (,binop ,b ,c))]
     [`(set! ,a ,b) `(set! ,a ,b)]
     [`(setLinear! ,a ,b) `(setLinear! ,a ,b)]
@@ -33,19 +33,20 @@
     [`(unseal ,r ... ,s) `(unseal ,@r ,s)]
     [`(split ,a ,b ,c ,d) `(split ,a ,b ,c ,d)]
     [`(splice ,a ,b ,c ,d) `(splice ,a ,b ,c ,d)]
-    [`(return-point ,l ,t) `(begin (return-point ,l ,(change-tail t parasize))
+    [`(return-point ,l ,t) `(begin (return-point ,l ,(change-tail t))
                                    (set! cfp ct6))]
     [_ #f]))
 
 ;
 ;(change-tail t)->tail?
 ;t: tail?
-(define (change-tail t parasize)
+(define (change-tail t)
   (match t
-    [`(begin ,e ... ,tail) `(begin ,@(map (lambda (eff) (change-effect eff parasize)) e) ,(change-tail tail parasize))]
-    [`(if ,p ,t1 ,t2) `(if ,(change-pred p parasize) ,(change-tail t1 parasize) ,(change-tail t2 parasize))]
+    [`(begin ,e ... ,tail) `(begin ,@(map change-effect e) ,(change-tail tail))]
+    [`(if ,p ,t1 ,t2) `(if ,(change-pred p) ,(change-tail t1) ,(change-tail t2))]
     [`(jump-call ,trg) `(jump-call ,trg)]
-    [`(jump-return ,trg) `(invoke ,(current-return-address-register) ,(current-frame-base-pointer-register))]
+    [`(jump-return ,trg) `(begin (set! ct6 ,(current-frame-base-pointer-register))
+                                 (invoke ,(current-return-address-register) ct6))]
     [`(invoke ,a ,b) `(invoke ,a ,b)]
     [_ #f]))
 
@@ -54,8 +55,7 @@
 ;t: tail?
 ;i: info?
 (define (change-info i t)
-  (let ([parasize (getInfo i getParamSize)])
-    (change-tail t parasize)))
+  (change-tail t))
 
 ;
 ;(change-func f)->'(define label? tail?)
