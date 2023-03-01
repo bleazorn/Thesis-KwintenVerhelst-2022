@@ -8,7 +8,10 @@
          "190-normalize-bind.rkt"
          "180-impose-calling-conventions-full.rkt"
          "180-impose-calling-conventions-half.rkt"
-         "175-call-convention-secure.rkt"
+         "175-add-saved-registers-full.rkt"
+         "175-add-saved-registers-half.rkt"
+         "175-add-saved-registers-stkTokens.rkt"
+         "175-add-saved-registers-cheri-linkage.rkt"
          "170-select-instructions.rkt"
          "160-uncover-locals.rkt"
          "150-undead-analysis.rkt"
@@ -82,6 +85,7 @@
          undead-analysis
          uncover-locals
          select-instructions
+         add-saved-registers-full
          impose-calling-conventions-full
          normalize-bind
          sequentialize-let
@@ -94,87 +98,88 @@
          [gI (index-where l (curry equal? access-memory-tempory-register))]
          [fI (index-where l (curry equal? implement-fvars))]
          [sI (index-where l (curry equal? change-frame-pointer))]
+         [cI (index-where l (curry equal? add-saved-registers-full))]
          [iI (index-where l (curry equal? impose-calling-conventions-full))]
          [switchedL (list-set
                      (list-set
                       (list-set
-                       (list-set l wI wrap-cheri-risc-v-run-time-stkTokens)
-                       gI access-memory-sub-add-frame-register)
-                      fI implement-fvars-split)
+                       (list-set
+                        (list-set l wI wrap-cheri-risc-v-run-time-stkTokens)
+                        gI access-memory-sub-add-frame-register)
+                       fI implement-fvars-split)
+                      cI add-saved-registers-stkTokens)
                      sI (list replace-call-got-seal
                               create-got
                               add-stktokens-seal
                               change-return-seal
                               clean-registers
                               secure-stktokens
-                             ))]
-         [tL (take switchedL iI)]
-         [dL (drop switchedL iI)])
-    (flatten (append tL
-            (list call-convention-secure)
-            dL))))
+                             ))])
+    (flatten switchedL)))
 
 (define (stkTokens-sentry l)
   (let* ([wI (index-where l (curry equal? wrap-cheri-risc-v-run-time))]
          [gI (index-where l (curry equal? access-memory-tempory-register))]
          [fI (index-where l (curry equal? implement-fvars))]
          [sI (index-where l (curry equal? change-frame-pointer))]
+         [cI (index-where l (curry equal? add-saved-registers-full))]
          [iI (index-where l (curry equal? impose-calling-conventions-full))]
          [switchedL (list-set
                      (list-set
                       (list-set
-                       (list-set l wI wrap-cheri-risc-v-run-time-stkTokens-sentry)
-                       gI access-memory-sub-add-frame-register)
-                      fI implement-fvars-split)
+                       (list-set
+                        (list-set l wI wrap-cheri-risc-v-run-time-stkTokens-sentry)
+                        gI access-memory-sub-add-frame-register)
+                       fI implement-fvars-split)
+                      cI add-saved-registers-stkTokens)
                      sI (list replace-call-got-sentry
                               create-got
                               add-stktokens-sentry
                               clean-registers
                               secure-stktokens
-                             ))]
-         [tL (take switchedL iI)]
-         [dL (drop switchedL iI)])
-    (flatten (append tL
-            (list call-convention-secure)
-            dL))))
+                             ))])
+    (flatten switchedL)))
 
 ;cheri-linkage
 (define (cheri-linkage-seal l)
   (let* ([wI (index-where l (curry equal? wrap-cheri-risc-v-run-time))]
          [sI (index-where l (curry equal? change-frame-pointer))]
+         [cI (index-where l (curry equal? add-saved-registers-full))]
          [iI (index-where l (curry equal? impose-calling-conventions-full))]
          [switchedL (list-set
-                     (list-set l wI wrap-cheri-risc-v-run-time-cheri-linkage-seal)
-                     sI (list replace-call-got-sentry
-                              create-got
-                              change-return-seal
-                              clean-registers
-                              secure-cheri-linkage
-                              ))]
-         [tL (take switchedL iI)]
-         [dL (drop switchedL iI)])
-    (flatten (append tL
-            (list call-convention-secure)
-            dL))))
+                     (list-set
+                      (list-set l wI wrap-cheri-risc-v-run-time-cheri-linkage-seal)
+                      cI add-saved-registers-cheri-linkage
+                      sI (list replace-call-got-sentry
+                               create-got
+                               change-return-seal
+                               clean-registers
+                               secure-cheri-linkage
+                               )))])
+    (flatten switchedL)))
 
 (define (cheri-linkage-trampoline l)
   (let* ([wI (index-where l (curry equal? wrap-cheri-risc-v-run-time))]
-         [sI (index-where l (curry equal? change-frame-pointer))])
-         (flatten (list-set
-                   (list-set l wI wrap-cheri-risc-v-run-time-cheri-linkage-trampoline)
-                   sI (list replace-call-got-sentry
-                            create-got
-                            clean-registers
-                            secure-cheri-linkage
-                            )))))
+         [sI (index-where l (curry equal? change-frame-pointer))]
+         [switchedL (list-set
+                     (list-set l wI wrap-cheri-risc-v-run-time-cheri-linkage-trampoline)
+                     sI (list replace-call-got-sentry
+                              create-got
+                              clean-registers
+                              secure-cheri-linkage
+                              ))])
+         (flatten switchedL)))
 
 ;half stack
 (define (halfStack l)
-  (let* ([iI (index-where l (curry equal? impose-calling-conventions-full))]
-         [l (list-set l iI impose-calling-conventions-half)]
+  (let* ([cI (index-where l (curry equal? add-saved-registers-full))]
+         [iI (index-where l (curry equal? impose-calling-conventions-full))]
          [aI (index-where l (curry equal? allocate-frames-full))]
-         [tL (take l aI)]
-         [dL (drop l (+ aI 3))])
+         [switchedL (list-set
+                     (list-set l cI add-saved-registers-half)
+                     iI impose-calling-conventions-half)]
+         [tL (take switchedL aI)]
+         [dL (drop switchedL (+ aI 3))])
     (append tL
             (list assign-frame-variables-half
                   assign-registers-half

@@ -112,10 +112,10 @@
 ;
 ;(impose-tail t)->tail?
 ;t: tail?
-(define (impose-tail t tmp-ra)
+(define (impose-tail t)
   (match t
-    [`(begin ,e ... ,tail) `(begin ,@(map impose-effect e) ,(impose-tail tail tmp-ra))]
-    [`(if ,p ,t1 ,t2) `(if ,(impose-pred p) ,(impose-tail t1 tmp-ra) ,(impose-tail t2 tmp-ra))]
+    [`(begin ,e ... ,tail) `(begin ,@(map impose-effect e) ,(impose-tail tail))]
+    [`(if ,p ,t1 ,t2) `(if ,(impose-pred p) ,(impose-tail t1) ,(impose-tail t2))]
     [`(call ,n ,a ...) (cond [(or (label? n) (aloc? n)) (let ([rp-label (freshRPLabel)])
                                                           (let-values ([(regArg regPara) (getArgRegs a)]
                                                                        [(fraArg fraPara) (getNewFrameVar a)])
@@ -124,17 +124,17 @@
                                                                                   (begin ,@(map (lambda (arg par) `(set! ,par ,arg)) (append (reverse fraArg) regArg) (append (reverse fraPara) regPara))
                                                                                          (set! ,(current-return-address-register) ,rp-label)
                                                                                          (jump-call ,n ,(current-frame-base-pointer-register) ,(current-return-address-register) ,@regPara ,@fraPara)))
-                                                                    (jump-return ,tmp-ra ,(current-frame-base-pointer-register) ,(current-return-value-register)))))]              
+                                                                    (jump-return ,(current-return-address-register) ,(current-frame-base-pointer-register) ,(current-return-value-register)))))]              
                              [(integer? n) n]
                              [else #f])]
     [val `(begin (set! ,(current-return-value-register) ,val)
-                 (jump-return ,tmp-ra ,(current-frame-base-pointer-register) ,(current-return-value-register)))]))
+                 (jump-return ,(current-return-address-register) ,(current-frame-base-pointer-register) ,(current-return-value-register)))]))
 
 ;
 ;(impose-entry e)->tail? info?
 ;e: entry?
-(define (impose-entry e tmp-ra)
-  (let ([tail (impose-tail e tmp-ra)])
+(define (impose-entry e)
+  (let ([tail (impose-tail e)])
     (let ([nInfo `(,(setNewFrames curStack) ,(setParamSize parasize))])
        (values tail
                nInfo))))
@@ -145,13 +145,11 @@
 (define (impose-func f)
   (resetImpose)
   (match f
-    [`(define ,l (lambda (,a ...) ,t)) (let ([tmp-ra (freshTmpRa)])
-                                         (let-values ([(regArg regPara) (getArgRegs a)]
-                                                      [(fraArg fraPara) (getFrameVar a)]
-                                                      [(entry info) (impose-entry t tmp-ra)])
-                                           `(define ,l ,info (begin (set! ,tmp-ra ,(current-return-address-register))
-                                                                    ,@(map (lambda (arg par) `(set! ,arg ,par)) (append regArg fraArg) (append regPara fraPara))
-                                                                    ,entry))))]
+    [`(define ,l (lambda (,a ...) ,t)) (let-values ([(regArg regPara) (getArgRegs a)]
+                                                    [(fraArg fraPara) (getFrameVar a)]
+                                                    [(entry info) (impose-entry t)])
+                                         `(define ,l ,info (begin ,@(map (lambda (arg par) `(set! ,arg ,par)) (append regArg fraArg) (append regPara fraPara))
+                                                                  ,entry)))]
     [_ #f]))
 
 ;Compiles Imp-lang-V5-cmf-proc to  Imp-lang-V5-cmf by imposing calling conventions on all calls and procedure definitions. The parameter registers are defined by the list current-parameter-registers.
@@ -159,11 +157,10 @@
 ;p : Imp-lang-V5-cmf-proc?
 (define/contract (impose-calling-conventions-full p) (-> proc-imp-cmf-lang? imp-cmf-lang?)
   (match p
-    [`(module ,i ,f ... ,t) (let ([funcs (map impose-func f)]
-                               [tmp-ra (freshTmpRa)])
-                           (resetImpose)
-                           (let-values ([(entry info) (impose-entry t tmp-ra)])
-                             `(module ,info ,@funcs (begin (set! ,tmp-ra ,(current-return-address-register)) ,entry))))]
+    [`(module ,i ,f ... ,t) (let ([funcs (map impose-func f)])
+                              (resetImpose)
+                              (let-values ([(entry info) (impose-entry t)])
+                                `(module ,info ,@funcs ,entry)))]
     [_ "impose-calling-conventions failed"]))
 
 
@@ -180,11 +177,10 @@
                                    (begin (set! y.2 3) (set! y.2 (+ y.2 2)))
                                    (+ x.1 y.2)))
                 '(module ((new-frames ()) (paramSize 0))
-                   (begin (set! tmp-ra.1 cra)
-                          (begin
-                            (set! x.1 2)
-                            (begin (set! y.2 3) (set! y.2 (+ y.2 2)))
-                            (begin (set! a0 (+ x.1 y.2)) (jump-return tmp-ra.1 cfp a0)))))
+                   (begin
+                     (set! x.1 2)
+                     (begin (set! y.2 3) (set! y.2 (+ y.2 2)))
+                     (begin (set! a0 (+ x.1 y.2)) (jump-return cra cfp a0))))
                 "impose-calling-conventions: succes-01: no tail calls")
   (check-impose impose-calling-conventions-full
                 '(module ()
@@ -202,48 +198,43 @@
                 '(module ((new-frames ()) (paramSize 0)) (define L.odd?.1
                                              ((new-frames ()) (paramSize 0))
                                              (begin
-                                               (set! tmp-ra.1 cra)
                                                (set! x.3 a0)
                                                (if (= x.3 0)
-                                                   (begin (set! a0 0) (jump-return tmp-ra.1 cfp a0))
+                                                   (begin (set! a0 0) (jump-return cra cfp a0))
                                                    (begin
                                                      (set! y.4 (+ x.3 -1))
                                                      (begin (return-point
-                                                             L.rpLabel.2
+                                                             L.rpLabel.1
                                                              (begin
                                                                (set! a0 y.4)
-                                                               (set! cra L.rpLabel.2)
+                                                               (set! cra L.rpLabel.1)
                                                                (jump-call L.even?.2 cfp cra a0)))
-                                                            (jump-return tmp-ra.1 cfp a0))))))
+                                                            (jump-return cra cfp a0))))))
                    (define L.even?.2
                      ((new-frames ()) (paramSize 0))
                      (begin
-                       (set! tmp-ra.3 cra)
                        (set! x.5 a0)
                        (if (= x.5 0)
-                           (begin (set! a0 1) (jump-return tmp-ra.3 cfp a0))
+                           (begin (set! a0 1) (jump-return cra cfp a0))
                            (begin
                              (set! y.6 (+ x.5 -1))
                              (begin (return-point
-                                     L.rpLabel.4
+                                     L.rpLabel.2
                                      (begin
                                        (set! a0 y.6)
-                                       (set! cra L.rpLabel.4)
+                                       (set! cra L.rpLabel.2)
                                        (jump-call L.odd?.1 cfp cra a0)))
-                                    (jump-return tmp-ra.3 cfp a0))))))
-                   (begin
-                     (set! tmp-ra.5 cra)
-                     (begin (return-point
-                             L.rpLabel.6
-                             (begin (set! a0 5) (set! cra L.rpLabel.6) (jump-call L.even?.2 cfp cra a0)))
-                     (jump-return tmp-ra.5 cfp a0))))
+                                    (jump-return cra cfp a0))))))
+                   (begin (return-point
+                             L.rpLabel.3
+                             (begin (set! a0 5) (set! cra L.rpLabel.3) (jump-call L.even?.2 cfp cra a0)))
+                     (jump-return cra cfp a0)))
                 "sequentialize-let: succes-02: tail calls")
   (check-impose impose-calling-conventions-full
                 '(module () (define L.test.1 (lambda (x.1 x.2 x.3) (begin (set! y.4 (+ x.1 x.2)) (+ x.3 y.4)))) (call L.test.1 1 2 3))
                 '(module ((new-frames ()) (paramSize 0)) (define L.test.1
                                                            ((new-frames ()) (paramSize 0))
                                                            (begin
-                                                             (set! tmp-ra.1 cra)
                                                              (set! x.1 a0)
                                                              (set! x.2 a1)
                                                              (set! x.3 a2)
@@ -251,19 +242,17 @@
                                                                (set! y.4 (+ x.1 x.2))
                                                                (begin
                                                                  (set! a0 (+ x.3 y.4))
-                                                                 (jump-return tmp-ra.1 cfp a0)))))
+                                                                 (jump-return cra cfp a0)))))
                    (begin
-                     (set! tmp-ra.2 cra)
-                     (begin
                        (return-point
-                        L.rpLabel.3
+                        L.rpLabel.1
                         (begin
                           (set! a0 1)
                           (set! a1 2)
                           (set! a2 3)
-                          (set! cra L.rpLabel.3)
+                          (set! cra L.rpLabel.1)
                           (jump-call L.test.1 cfp cra a0 a1 a2)))
-                       (jump-return tmp-ra.2 cfp a0))))
+                       (jump-return cra cfp a0)))
                 "impose-calling-conventions: succes-03: tail calls with fvar args")
   (check-impose impose-calling-conventions-full
                 '(module () (define L.swap.1
@@ -276,37 +265,34 @@
                    (define L.swap.1
                      ((new-frames ()) (paramSize 0))
                      (begin
-                       (set! tmp-ra.1 cra)
                        (set! x.1 a0)
                        (set! y.2 a1)
                        (if (< y.2 x.1)
                            (begin
                              (set! a0 x.1)
-                             (jump-return tmp-ra.1 cfp a0))
+                             (jump-return cra cfp a0))
                            (begin
                              (begin
                                (return-point
-                                L.rpLabel.2
+                                L.rpLabel.1
                                 (begin
                                   (set! a0 y.2)
                                   (set! a1 x.1)
-                                  (set! cra L.rpLabel.2)
+                                  (set! cra L.rpLabel.1)
                                   (jump-call L.swap.1 cfp cra a0 a1)))
                                (set! z.3 a0))
                              (begin
                                (set! a0 z.3)
-                               (jump-return tmp-ra.1 cfp a0))))))
+                               (jump-return cra cfp a0))))))
                    (begin
-                     (set! tmp-ra.3 cra)
-                     (begin
                        (return-point
-                        L.rpLabel.4
+                        L.rpLabel.2
                         (begin
                           (set! a0 1)
                           (set! a1 2)
-                          (set! cra L.rpLabel.4)
+                          (set! cra L.rpLabel.2)
                           (jump-call L.swap.1 cfp cra a0 a1)))
-                       (jump-return tmp-ra.3 cfp a0))))
+                       (jump-return cra cfp a0)))
                 "impose-calling-conventions: succes-04: value call")
   ;|#
   )
