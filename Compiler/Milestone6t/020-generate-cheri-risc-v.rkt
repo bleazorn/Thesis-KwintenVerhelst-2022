@@ -191,26 +191,25 @@ sltiu reg, reg, int12		compares < unsigned 12 bit integer
 ; s: any?
 (define (generate-sets s)
   (match s 
-    [`(set! ,a ,b) (generate-set s)]                               ;set
+    [`(set! ,a ,b) (generate-set s)]                                           ;set
     
     [`(with-label ,l ,a) (string-append (indent-instr (format ".global ~a" l))
                                         (format "~a:\n" l)
                                         (indent-instr (format "addi s6, s6, ~a" (oneUpLabel)))
-                                        (generate-sets a))]        ;set label 
-    [`(jump ,l) (generate-jump s)]                                 ;unconditional jump
-    [`(compare ,a (,relop ,b ,c)) (generate-relop s)]              ;compare
-    [`(jump-if ,l (,relop ,b ,c)) (generate-jump-if s)]            ;conditional jump
-    [`(perm ,r ,ps) (generate-perm s)]                             ;perms
-    [`(bound ,r ,bas ,len) (generate-bound s)]                     ;bounds
-    [`(seal ,r ... ,t) (generate-seal s)]                          ;seal
-    [`(unseal ,r ... ,t) (generate-unseal s)]                      ;unseal
-    [`(split ,a ,b ,c ,d) (split a b c d)]                         ;split
-    [`(splice ,a ,b ,c ,d) (splice a b c d)]                       ;splice
-    [`(setLinear! ,a ,b) (generate-setLinear s)]                   ;setLinear
-    [`(sentry ,r) (indent-instr (format "CSealEntry ~a, ~a" r r))] ;sentry
-    [`(invoke ,a ,b) (string-append (indent-instr (format "CMove ~a, ~a" 'ct6 b))
-                                    (indent-instr (format "CInvoke ~a, ~a" a 'ct6)))] ;invoke
-    [`(set-addr! ,a ,b) (indent-instr (format "CSetAddr ~a, ~a, ~a" a a b))]
+                                        (generate-sets a))]                    ;set label 
+    [`(jump ,l) (generate-jump s)]                                             ;unconditional jump
+    [`(compare ,a (,relop ,b ,c)) (generate-relop s)]                          ;compare
+    [`(jump-if ,l (,relop ,b ,c)) (generate-jump-if s)]                        ;conditional jump
+    [`(perm ,r ,ps) (generate-perm s)]                                         ;perms
+    [`(bound ,r ,bas ,len) (generate-bound s)]                                 ;bounds
+    [`(seal ,a ,b ,c ,s) (indent-instr (format "CSeal ~a, ~a, ~a" a b c))]     ;seal
+    [`(unseal ,a ,b ,c ,s) (indent-instr (format "CUnseal ~a, ~a, ~a" a b c))] ;unseal
+    [`(split ,a ,b ,c ,d) (split a b c d)]                                     ;split
+    [`(splice ,a ,b ,c ,d) (splice a b c d)]                                   ;splice
+    [`(setLinear! ,a ,b) (generate-setLinear s)]                               ;setLinear
+    [`(sentry ,r) (indent-instr (format "CSealEntry ~a, ~a" r r))]             ;sentry
+    [`(invoke ,a ,b) (indent-instr (format "CInvoke ~a, ~a" a b))]             ;invoke
+    [`(set-addr! ,a ,b) (indent-instr (format "CSetAddr ~a, ~a, ~a" a a b))]   ;set-addr
     [_ #f]))
 
 ;Generates paren-cheri-risc-v code in string if argument matches. Otherwise false.

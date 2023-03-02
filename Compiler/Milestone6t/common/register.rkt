@@ -27,8 +27,7 @@
          addr-binop?
          addr?
          isRegAddress?
-         isCapAddress?
-         seal-location)
+         isCapAddress?)
 
 (module+ test
   (require rackunit))
@@ -211,8 +210,6 @@
     [`(,r ,binop ,n) #:when (and (isCapability? r) (integer? n) (addr-binop? binop)) a]
     [_ #f]))
 
-(define seal-location
-  20)
 
 
 

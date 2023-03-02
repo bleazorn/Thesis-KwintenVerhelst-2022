@@ -67,11 +67,23 @@
   (match t
     [`(begin ,e ... ,tail) `(begin ,@(map (lambda (eff) (secure-effect eff framesize parasize)) e) ,(secure-tail tail framesize parasize token))]
     [`(if ,p ,t1 ,t2) `(if ,(secure-pred p framesize parasize) ,(secure-tail t1 framesize parasize token) ,(secure-tail t2 framesize parasize token))]
-    [`(jump-call ,trg) `(begin (split csp csp cfp ,framesize)
-                               (seal cra cfp ,token)
-                               (jump-call ,trg))]
+    [`(jump-call ,trg) (let ([aux-register (car (current-auxiliary-registers))])
+                         `(begin (split csp csp cfp ,framesize)
+                                 (set! ,(current-seal-register) (,(current-seal-location-register) - ,seal-location))
+                                 (seal cra cra ,(current-seal-register) ,token)
+                                 (seal cfp cfp ,(current-seal-register) ,token)
+                                 (jump-call ,trg)))]
     [`(jump-return ,trg) `(jump-return ,trg)]
     [`(invoke ,a ,b) `(invoke ,a ,b)]
+    [_ #f]))
+
+(define (split-seal s)
+  (match s
+    [`(seal ,r ... ,i) (let ([aux-register (car (current-auxiliary-registers))])
+                         `(,@(map (lambda (x) `(seal-single ,x)) r)
+                           (set! ,(current-seal-register) (,(current-seal-location-register) - 0))
+                           (set! ,aux-register i)
+                           (set! ,(current-seal-register) (+ ,(current-seal-register) ,aux-register))))]
     [_ #f]))
 
 ;

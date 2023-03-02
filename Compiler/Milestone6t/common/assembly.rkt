@@ -13,7 +13,8 @@
          int64?
          int32?
          int12?
-         seal-token-size)
+         seal-token-size
+         seal-location)
 
 
 (module+ test
@@ -102,6 +103,9 @@
 
 (define seal-token-size
   100)
+
+(define seal-location
+  0)
   
 
 

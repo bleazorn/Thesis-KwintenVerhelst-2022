@@ -58,6 +58,17 @@
     [_ #f]))
 
 ;
+;(patch-set s)->list? '((set! ...) ...)
+;s: (set! ...)
+(define (patch-set-linear s)
+  (match s
+    [`(setLinear! ,a ,b) #:when (or (register? a) (register? b)) `((setLinear! ,a ,b))]                  
+    [`(setLinear! ,a ,b) #:when (and (addr? a) (not (register? b))) (let ([reg (newTemp)])
+                                                                      `((setLinear! ,reg ,b) (set! ,a ,reg)))]
+    [`(setLinear! ,a ,b) (logln (addr? a))]
+    [_ #f]))
+
+;
 ;(patch-with-label w)->list? '((set! ...) ...)
 ;w->effect
 (define (patch-with-label w)
@@ -106,6 +117,23 @@
                                     (append aSet bSet `((jump-if ,l (,relop ,aReg ,bReg)))))]
     [_ #f]))
 
+;
+;
+;
+(define (patch-seal e)
+  (match e
+    [`(seal ,a ,b ,c ,s) `(,(patch-binop c c s '+)
+                           (seal ,a ,b ,c ,s))]
+    [_ #f]))
+
+;
+;
+;
+(define (patch-unseal e)
+  (match e
+    [`(unseal ,a ,b ,c ,s) `(,(patch-binop c c s '+)
+                           (unseal ,a ,b ,c ,s))]
+    [_ #f]))
 
 ;
 ;(patch-effect e)->list? '(effect? ...)
@@ -114,14 +142,14 @@
   (match e
     [`(set! ,a (,binop ,b ,c)) #:when (or (register? b) (addr? b)) (patch-binop a b c binop)]
     [`(set! ,a ,b) (patch-set e)]
-    [`(setLinear! ,a ,b) `((setLinear! ,a ,b))]
+    [`(setLinear! ,a ,b) (patch-set-linear e)]
     [`(set-addr! ,a ,b) `((set-addr! ,a ,b))]
     [`(with-label ,l ,b) (patch-with-label e)]
     [`(jump ,l) `((jump ,l))]
     [`(compare ,a (,relop ,b ,c)) (patch-compare e)]
     [`(jump-if ,l (,relop ,b ,c)) (patch-jump-if e)]  
-    [`(seal ,r ... ,s) `((seal ,@r ,s))]
-    [`(unseal ,r ... ,s) `((unseal ,@r ,s))]
+    [`(seal ,r ... ,s) (patch-seal e)]
+    [`(unseal ,r ... ,s) (patch-unseal)]
     [`(split ,a ,b ,c ,d) `((split ,a ,b ,c ,d))]
     [`(splice ,a ,b ,c ,d) `((splice ,a ,b ,c ,d))]
     [`(invoke ,a ,b) `((invoke ,a ,b))]
