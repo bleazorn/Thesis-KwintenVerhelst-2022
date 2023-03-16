@@ -28,7 +28,7 @@
                                  (set! ,fbp (,(stack-direction) ,fbp ,frameSize))
                                  (return-point ,l ,(change-tail t frames assign))
                                  (set! ,fbp (,(opposite-direction (stack-direction)) ,fbp ,frameSize)))))]
-    [_ #f]))
+    [_ (error (format "change-frame-pointer:  Failed match.\n No valid return-point: ~a" e))]))
 
 ;
 ;(change-pred p assign)->pred?
@@ -42,7 +42,7 @@
     ['(true) '(true)]
     ['(false) '(false)]
     [`(not ,pred) `(not ,(change-pred pred frames assign))]
-    [_ #f]))
+    [_ (error (format "change-frame-pointer:  Failed match.\n No valid pred: ~a" p))]))
 
 ;
 ;(change-effect e assign)->effect?
@@ -56,7 +56,12 @@
     [`(set! ,a ,b) `(set! ,a ,b)]
     [`(setLinear! ,a ,b) `(setLinear! ,a ,b)]
     [`(return-point ,l ,t) (change-return-point e frames assign)]
-    [_ #f]))
+    [`(seal ,r ... ,s) `(seal ,@r ,s)]
+    [`(unseal ,r ... ,s) `(unseal ,@r ,s)]
+    [`(split ,a ,b ,c ,d) `(split ,a ,b ,c ,d)]
+    [`(splice ,a ,b ,c ,d) `(splice ,a ,b ,c ,d)]
+    [`(set-addr! ,a ,b) `(set-addr! ,a ,b)]
+    [_ (error (format "change-frame-pointer:  Failed match.\n No valid effect: ~a" e))]))
 
 ;
 ;(change-tail t assign)->tail?
@@ -69,7 +74,7 @@
     [`(jump-call ,trg) `(jump ,trg)]
     [`(jump-return ,trg) `(jump ,trg)]
     [`(invoke ,a ,b) `(invoke ,a ,b)]
-    [_ #f]))
+    [_ (error (format "change-frame-pointer:  Failed match.\n No valid tail: ~a" t))]))
 
 ;
 ;(change-func f)->'(define label? tail?)
@@ -77,13 +82,12 @@
 (define (change-func f)
   (match f
     [`(define ,l ,i ,t) `(define ,l ,i ,(change-tail t (getInfo i getNewFrames) (getInfo i getAssignment)))]
-    [_ #t]))
+    [_ (error (format "change-frame-pointer:  Failed match.\n No valid function: ~a" f))]))
 
 
 (define/contract (change-frame-pointer p) (-> nested-asm-lang-jumps? nested-asm-lang-fvars?)
   (match p
-    [`(module ,i ,f ... ,pro) `(module () ,@(map change-func f) ,(change-tail pro (getInfo i getNewFrames) (getInfo i getAssignment)))]
-    [_ "replace locations failed"]))
+    [`(module ,i ,f ... ,pro) `(module () ,@(map change-func f) ,(change-tail pro (getInfo i getNewFrames) (getInfo i getAssignment)))]))
 
 
 #;(parameterize ([stack-direction '+])

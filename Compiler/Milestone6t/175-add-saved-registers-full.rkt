@@ -17,10 +17,11 @@
   (match t
     [`(begin ,e ... ,tail) `(begin ,@e ,(add-tail tail tmp-ra))]
     [`(if ,p ,t1 ,t2) `(if ,p ,(add-tail t1 tmp-ra) ,(add-tail t2 tmp-ra))]
-    [`(jump-call ,l ,a ...) `(jump-call ,l ,@a)]                             ;Call
+    [`(jump-call ,l ,a ...) `(begin (set! ,(current-return-address-register) ,tmp-ra)
+                                    (jump-call ,l ,@a))]                             ;Call
     [`(jump-return ,l ,a ...) `(jump-return ,tmp-ra
                                             ,@a)]                            ;Return
-    [_ #f]))
+    [_ (error (format "add-saved-registers-full:  Failed match.\n No valid tail: ~a" t))]))
 
 ;
 ;(add-tail-info info tail)->info? tail?
@@ -40,7 +41,7 @@
   (match f
     [`(define ,l ,i ,t) (let-values ([(info tail) (add-tail-info i t)])
                           `(define ,l ,info ,tail))]
-    [_ #f]))
+    [_ (error (format "add-saved-registers-full:  Failed match.\n No valid function: ~a" f))]))
 
 
 ;
@@ -52,11 +53,242 @@
                               `(module ,info ,@(map add-func f) ,tail))]
     [_ #f]))
 
-
 (module+ test
- (define (check-add p a b m)
-   (resetfresh)
-   (check-equal? (p a) b m))
+  (define (check-add p a b m)
+    (resetfresh)
+    (check-equal? (p a) b m))
+  (define (check-add-2 p a1 a2 b m)
+    (resetfresh)
+    (check-equal? (p a1 a2) b m))
+  (define (check-add-values-2 p a1 a2 b1 b2 m)
+    (resetfresh)
+    (let-values ([(r1 r2) (p a1 a2)])
+      (check-equal? r1 b1 m)
+      (check-equal? r2 b2 m)))
+  ;(add-tail t)
+  ;succes
+  (check-add-2 add-tail
+               '(jump-return cra cfp a0)
+               'L.rpLabel.1
+               '(jump-return L.rpLabel.1 cfp a0)
+               "add-tail: succes-01: jump-return")
+  (check-add-2 add-tail
+               '(jump-call L.swap.1 cfp cra a1 a2)
+               'L.rpLabel.1
+               '(begin (set! cra L.rpLabel.1) (jump-call L.swap.1 cfp cra a1 a2))
+               "add-tail: succes-02: jump-call")
+
+  (check-add-2 add-tail
+               '(begin (set! x.1 y.2) (begin (set! a0 x.1) (jump-return cra cfp a0)))
+               'L.rpLabel.1
+               '(begin (set! x.1 y.2) (begin (set! a0 x.1) (jump-return L.rpLabel.1 cfp a0)))
+               "add-tail: succes-03: begin")
+  (check-add-2 add-tail
+               '(if (true)
+                    (begin (set! a0 x.1) (jump-return cra cfp a0))
+                    (begin (set! a0 y.2) (jump-return cra cfp a0)))
+               'L.rpLabel.1
+               '(if (true)
+                    (begin (set! a0 x.1) (jump-return L.rpLabel.1 cfp a0))
+                    (begin (set! a0 y.2) (jump-return L.rpLabel.1 cfp a0)))
+               "add-tail: succes-04: if")
+  (check-add-2 add-tail
+               '(begin
+                  (return-point
+                   L.rpLabel.1
+                   (begin
+                     (set! a1 1)
+                     (set! a2 2)
+                     (set! cra L.rpLabel.1)
+                     (jump-call L.swap.1 cfp cra a1 a2)))
+                  (jump-return cra cfp a0))
+               'L.rpLabel.1
+               '(begin
+                  (return-point
+                   L.rpLabel.1
+                   (begin
+                     (set! a1 1)
+                     (set! a2 2)
+                     (set! cra L.rpLabel.1)
+                     (jump-call L.swap.1 cfp cra a1 a2)))
+                  (jump-return L.rpLabel.1 cfp a0))
+               "add-tail: succes-05: call")
+  ;failure
+  (check-exn exn:fail? (thunk (add-tail '(call x 1 2) 'L.rpLabel.1)) "add-tail: failure-01: call error")
+  ;(add-tail-info e)
+  ;succes
+  (check-add-values-2 add-tail-info
+                      '((new-frames ()) (paramSize 0)) '(begin (set! a0 x.1) (jump-return cra cfp a0)) 
+                      '((new-frames ()) (paramSize 0)) '(begin
+                                                          (set! tmp-ra.1 cra)
+                                                          (begin (set! a0 x.1) (jump-return tmp-ra.1 cfp a0))) 
+                      "add-tail-info: succes-01: val")
+  (check-add-values-2 add-tail-info
+                      '((new-frames ()) (paramSize 0))
+                      '(begin
+                         (return-point
+                          L.rpLabel.1
+                          (begin
+                            (set! a1 1)
+                            (set! a2 2)
+                            (set! cra L.rpLabel.1)
+                            (jump-call L.swap.1 cfp cra a1 a2)))
+                         (jump-return cra cfp a0))
+                      '((new-frames ()) (paramSize 0))
+                      '(begin
+                         (set! tmp-ra.1 cra)
+                         (begin
+                           (return-point
+                            L.rpLabel.1
+                            (begin
+                              (set! a1 1)
+                              (set! a2 2)
+                              (set! cra L.rpLabel.1)
+                              (jump-call L.swap.1 cfp cra a1 a2)))
+                           (jump-return tmp-ra.1 cfp a0)))
+                      "add-tail-info: succes-02: call")
+
+  (check-add-values-2 add-tail-info
+                      '((new-frames ()) (paramSize 0)) '(begin (set! x.1 y.2) (begin (set! a0 x.1) (jump-return cra cfp a0))) 
+                      '((new-frames ()) (paramSize 0)) '(begin
+                                                          (set! tmp-ra.1 cra)
+                                                          (begin (set! x.1 y.2) (begin (set! a0 x.1) (jump-return tmp-ra.1 cfp a0)))) 
+                      "add-tail-info: succes-03: begin")
+  (check-add-values-2 add-tail-info
+                      '((new-frames ()) (paramSize 0))
+                      '(if (true)
+                           (begin (set! a0 x.1) (jump-return cra cfp a0))
+                           (begin (set! a0 y.2) (jump-return cra cfp a0)))
+                      '((new-frames ()) (paramSize 0))
+                      '(begin
+                         (set! tmp-ra.1 cra)
+                         (if (true)
+                             (begin (set! a0 x.1) (jump-return tmp-ra.1 cfp a0))
+                             (begin (set! a0 y.2) (jump-return tmp-ra.1 cfp a0))))
+                      "add-tail-info: succes-04: if")
+  ;(add-func f)
+  ;succes
+  (check-add add-func
+             '(define L.odd.1
+                ((new-frames ()) (paramSize 0))
+                (begin
+                  (set! x.1 a1)
+                  (set! y.2 a2)
+                  (set! z.3 a3)
+                  (begin
+                    (return-point
+                     L.rpLabel.1
+                     (begin
+                       (set! a1 x.1)
+                       (set! a2 y.2)
+                       (set! cra L.rpLabel.1)
+                       (jump-call L.swap.2 cfp cra a1 a2)))
+                    (jump-return cra cfp a0))))
+             '(define L.odd.1
+                ((new-frames ()) (paramSize 0))
+                (begin
+                  (set! tmp-ra.1 cra)
+                  (begin
+                    (set! x.1 a1)
+                    (set! y.2 a2)
+                    (set! z.3 a3)
+                    (begin
+                      (return-point
+                       L.rpLabel.1
+                       (begin
+                         (set! a1 x.1)
+                         (set! a2 y.2)
+                         (set! cra L.rpLabel.1)
+                         (jump-call L.swap.2 cfp cra a1 a2)))
+                      (jump-return tmp-ra.1 cfp a0)))))
+             "add-func: succes-01: tail call")
+  (check-add add-func
+             '(define L.odd.1
+                ((new-frames ((L.rpLabel.1 (nfv.2 nfv.3)))) (paramSize 3))
+                (begin
+                  (set! x.1 fv0)
+                  (set! y.2 fv1)
+                  (set! z.3 fv2)
+                  (begin
+                    (begin
+                      (return-point
+                       L.rpLabel.1
+                       (begin
+                         (set! nfv.3 y.2)
+                         (set! nfv.2 x.1)
+                         (set! cra L.rpLabel.1)
+                         (jump-call L.swap.2 cfp cra nfv.2 nfv.3)))
+                      (set! x.1 a0))
+                    (begin (set! a0 x.1) (jump-return cra cfp a0)))))
+             '(define L.odd.1
+                ((new-frames ((L.rpLabel.1 (nfv.2 nfv.3)))) (paramSize 3))
+                (begin
+                  (set! tmp-ra.1 cra)
+                  (begin
+                    (set! x.1 fv0)
+                    (set! y.2 fv1)
+                    (set! z.3 fv2)
+                    (begin
+                      (begin
+                        (return-point
+                         L.rpLabel.1
+                         (begin
+                           (set! nfv.3 y.2)
+                           (set! nfv.2 x.1)
+                           (set! cra L.rpLabel.1)
+                           (jump-call L.swap.2 cfp cra nfv.2 nfv.3)))
+                        (set! x.1 a0))
+                      (begin (set! a0 x.1) (jump-return tmp-ra.1 cfp a0))))))
+             "add-func: succes-02: value call")
+  ;failure
+  (check-exn exn:fail? (thunk (add-func '(defihne L.odd.1
+                                           ((new-frames ()) (paramSize 0))
+                                           (begin
+                                             (set! x.1 a1)
+                                             (set! y.2 a2)
+                                             (set! z.3 a3)
+                                             (begin
+                                               (return-point
+                                                L.rpLabel.1
+                                                (begin
+                                                  (set! a1 x.1)
+                                                  (set! a2 y.2)
+                                                  (set! cra L.rpLabel.1)
+                                                  (jump-call L.swap.2 cfp cra a1 a2)))
+                                               (jump-return cra cfp a0)))))) "add-func: failure-01: wrong datum literal define")
+  (check-exn exn:fail? (thunk (add-func '(define
+                                           ((new-frames ()) (paramSize 0))
+                                           (begin
+                                             (set! x.1 a1)
+                                             (set! y.2 a2)
+                                             (set! z.3 a3)
+                                             (begin
+                                               (return-point
+                                                L.rpLabel.1
+                                                (begin
+                                                  (set! a1 x.1)
+                                                  (set! a2 y.2)
+                                                  (set! cra L.rpLabel.1)
+                                                  (jump-call L.swap.2 cfp cra a1 a2)))
+                                               (jump-return cra cfp a0)))))) "add-func: failure-02: no name")
+  (check-exn exn:fail? (thunk (add-func '(define L.odd.1
+                                           (begin
+                                             (set! x.1 a1)
+                                             (set! y.2 a2)
+                                             (set! z.3 a3)
+                                             (begin
+                                               (return-point
+                                                L.rpLabel.1
+                                                (begin
+                                                  (set! a1 x.1)
+                                                  (set! a2 y.2)
+                                                  (set! cra L.rpLabel.1)
+                                                  (jump-call L.swap.2 cfp cra a1 a2)))
+                                               (jump-return cra cfp a0)))))) "add-func: failure-03: no info")
+  (check-exn exn:fail? (thunk (add-func '(define L.odd.1
+                                           ((new-frames ()) (paramSize 0)))))
+             "add-func: failure-04: no tail")
+  #|
 ;add-saved-registers-full
   ;succes
   (check-add add-saved-registers-full '(module ((new-frames ()) (paramSize 0))

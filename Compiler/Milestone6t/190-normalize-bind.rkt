@@ -40,7 +40,7 @@
     ['(true) '(true)]
     ['(false) '(false)]
     [`(not ,pred) `(not ,(normalize-pred pred))]
-    [_ #f]))
+    [_ (error (format "normalize-bind:  Failed match.\n No valid pred: ~a" p))]))
 
 ;
 ;(normalize-value v)->value?
@@ -78,15 +78,14 @@
 (define (normalize-func f)
   (match f
     [`(define ,l (lambda (,a ...) ,t)) `(define ,l (lambda ,a ,(normalize-entry t)))]
-    [_ #f]))
+    [_ (error (format "normalize-bind:  Failed match.\n No valid function: ~a" f))]))
 
 ;Compiles Imp-lang-V3-mf? to Imp-lang-V3-cmf?, pushing set! under begin so that the right-hand-side of each set! is simple value-producing operation. This normalizes Imp-lang-V3-mf? with respect to the equations
 ;(normalize-bind p) → Imp-lang-V3-cmf?
 ;p: Imp-lang-V3-mf?
 (define/contract (normalize-bind p) (-> imp-mf-lang? proc-imp-cmf-lang?)
   (match p
-    [`(module ,i ,f ... ,t) `(module ,i ,@(map normalize-func f) ,(normalize-entry t))]
-    [_ "normalize-bind failed"]))
+    [`(module ,i ,f ... ,t) `(module ,i ,@(map normalize-func f) ,(normalize-entry t))]))
 
 
 (module+ test
@@ -130,6 +129,8 @@
   (check-equal? (normalize-pred '(begin (set! z.3 (begin (set! x.1 y.2) x.1)) (true))) '(begin (begin (set! x.1 y.2) (set! z.3 x.1)) (true)) "normalize-pred: succes-05: begin")
 
   (check-equal? (normalize-pred '(if (true) (false) (not (= x.1 y.1)))) '(if (true) (false) (not (= x.1 y.1))) "normalize-pred: succes-06: if")
+  ;failure
+  (check-exn exn:fail? (thunk (normalize-pred '(not))) "normalize-pred: failure-01: wrong expression")
   ;normalize-value
   ;succes
   (check-equal? (normalize-value '(begin (set! z.3 (begin (set! x.1 y.2) x.1)) (+ x.1 y.2))) '(begin (begin (set! x.1 y.2) (set! z.3 x.1)) (+ x.1 y.2)) "normalize-value: succes-05: begin")
@@ -140,7 +141,43 @@
   (check-equal? (normalize-tail '(begin (set! z.3 (begin (set! x.1 y.2) x.1)) (+ x.1 y.2))) '(begin (begin (set! x.1 y.2) (set! z.3 x.1)) (+ x.1 y.2)) "normalize-tail: succes-05: begin")
   (check-equal? (normalize-tail '(if (true) (+ x.1 y.2) (+ x.1 y.2))) '(if (true) (+ x.1 y.2) (+ x.1 y.2)) "normalize-tail: succes-06: if")
   (check-equal? (normalize-tail '(call L.fun.4 x.1 y.2 z.3)) '(call L.fun.4 x.1 y.2 z.3) "normalize-tail: succes-07: call")
-
+  ;normalize-func 
+  ;succes
+  (check-equal? (normalize-func '(define L.odd?.1
+                                   (lambda (x.4)
+                                     (if (= x.4 0)
+                                         0
+                                         (begin (set! y.5 (+ x.4 -1))
+                                                (call L.even?.2 y.5))))))
+                '(define L.odd?.1
+                   (lambda (x.4)
+                     (if (= x.4 0)
+                         0
+                         (begin (set! y.5 (+ x.4 -1))
+                                (call L.even?.2 y.5)))))
+                "normalize-func: succes-01: name gathering")
+  ;failure
+  (check-exn exn:fail? (thunk (normalize-func '(efine L.odd?.1
+                                                      (lambda (x.4)
+                                                        (if (= x.4 0)
+                                                            0
+                                                            (begin (set! y.5 (+ x.4 -1))
+                                                                   (call L.even?.2 y.5)))))))
+             "normalize-func: failure-01: wrong datum literal define")
+  (check-exn exn:fail? (thunk (normalize-func '(define 
+                                                 (lambda (x.4)
+                                                   (if (= x.4 0)
+                                                       0
+                                                       (begin (set! y.5 (+ x.4 -1))
+                                                              (call L.even?.2 y.5)))))))
+             "normalize-func: failure-02: no name")
+  (check-exn exn:fail? (thunk (normalize-func '(define L.odd?.1
+                                                 (lambjda (x.4)
+                                                          (if (= x.4 0)
+                                                              0
+                                                              (begin (set! y.5 (+ x.4 -1))
+                                                                     (call L.even?.2 y.5)))))))
+             "normalize-func: failure-03:  wrong datum literal lambda")
   ;normalize-bind
   ;succes
   (check-equal? (normalize-bind '(module () (+ 2 2)))
@@ -159,92 +196,92 @@
                 '(module () (begin (set! x.1 2) (begin (set! x.2 3) (begin (set! z.3 5) (begin (set! a.4 15) (set! x.2 (+ x.2 z.3))))) (+ x.1 x.2)))
                 "normalize-bind: succes-4: begin value in begin effect in begin effect tree normalizing")
   (check-equal? (normalize-bind '(module ()
-                                     (if (false)
-                                         (if (not (if (not (false)) (< 419 -178) (false)))
-                                             (begin
-                                               (set! x1.1
-                                                     (begin
-                                                       (set! x2.2 (* -112 -316))
-                                                       (set! x3.3
-                                                             (if (not (<= 8 -16))
-                                                                 258
-                                                                 (if (not
-                                                                      (if (begin
-                                                                            (set! x7.4 (+ 367 -203))
-                                                                            (set! x8.5 (+ -236 -62))
-                                                                            (set! x9.6 (if (false) (* -294 -146) -425))
-                                                                            (set! x10.7 (begin (set! x12.8 62) (* x12.8 x12.8)))
-                                                                            (set! x11.9
-                                                                                  (begin
-                                                                                    (set! x13.10 (+ -84 -24))
-                                                                                    (set! x14.11
-                                                                                          (begin
-                                                                                            (set! x15.12
-                                                                                                  (begin
-                                                                                                    (set! x20.13 (+ 201 289))
-                                                                                                    (set! x21.14 (+ -343 8))
-                                                                                                    (set! x22.15 -35)
-                                                                                                    (set! x23.16 -22)
-                                                                                                    (+ 382 x22.15)))
-                                                                                            (set! x16.17 (* -166 449))
-                                                                                            (set! x17.18 (* 439 102))
-                                                                                            (set! x18.19 (+ 369 461))
-                                                                                            (set! x19.20 -2)
-                                                                                            (* 215 430)))
-                                                                                    (* -409 x13.10)))
-                                                                            (<= x8.5 -62))
-                                                                          (true)
-                                                                          (false)))
-                                                                     -306
-                                                                     90)))
-                                                       (set! x4.21 (+ 313 228))
-                                                       (set! x5.22 (+ 3 110))
-                                                       (set! x6.23 (+ 450 415))
-                                                       -358))
-                                               (* -242 350))
-                                             (+ 189 -501))
-                                         -462)))
+                                   (if (false)
+                                       (if (not (if (not (false)) (< 419 -178) (false)))
+                                           (begin
+                                             (set! x1.1
+                                                   (begin
+                                                     (set! x2.2 (* -112 -316))
+                                                     (set! x3.3
+                                                           (if (not (<= 8 -16))
+                                                               258
+                                                               (if (not
+                                                                    (if (begin
+                                                                          (set! x7.4 (+ 367 -203))
+                                                                          (set! x8.5 (+ -236 -62))
+                                                                          (set! x9.6 (if (false) (* -294 -146) -425))
+                                                                          (set! x10.7 (begin (set! x12.8 62) (* x12.8 x12.8)))
+                                                                          (set! x11.9
+                                                                                (begin
+                                                                                  (set! x13.10 (+ -84 -24))
+                                                                                  (set! x14.11
+                                                                                        (begin
+                                                                                          (set! x15.12
+                                                                                                (begin
+                                                                                                  (set! x20.13 (+ 201 289))
+                                                                                                  (set! x21.14 (+ -343 8))
+                                                                                                  (set! x22.15 -35)
+                                                                                                  (set! x23.16 -22)
+                                                                                                  (+ 382 x22.15)))
+                                                                                          (set! x16.17 (* -166 449))
+                                                                                          (set! x17.18 (* 439 102))
+                                                                                          (set! x18.19 (+ 369 461))
+                                                                                          (set! x19.20 -2)
+                                                                                          (* 215 430)))
+                                                                                  (* -409 x13.10)))
+                                                                          (<= x8.5 -62))
+                                                                        (true)
+                                                                        (false)))
+                                                                   -306
+                                                                   90)))
+                                                     (set! x4.21 (+ 313 228))
+                                                     (set! x5.22 (+ 3 110))
+                                                     (set! x6.23 (+ 450 415))
+                                                     -358))
+                                             (* -242 350))
+                                           (+ 189 -501))
+                                       -462)))
                 '(module ()
-                     (if (false)
-                         (if (not (if (not (false)) (< 419 -178) (false)))
+                   (if (false)
+                       (if (not (if (not (false)) (< 419 -178) (false)))
+                           (begin
                              (begin
-                               (begin
-                                 (set! x2.2 (* -112 -316))
-                                 (if (not (<= 8 -16))
-                                     (set! x3.3 258)
-                                     (if (not
-                                          (if (begin
-                                                (set! x7.4 (+ 367 -203))
-                                                (set! x8.5 (+ -236 -62))
-                                                (if (false) (set! x9.6 (* -294 -146)) (set! x9.6 -425))
-                                                (begin (set! x12.8 62) (set! x10.7 (* x12.8 x12.8)))
+                               (set! x2.2 (* -112 -316))
+                               (if (not (<= 8 -16))
+                                   (set! x3.3 258)
+                                   (if (not
+                                        (if (begin
+                                              (set! x7.4 (+ 367 -203))
+                                              (set! x8.5 (+ -236 -62))
+                                              (if (false) (set! x9.6 (* -294 -146)) (set! x9.6 -425))
+                                              (begin (set! x12.8 62) (set! x10.7 (* x12.8 x12.8)))
+                                              (begin
+                                                (set! x13.10 (+ -84 -24))
                                                 (begin
-                                                  (set! x13.10 (+ -84 -24))
                                                   (begin
-                                                    (begin
-                                                      (set! x20.13 (+ 201 289))
-                                                      (set! x21.14 (+ -343 8))
-                                                      (set! x22.15 -35)
-                                                      (set! x23.16 -22)
-                                                      (set! x15.12 (+ 382 x22.15)))
-                                                    (set! x16.17 (* -166 449))
-                                                    (set! x17.18 (* 439 102))
-                                                    (set! x18.19 (+ 369 461))
-                                                    (set! x19.20 -2)
-                                                    (set! x14.11 (* 215 430)))
-                                                  (set! x11.9 (* -409 x13.10)))
-                                                (<= x8.5 -62))
-                                              (true)
-                                              (false)))
-                                         (set! x3.3 -306)
-                                         (set! x3.3 90)))
-                                 (set! x4.21 (+ 313 228))
-                                 (set! x5.22 (+ 3 110))
-                                 (set! x6.23 (+ 450 415))
-                                 (set! x1.1 -358))
-                               (* -242 350))
-                             (+ 189 -501))
-                         -462))
+                                                    (set! x20.13 (+ 201 289))
+                                                    (set! x21.14 (+ -343 8))
+                                                    (set! x22.15 -35)
+                                                    (set! x23.16 -22)
+                                                    (set! x15.12 (+ 382 x22.15)))
+                                                  (set! x16.17 (* -166 449))
+                                                  (set! x17.18 (* 439 102))
+                                                  (set! x18.19 (+ 369 461))
+                                                  (set! x19.20 -2)
+                                                  (set! x14.11 (* 215 430)))
+                                                (set! x11.9 (* -409 x13.10)))
+                                              (<= x8.5 -62))
+                                            (true)
+                                            (false)))
+                                       (set! x3.3 -306)
+                                       (set! x3.3 90)))
+                               (set! x4.21 (+ 313 228))
+                               (set! x5.22 (+ 3 110))
+                               (set! x6.23 (+ 450 415))
+                               (set! x1.1 -358))
+                             (* -242 350))
+                           (+ 189 -501))
+                       -462))
                 "normalize-bind: succes-5: complex program if begin")
   (check-equal? (normalize-bind '(module () (define L.meth.1 (lambda (x.1) (begin (set! x.2 (begin (set! x.2 3) (begin (set! z.3 5) (begin (set! a.4 15) (+ x.2 z.3))))) (+ x.1 x.2))))
                                    (call L.meth.1 2)))

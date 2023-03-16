@@ -24,7 +24,7 @@
     ['(true) '(true)]
     ['(false) '(false)]
     [`(not ,pred) `(not ,(sequentialize-pred pred))]
-    [_ #f]))
+    [_ (error (format "sequentialize-let:  Failed match.\n No valid pred: ~a" p))]))
 
 ;
 ;(sequentialize-value v)->value?
@@ -52,18 +52,17 @@
 (define (sequentialize-func f)
   (match f
     [`(define ,l (lambda (,a ...) ,t)) `(define ,l (lambda ,a ,(sequentialize-tail t)))]
-    [_ #f]))
+    [_ (error (format "sequentialize-let:  Failed match.\n No valid function: ~a" f))]))
 
 ;
 ;(sequentialize-let p) → Im-lang-V3-mf?
 ;p: Values-lang-V3-unique?
 (define/contract (sequentialize-let p) (-> values-unique-lang? imp-mf-lang?)
   (match p
-    [`(module ,i ,f ... ,t) `(module ,i ,@(map sequentialize-func f) ,(sequentialize-tail t))]
-    [_ "sequentialize-let failed"]))
+    [`(module ,i ,f ... ,t) `(module ,i ,@(map sequentialize-func f) ,(sequentialize-tail t))]))
 
 (module+ test
-;sequentialize-let
+  ;sequentialize-let
   ;succes
   (check-equal? (sequentialize-let '(module () (let ([x.1 1]) x.1)))
                 '(module () (begin (set! x.1 1) x.1))
@@ -83,7 +82,7 @@
   (check-equal? (sequentialize-let '(module () (let ([x.7 (let ([x.10 70]) (+ x.10 x.7))]) (let ([x.9 4]) (+ x.9 y.8)))))
                 '(module () (begin (set! x.7 (begin (set! x.10 70) (+ x.10 x.7))) (begin (set! x.9 4) (+ x.9 y.8))))
                 "sequentialize-let: succes-6: nested let and let in value")
-;sequentialize-pred
+  ;sequentialize-pred
   ;succes
   (check-equal? (sequentialize-pred '(< x.1 y.1)) '(< x.1 y.1) "sequentialize-pred: succes-01: relop")
   (check-equal? (sequentialize-pred '(true)) '(true) "sequentialize-pred: succes-02: true")
@@ -104,30 +103,69 @@
   (check-equal? (sequentialize-pred '(if (let ([x.1 1]) (true)) (false) (true))) '(if (begin (set! x.1 1) (true)) (false) (true)) "sequentialize-pred: succes-09: if")
   (check-equal? (sequentialize-pred '(if (true) (let ([x.1 1]) (true)) (true))) '(if (true) (begin (set! x.1 1) (true)) (true)) "sequentialize-pred: succes-10: if")
   (check-equal? (sequentialize-pred '(if (true) (false) (let ([x.1 1]) (true)))) '(if (true) (false) (begin (set! x.1 1) (true))) "sequentialize-pred: succes-11: if")
-;sequentialize-value
+  ;failure
+  (check-exn exn:fail? (thunk (sequentialize-pred '(not))) "sequentialize-pred: failure-01: wrong expression")
+  ;sequentialize-value
   ;succes
   (check-equal? (sequentialize-value '(if (true) x.1 y.2)) '(if (true) x.1 y.2) "sequentialize-value: succes-01: if")
   (check-equal? (sequentialize-value '(if (let ([x.1 1]) (true)) (false) (true))) '(if (begin (set! x.1 1) (true)) (false) (true)) "sequentialize-value: succes-02: if")
   (check-equal? (sequentialize-value '(if (true) (let ([x.1 1]) x.1) (true))) '(if (true) (begin (set! x.1 1) x.1) (true)) "sequentialize-value: succes-03: if")
   (check-equal? (sequentialize-value '(if (true) (false) (let ([x.1 1]) x.1))) '(if (true) (false) (begin (set! x.1 1) x.1)) "sequentialize-value: succes-04: if")
   (check-equal? (sequentialize-value '(call L.fun.4 x.1 y.2 z.3)) '(call L.fun.4 x.1 y.2 z.3) "sequentialize-value: succes-05: call")
-;sequentialize-tail
+  ;sequentialize-tail
   ;succes
   (check-equal? (sequentialize-tail '(if (true) x.1 y.2)) '(if (true) x.1 y.2) "sequentialize-tail: succes-01: if")
   (check-equal? (sequentialize-tail '(if (let ([x.1 1]) (true)) (false) (true))) '(if (begin (set! x.1 1) (true)) (false) (true)) "sequentialize-tail: succes-02: if")
   (check-equal? (sequentialize-tail '(if (true) (let ([x.1 1]) x.1) (true))) '(if (true) (begin (set! x.1 1) x.1) (true)) "sequentialize-tail: succes-03: if")
   (check-equal? (sequentialize-tail '(if (true) (false) (let ([x.1 1]) x.1))) '(if (true) (false) (begin (set! x.1 1) x.1)) "sequentialize-tail: succes-04: if")
   (check-equal? (sequentialize-tail '(call L.fun.4 x.1 y.2 z.3)) '(call L.fun.4 x.1 y.2 z.3) "sequentialize-tail: succes-05: call")
-;sequentialize-let
+  ;sequentialize-func
+  ;succes
+  (check-equal? (sequentialize-func '(define L.odd?.1
+                                       (lambda (x.4)
+                                         (if (= x.4 0)
+                                             0
+                                             (let ((y.5 (+ x.4 -1)))
+                                               (call L.even?.2 y.5))))))
+                '(define L.odd?.1
+                   (lambda (x.4)
+                     (if (= x.4 0)
+                         0
+                         (begin (set! y.5 (+ x.4 -1))
+                                (call L.even?.2 y.5)))))
+                "sequentialize-func: succes-01: name gathering")
+  ;failure
+  (check-exn exn:fail? (thunk (sequentialize-func '(defne L.odd?.1
+                                                     (lambda (x.4)
+                                                       (if (= x.4 0)
+                                                           0
+                                                           (let ((y.5 (+ x.4 -1)))
+                                                             (call L.even?.2 y.5)))))))
+             "sequentialize-func: failure-01: wrong datum literal define")
+  (check-exn exn:fail? (thunk (sequentialize-func '(define
+                                                     (lambda (x.4)
+                                                       (if (= x.4 0)
+                                                           0
+                                                           (let ((y.5 (+ x.4 -1)))
+                                                             (call L.even?.2 y.5)))))))
+             "sequentialize-func: failure-02: no name")
+  (check-exn exn:fail? (thunk (sequentialize-func '(define L.odd?.1
+                                                     (lajmbda (x.4)
+                                                              (if (= x.4 0)
+                                                                  0
+                                                                  (let ((y.5 (+ x.4 -1)))
+                                                                    (call L.even?.2 y.5)))))))
+             "sequentialize-func: failure-03:  wrong datum literal lambda")
+  ;sequentialize-let
   ;succes
   (check-equal? (sequentialize-let '(module () (if (true) x.1 (let ([x.1 1]) x.1)))) '(module () (if (true) x.1 (begin (set! x.1 1) x.1))) "sequentialize-let: succes-01: if let")
   (check-equal? (sequentialize-let '(module ()
-                                        (define L.odd?.1
-                                          (lambda (x.3)
-                                            (if (= x.3 0)
-                                                0
-                                                (let ([y.4 (+ x.3 -1)])
-                                                  (call L.even?.2 y.4)))))
+                                      (define L.odd?.1
+                                        (lambda (x.3)
+                                          (if (= x.3 0)
+                                              0
+                                              (let ([y.4 (+ x.3 -1)])
+                                                (call L.even?.2 y.4)))))
                                       (define L.even?.2
                                         (lambda (x.5)
                                           (if (= x.5 0)
@@ -136,12 +174,12 @@
                                                 (call L.odd?.1 y.6)))))
                                       (call L.even?.2 5)))
                 '(module ()
-                     (define L.odd?.1
-                       (lambda (x.3)
-                         (if (= x.3 0)
-                             0
-                             (begin (set! y.4 (+ x.3 -1))
-                                    (call L.even?.2 y.4)))))
+                   (define L.odd?.1
+                     (lambda (x.3)
+                       (if (= x.3 0)
+                           0
+                           (begin (set! y.4 (+ x.3 -1))
+                                  (call L.even?.2 y.4)))))
                    (define L.even?.2
                      (lambda (x.5)
                        (if (= x.5 0)

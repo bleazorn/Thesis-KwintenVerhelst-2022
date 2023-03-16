@@ -94,12 +94,10 @@ Any variable defined during a move instruction is in conflict with every variabl
     [`(begin ,eff ...) (conflict-begin eff undead-outs conf)]
     [`(set! ,a (,binop ,b ,c)) (conflict-aloc a `(,b ,c) '() undead-outs (conflict-aloc b `(,a) '() undead-outs (conflict-aloc c `(,a) '() undead-outs conf)))]
     [`(set! ,a ,b) (conflict-aloc a `(,b) '() undead-outs (conflict-aloc b `(,a) '() undead-outs conf))]
-    [`(setLinear! ,a ,b) (conflict-aloc a `(,b) '() undead-outs (conflict-aloc b `(,a) '() undead-outs conf))]
     [`(if ,p ,e1 ,e2) (conflict-effect e2 (third undead-outs)
                                          (conflict-effect e1 (second undead-outs)
                                                         (conflict-pred p (first undead-outs) conf)))]
     [`(return-point ,l ,t) (conflict-tail t (second undead-outs) conf)]
-    ['(split) conf]
     [_ #f]))
 
 ;

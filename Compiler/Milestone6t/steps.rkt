@@ -70,7 +70,7 @@
          wrap-cheri-risc-v-run-time
          generate-cheri-risc-v
          access-memory-tempory-register
-         ;cap-mode-on
+         cap-mode-on
          patch-instructions
          flatten-program  
          resolve-predicates

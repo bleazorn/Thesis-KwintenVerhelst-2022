@@ -85,7 +85,7 @@
 (define (undead-pred p undead-outs)
   (let ([undead-out (if (null? undead-outs) '() (car undead-outs))]
         [undead-rest (if (null? undead-outs) '() (cdr undead-outs))])
-  ;(logln (format "pred: ~a" p))
+    ;(logln (format "pred: ~a" p))
     (match p
       [`(begin ,e ... ,pred) (let ([pU (undead-pred pred `(,undead-out))])
                                (undead-begin e pU undead-rest))]
@@ -96,7 +96,7 @@
       [`(true) (cons undead-out undead-outs)]
       [`(false) (cons undead-out undead-outs)]
       [`(not ,pred) (undead-pred pred undead-outs)]
-      [_ #f])))
+      [_ (error (format "undead-analysis:  Failed match.\n No valid pred: ~a" p))])))
 
 ;
 ;(undead-effect e undead-out)->undead-out?
@@ -105,7 +105,7 @@
 (define (undead-effect e undead-outs)
   (let ([undead-out (if (null? undead-outs) '() (car undead-outs))]
         [undead-rest (if (null? undead-outs) '() (cdr undead-outs))])
-  ;(logln (format "effect: ~a - ~a" e undead-out))
+    ;(logln (format "effect: ~a - ~a" e undead-out))
     (match e
       [`(set! ,a (,binop ,b ,c)) (cons (undead-cons b (undead-cons c (undead-remove a undead-out))) undead-outs)]
       [`(set! ,a ,b) (cons (undead-cons b (undead-remove a undead-out)) undead-outs)]
@@ -119,7 +119,7 @@
                                (addCallReturn nextUndead undead-out)
                                (cons nextUndead (cons (list-set uTail 0 undead-out) undead-rest)))]
       ['(split) (cons undead-out undead-outs)]
-      [_ "effect"])))
+      [_ (error (format "undead-analysis:  Failed match.\n No valid effect: ~a" e))])))
 
 ;
 ;(undead-tail t undead-out)->undead-set-tree?
@@ -136,12 +136,12 @@
                                [u2 (undead-tail t2 `(,undead-out))])
                           (undead-if p u1 u2 undead-rest))]
       [`(jump-call ,trg ,l ...) (let ([uJump (cond [(or (aloc? trg) (fvar? trg) (register? trg)) (addCallJump `(,trg)) (cons trg l)]
-                                              [else l])])
-                             (cons uJump (cons l undead-rest)))]
+                                                   [else l])])
+                                  (cons uJump (cons l undead-rest)))]
       [`(jump-return ,trg ,l ...) (let ([uJump (cond [(or (aloc? trg) (fvar? trg) (register? trg)) (cons trg l)]
-                                              [else l])])
-                             (cons uJump (cons l undead-rest)))]
-      [_ "tail"])))
+                                                     [else l])])
+                                    (cons uJump (cons l undead-rest)))]
+      [_ (error (format "undead-analysis:  Failed match.\n No valid tail: ~a" t))])))
 
 ;
 ;(undead-info t)->list? '((undead-out) (call-undead))
@@ -158,7 +158,7 @@
 (define (undead-func f)
   (match f
     [`(define ,l ,i ,t) `(define ,l ,(undead-info i t) ,t)]
-    [_ "func"]))
+    [_ (error (format "undead-analysis:  Failed match.\n No valid function: ~a" f))]))
 
 
 ;Performs undeadness analysis, decorating the program with undead-set tree. Only the info field of the program is modified.
@@ -166,8 +166,7 @@
 ;p:Asm-lang-V2-locals?
 (define/contract (undead-analysis p) (-> asm-pred-lang? asm-pred-lang?)
   (match p
-    [`(module ,i ,f ... ,t) `(module ,(undead-info i t) ,@(map undead-func f) ,t)]
-    [_ (logln "failed analysis")]))
+    [`(module ,i ,f ... ,t) `(module ,(undead-info i t) ,@(map undead-func f) ,t)]))
 
 
 (module+ test
@@ -175,27 +174,27 @@
     (resetCall)
     (check-equal? a b m))
   ;#|
-;undead-remove
+  ;undead-remove
   ;succes
   (check-equal? (undead-remove 'x.1 '()) '() "undead-remove: succes-1: empty undead-out")
   (check-equal? (undead-remove 'x.1 '(a.1 x.1 z.2)) '(a.1 z.2) "undead-remove: succes-2: not empty undead-out")
   (check-equal? (undead-remove 5 '(a.1 x.1 z.2)) '(a.1 x.1 z.2) "undead-remove: succes-3: not aloc")
-;undead-cons
+  ;undead-cons
   ;succes
   (check-equal? (undead-cons 'x.1 '()) '(x.1) "undead-cons: succes-1: empty undead-out")
   (check-equal? (undead-cons 'x.1 '(a.1 z.2)) '(x.1 a.1 z.2) "undead-cons: succes-2: not empty undead-out")
   (check-equal? (undead-cons 5 '(a.1 x.1 z.2)) '(a.1 x.1 z.2) "undead-cons: succes-3: not aloc")
-;undead-begin-rec
+  ;undead-begin-rec
   ;succes
   (check-equal? (undead-begin-rec '((set! x.1 5) (set! y.2 6) (set! z.3 (+ x.1 y.2))) '((z.3) ()))
                 '(() (x.1) (x.1 y.2) (z.3) ())
                 "undead-begin-rec: succes-1: simple begin")
-;undead-begin
+  ;undead-begin
   ;succes
   (check-equal? (undead-begin '((set! x.1 5) (set! y.2 6) (set! z.3 (+ x.1 y.2))) '((z.3)) '(()))
                 '(() ((x.1) (x.1 y.2) (z.3)) ())
                 "undead-begin: succes-1: simple begin")
-;undead-pred
+  ;undead-pred
   ;succes
   (check-equal? (undead-pred '(= x.1 y.2) '((z.3) ())) '((x.1 y.2 z.3) (z.3) ()) "undead-pred: succes-1: relop")
   (check-equal? (undead-pred '(true) '((z.3) ())) '((z.3) (z.3) ()) "undead-pred: succes-2: true")
@@ -210,68 +209,144 @@
   (check-equal? (undead-pred '(if (= x.1 y.2) (begin (set! x.1 5) (set! y.2 6) (set! z.3 (+ x.1 y.2)) (= 5 z.3)) (true)) '((z.3) ()))
                 '((x.1 y.2 z.3) ((z.3) ((x.1) (x.1 y.2) (z.3) (z.3)) (z.3)) ())
                 "undead-pred: succes-7: if change")
-;undead-effect
+  ;failure
+  (check-exn exn:fail? (thunk (undead-pred 'symp1 '((z.3) ()))) "undead-pred: failure-01: no pred")
+  ;undead-effect
   ;succes
   (check-undead? (undead-effect '(set! z.3 x.1) '((z.3) ())) '((x.1) (z.3) ()) "undead-effect: succes-01: set")
   (check-undead? (undead-effect '(set! z.3 (+ x.1 y.2)) '((z.3) ())) '((x.1 y.2) (z.3) ()) "undead-effect: succes-02: binop")
   (check-undead? (undead-effect '(begin (set! x.1 5) (set! y.2 6) (set! z.3 (+ x.1 y.2))) '((z.3) ()))
-                '(() ((x.1) (x.1 y.2) (z.3)) ())
-                "undead-effect: succes-03: simple begin")
+                 '(() ((x.1) (x.1 y.2) (z.3)) ())
+                 "undead-effect: succes-03: simple begin")
   (check-undead? (undead-effect '(if (= x.1 y.2) (set! z.3 (+ x.1 y.2)) (begin (set! x.1 5) (set! y.2 6) (set! z.3 (+ x.1 y.2)))) '((z.3) ()))
-                '((x.1 y.2) ((x.1 y.2) (z.3) ((x.1) (x.1 y.2) (z.3))) ())
-                "undead-effect: succes-04: if")
-    (check-undead? (undead-effect '(if (= x.1 y.2)
-                                      (begin (set! x.1 5) (set! y.2 6) (set! z.3 (+ x.1 y.2)))
-                                      (set! z.3 (+ x.1 y.2)))
-                                 '((z.3) ()))
-                  '((x.1 y.2)
-                    ((x.1 y.2)
-                     ((x.1) (x.1 y.2) (z.3))
-                     (z.3))
-                    ())
-                "undead-effect: succes-05: if change")
+                 '((x.1 y.2) ((x.1 y.2) (z.3) ((x.1) (x.1 y.2) (z.3))) ())
+                 "undead-effect: succes-04: if")
+  (check-undead? (undead-effect '(if (= x.1 y.2)
+                                     (begin (set! x.1 5) (set! y.2 6) (set! z.3 (+ x.1 y.2)))
+                                     (set! z.3 (+ x.1 y.2)))
+                                '((z.3) ()))
+                 '((x.1 y.2)
+                   ((x.1 y.2)
+                    ((x.1) (x.1 y.2) (z.3))
+                    (z.3))
+                   ())
+                 "undead-effect: succes-05: if change")
   (check-undead? (undead-effect '(return-point
-                                 L.rp.6
-                                 (begin
-                                   (set! nfv.16 new-n.10)
-                                   (set! cra L.rp.6)
-                                   (jump-return L.fact.4 cfp cra nfv.16)))
-                               '((z.3) ()))
-                               '((z.3 new-n.10 cfp)
-                                 ((z.3) ((cfp nfv.16) (cfp cra nfv.16) (cfp cra nfv.16)))
-                                 ())
-  "undead-effect: succes-06: return-point")
-;undead-tail
+                                  L.rp.6
+                                  (begin
+                                    (set! nfv.16 new-n.10)
+                                    (set! cra L.rp.6)
+                                    (jump-return L.fact.4 cfp cra nfv.16)))
+                                '((z.3) ()))
+                 '((z.3 new-n.10 cfp)
+                   ((z.3) ((cfp nfv.16) (cfp cra nfv.16) (cfp cra nfv.16)))
+                   ())
+                 "undead-effect: succes-06: return-point")
+  ;failure
+  (check-exn exn:fail? (thunk (undead-effect 'symp1 '((z.3) ()))) "undead-effect: failure-01: no effect")
+  ;undead-tail
   ;succes
   (check-undead? (undead-tail '(begin (set! a0 x.1) (jump-return cra)) '((z.1) ())) '((x.1 cra) ((cra) ()) ()) "undead-tail: succes-01: halt")
   (check-undead? (undead-tail '(begin (set! a0 x.1) (jump-call L.foo.4)) '(())) '((x.1) (() ())) "undead-tail: succes-02: start halt")
   (check-undead? (undead-tail '(begin (set! x.1 42) (begin (set! a0 x.1) (jump-call L.foo.4))) '(())) '(() ((x.1) (() ()))) "undead-tail: succes-03: simple begin")
   (check-undead? (undead-tail '(begin (set! x.1 5) (set! y.2 6) (set! z.3 (+ x.1 y.2)) (begin (set! a0 z.3) (jump-call L.foo.4))) '(()))
-                '(() ((x.1) (x.1 y.2) (z.3) (() ())))
-                "undead-tail: succes-04: simple begin")
+                 '(() ((x.1) (x.1 y.2) (z.3) (() ())))
+                 "undead-tail: succes-04: simple begin")
   (check-undead? (undead-tail '(if (= x.1 y.2)
-                                  (begin (set! a0 z.3) (jump-return cra))
-                                  (begin (set! x.1 5) (set! y.2 6) (set! z.3 (+ x.1 y.2)) (begin (set! a0 z.3) (jump-return cra))))
-                             '((z.3) ()))
-                '((x.1 y.2 z.3 cra)
-                  ((z.3 cra)
-                   ((cra) ())
-                   ((x.1 cra) (x.1 y.2 cra) (z.3 cra) ((cra) ())))
-                  ())
-                "undead-tail: succes-05: if")
+                                   (begin (set! a0 z.3) (jump-return cra))
+                                   (begin (set! x.1 5) (set! y.2 6) (set! z.3 (+ x.1 y.2)) (begin (set! a0 z.3) (jump-return cra))))
+                              '((z.3) ()))
+                 '((x.1 y.2 z.3 cra)
+                   ((z.3 cra)
+                    ((cra) ())
+                    ((x.1 cra) (x.1 y.2 cra) (z.3 cra) ((cra) ())))
+                   ())
+                 "undead-tail: succes-05: if")
   
   (check-undead? (undead-tail '(if (= x.1 y.2)
-                                  (begin (set! x.1 5) (set! y.2 6) (set! z.3 (+ x.1 y.2)) (begin (set! a0 z.3) (jump-return cra)))
-                                  (begin (set! a0 z.3) (jump-return cra)))
-                             '((z.3) ()))
+                                   (begin (set! x.1 5) (set! y.2 6) (set! z.3 (+ x.1 y.2)) (begin (set! a0 z.3) (jump-return cra)))
+                                   (begin (set! a0 z.3) (jump-return cra)))
+                              '((z.3) ()))
                  '((x.1 y.2 cra z.3)
                    ((cra z.3)
                     ((x.1 cra) (x.1 y.2 cra) (z.3 cra) ((cra) ()))
                     ((cra) ()))
                    ())
-                "undead-effect: succes-06: if change")
+                 "undead-effect: succes-06: if change")
   (check-undead? (undead-tail '(jump-call L.foo.4) '((z.1) ())) '(() () ()) "undead-tail: succes-07: jump-call")
   (check-undead? (undead-tail '(jump-return cra) '((z.1) ())) '((cra) () ()) "undead-tail: succes-08: jump-return")
+  ;failure
+  (check-exn exn:fail? (thunk (undead-tail 'symp1 '((z.3) ()))) "undead-tail: failure-01: no tail")
+  ;undead-func
+  ;succes
+  (check-equal? (undead-func '(define L.odd.1
+                                ((locals (tmp-ra.1 x.1 y.2 z.3 tmp.1)) (new-frames ()) (paramSize 0))
+                                (begin
+                                  (set! tmp-ra.1 cra)
+                                  (begin
+                                    (set! x.1 a1)
+                                    (set! y.2 a2)
+                                    (set! z.3 a3)
+                                    (begin (set! tmp.1 5) (set! x.1 (+ tmp.1 tmp.1)))
+                                    (jump-return cra cfp)))))
+                '(define L.odd.1
+                   ((undead-out
+                     ((a1 a2 a3 cra cfp)
+                      ((a2 a3 cra cfp)
+                       (a3 cra cfp)
+                       (cra cfp)
+                       ((tmp.1 cra cfp) (cra cfp))
+                       (cfp))))
+                    (call-undead ())
+                    (locals (tmp-ra.1 x.1 y.2 z.3 tmp.1))
+                    (new-frames ())
+                    (paramSize 0))
+                   (begin
+                     (set! tmp-ra.1 cra)
+                     (begin
+                       (set! x.1 a1)
+                       (set! y.2 a2)
+                       (set! z.3 a3)
+                       (begin (set! tmp.1 5) (set! x.1 (+ tmp.1 tmp.1)))
+                       (jump-return cra cfp))))
+                "undead-func: succes-01: simple function")
+  ;failure
+  (check-exn exn:fail? (thunk (undead-func '(defdine L.odd.1
+                                              ((locals (tmp-ra.1 x.1 y.2 z.3 tmp.1)) (new-frames ()) (paramSize 0))
+                                              (begin
+                                                (set! tmp-ra.1 cra)
+                                                (begin
+                                                  (set! x.1 a1)
+                                                  (set! y.2 a2)
+                                                  (set! z.3 a3)
+                                                  (begin (set! tmp.1 5) (set! x.1 (+ tmp.1 tmp.1)))
+                                                  (jump-return cra cfp))))))
+             "undead-func: failure-01: wrong datum literal define")
+  (check-exn exn:fail? (thunk (undead-func '(define
+                                              ((locals (tmp-ra.1 x.1 y.2 z.3 tmp.1)) (new-frames ()) (paramSize 0))
+                                              (begin
+                                                (set! tmp-ra.1 cra)
+                                                (begin
+                                                  (set! x.1 a1)
+                                                  (set! y.2 a2)
+                                                  (set! z.3 a3)
+                                                  (begin (set! tmp.1 5) (set! x.1 (+ tmp.1 tmp.1)))
+                                                  (jump-return cra cfp))))))
+             "undead-func: failure-02: no name")
+  (check-exn exn:fail? (thunk (undead-func '(define L.odd.1
+                                              (begin
+                                                (set! tmp-ra.1 cra)
+                                                (begin
+                                                  (set! x.1 a1)
+                                                  (set! y.2 a2)
+                                                  (set! z.3 a3)
+                                                  (begin (set! tmp.1 5) (set! x.1 (+ tmp.1 tmp.1)))
+                                                  (jump-return cra cfp))))))
+             "undead-func: failure-03:  no info")
+  (check-exn exn:fail? (thunk (undead-func '(define L.odd.1
+                                              ((locals (tmp-ra.1 x.1 y.2 z.3 tmp.1)) (new-frames ()) (paramSize 0)))))
+             "undead-func: failure-04:  no tail")
+  #|
 ;undead-analysis
   ;succes
   (check-undead? (undead-analysis '(module ((locals (x.1)))

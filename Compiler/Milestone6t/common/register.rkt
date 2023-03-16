@@ -70,7 +70,7 @@
   (make-parameter (build-list 5 (lambda (a) (string->symbol (format "t~a" a))))))
 
 (define current-parameter-registers
-  (make-parameter (build-list 8 (lambda (a) (string->symbol (format "a~a" a))))))
+  (make-parameter (build-list 7 (lambda (a) (string->symbol (format "a~a" (add1 a)))))))
 
 (define current-return-address-register
   (make-parameter 'cra))

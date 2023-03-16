@@ -41,7 +41,7 @@
     ['(true) '(true)]
     ['(false) '(false)]
     [`(not ,pred) `(not ,(uniquify-pred pred locs))]
-    [_ #f]))
+    [_ (error (format "uniquify:  Failed match.\n No valid pred: ~a" p))]))
   
 ;
 ;(uniquify-value t locs)->value?
@@ -83,7 +83,7 @@
   (match f
     [`(define ,l (lambda (,n ...) ,t)) (let ([func-names (uniquify-funcNamesLoc n locs)])
                                          `(define ,(uniquify-triv l func-names) (lambda ,(map (lambda (name) (uniquify-triv name func-names)) n) ,(uniquify-tail t func-names))))]
-    [_ '()]))
+    [_ (error (format "uniquify: Failed match.\n No valid function: ~a" f))]))
 
 ;
 ;(uniquify-func-names f)->list? '((name aloc) ... (name label) ...)
@@ -91,7 +91,7 @@
 (define (uniquify-func-names f)
   (foldl (lambda (func l)  (cons (match func
                                    [`(define ,l (lambda (,n ...) ,t)) `(,l ,(freshLabel l))]
-                                   [_ #f]) l)) '() f))
+                                   [_ (error (format "uniquify: Failed match.\n No valid function name: ~a" f))]) l)) '() f))
 
 ;Compiles Values-lang-V3? to Values-lang-V3-unique? by resolving all lexical identifiers to abstract locations.
 ;(uniquify p) → Values-lang-V3-unique?
@@ -99,8 +99,7 @@
 (define/contract (uniquify m) (-> values-lang? values-unique-lang?)
   (match m
     [`(module ,i ,f ... ,a) (let ([func-names (uniquify-func-names f)])
-                           `(module ,i ,@(map (lambda (func) (uniquify-func func func-names)) f) ,(uniquify-tail a func-names)))]
-    [_ "uniquify failed"]))
+                           `(module ,i ,@(map (lambda (func) (uniquify-func func func-names)) f) ,(uniquify-tail a func-names)))]))
          
 (module+ test
   ;#|
@@ -162,6 +161,7 @@
 
   ;failure
   (check-uniquify (uniquify-pred '(= x y) '((x x.1))) '(= x.1 #f) "uniquify-pred: failure-01: relop not change")
+  (check-exn exn:fail? (thunk (uniquify-pred '(not) '((x x.1)))) "uniquify-pred: failure-02: wrong expression")
 
 ;uniquify-value
   ;succes
@@ -254,6 +254,103 @@
   (check-uniquify (uniquify-tail `(call fun x y z) '((fun L.fun.4) (x x.1) (z z.3)))
                   `(call L.fun.4 x.1 #f z.3)
                   "uniquify-tail: failure-07: call arg 2")
+;uniquify-func-names
+  ;succes
+  (check-uniquify (uniquify-func-names '((define odd?
+                                           (lambda (x)
+                                             (if (= x 0)
+                                                 0
+                                                 (let ([y (+ x -1)])
+                                                   (call even? y)))))
+                                         (define even?
+                                           (lambda (x)
+                                             (if (= x 0)
+                                                 1
+                                                 (let ([y (+ x -1)])
+                                                   (call odd? y)))))))
+                  '((even? L.even?.2) (odd? L.odd?.1))
+                  "uniquify-func-names: succes-01: name gathering")
+  ;failure
+  (check-exn exn:fail? (thunk (uniquify-func-names '((define odd?
+                                                       (lambda (x)
+                                                         (if (= x 0)
+                                                             0
+                                                             (let ([y (+ x -1)])
+                                                               (call even? y)))))
+                                                     (dene even?
+                                                       (lambda (x)
+                                                         (if (= x 0)
+                                                             1
+                                                             (let ([y (+ x -1)])
+                                                               (call odd? y))))))))
+                  "uniquify-func-names: failure-01: wrong datum literal define")
+  (check-exn exn:fail? (thunk (uniquify-func-names '((define odd?
+                                                       (lambda (x)
+                                                         (if (= x 0)
+                                                             0
+                                                             (let ([y (+ x -1)])
+                                                               (call even? y)))))
+                                                     (define
+                                                       (lambda (x)
+                                                         (if (= x 0)
+                                                             1
+                                                             (let ([y (+ x -1)])
+                                                               (call odd? y))))))))
+                  "uniquify-func-names: failure-02: no name")
+  (check-exn exn:fail? (thunk (uniquify-func-names '((define odd?
+                                                       (lambda (x)
+                                                         (if (= x 0)
+                                                             0
+                                                             (let ([y (+ x -1)])
+                                                               (call even? y)))))
+                                                     (define even?
+                                                       (lamba (x)
+                                                         (if (= x 0)
+                                                             1
+                                                             (let ([y (+ x -1)])
+                                                               (call odd? y))))))))
+                  "uniquify-func-names: failure-03:  wrong datum literal lambda")
+;uniquify-func
+  ;succes
+  (check-uniquify (uniquify-func '(define odd?
+                                    (lambda (x)
+                                      (if (= x 0)
+                                          0
+                                          (let ([y (+ x -1)])
+                                            (call even? y)))))
+                                 '((even? L.even?.2) (odd? L.odd?.1)))
+                  '(define L.odd?.1
+                     (lambda (x.4)
+                       (if (= x.4 0)
+                           0
+                           (let ((y.5 (+ x.4 -1)))
+                             (call L.even?.2 y.5)))))
+                  "uniquify-func-names: succes-01: name gathering")
+  ;failure
+  (check-exn exn:fail? (thunk (uniquify-func '(defµine odd?
+                                                (lambda (x)
+                                                  (if (= x 0)
+                                                      0
+                                                      (let ([y (+ x -1)])
+                                                        (call even? y)))))
+                                             '((even? L.even?.2) (odd? L.odd?.1))))
+                  "uniquify-func-names: failure-01: wrong datum literal define")
+  (check-exn exn:fail? (thunk (uniquify-func '(define
+                                                (lambda (x)
+                                                  (if (= x 0)
+                                                      0
+                                                      (let ([y (+ x -1)])
+                                                        (call even? y)))))
+                                             '((even? L.even?.2) (odd? L.odd?.1))))
+                  "uniquify-func-names: failure-02: no name")
+  (check-exn exn:fail? (thunk (uniquify-func '(define odd?
+                                                (lambdµa (x)
+                                                  (if (= x 0)
+                                                      0
+                                                      (let ([y (+ x -1)])
+                                                        (call even? y)))))
+                                             '((even? L.even?.2) (odd? L.odd?.1))))
+                  "uniquify-func-names: failure-03:  wrong datum literal lambda")
 ;uniquify
   ;succes
   (check-uniquify (uniquify '(module () (+ 2 2)))

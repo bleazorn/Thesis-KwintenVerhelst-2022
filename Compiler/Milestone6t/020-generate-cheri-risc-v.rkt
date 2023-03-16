@@ -159,22 +159,6 @@ sltiu reg, reg, int12		compares < unsigned 12 bit integer
     addr))
 
 
-(define (generate-seal s)
-  (match s
-    [`(seal ,r ... ,i) #:when (andmap isCapability? r) (let ([sealInstr (foldl (lambda (x s) (string-append s (indent-instr (format "cseal ~a, ~a, cs2" x x)))) "" r)])
-                                                         (string-append (indent-instr  (format "lc.cap cs2, 0(~a)" (current-seal-location-register)))
-                                                                        (indent-instr  (format "li t6, ~a" i))
-                                                                        (indent-instr  (format "csetoffset cs2, cs2, t6"))
-                                                                        sealInstr))]
-    [_ #f]))
-
-(define (generate-unseal u)
-  (match u
-    [`(unseal ,r ... ,i) #:when (andmap isCapability? r) (let ([sealInstr (foldl (lambda (x s) (string-append s (indent-instr (format "cunseal ~a, ~a, cs2" x x)))) "" r)])
-                                                           (string-append (indent-instr  (format "li t6, ~a" i))
-                                                                          (indent-instr  (format "csetoffset cs2, cs2, t6"))
-                                                                          sealInstr))]
-    [_ #f]))
 
 (define (generate-setLinear s)
   (match s
@@ -321,3 +305,4 @@ sltiu reg, reg, int12		compares < unsigned 12 bit integer
                 "generate-cheri-risc-v: failure-2: meerdere instructies met 1 slechte instructie")
 |#
   )
+

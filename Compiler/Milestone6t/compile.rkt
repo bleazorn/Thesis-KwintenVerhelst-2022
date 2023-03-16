@@ -82,7 +82,7 @@
 
 (define (setup-cc steps)
   (match (cc)
-    ['vanilla-riscv steps]
+    ['vanilla-cheri-riscv steps]
     ['stktokens                    (stkTokens steps)]
     ['stkTokens-sentry             (stkTokens-sentry steps)]
     ['cheri-linkage-seal           (cheri-linkage-seal steps)]
@@ -193,7 +193,7 @@
                ;[current-parameter-registers '()]
                ;[current-assignable-registers '()]
                  ) |#
-(parameterize ([cc 'stktokens])
+(parameterize ([cc (cc)])
   (parameterize ([steps                               (setup-steps (steps))]
                  [current-stack-base-pointer-register (setup-stack-register)]
                  [current-frame-base-pointer-register (setup-frame-register)]
