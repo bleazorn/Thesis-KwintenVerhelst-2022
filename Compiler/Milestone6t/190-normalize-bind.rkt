@@ -25,7 +25,9 @@
     [`(set! ,a (begin ,e ... ,v)) `(begin ,@(map normalize-effect e) ,(normalize-set a v))] ;; SAND: rewritten with quasiquoting, also note that you can just pass the procedure as is, no need to wrap it in a lambda (change pushed through in other places too)
     [`(set! ,a (if ,p ,v1 ,v2)) `(if ,(normalize-pred p) ,(normalize-set a v1) ,(normalize-set a v2))]
     [`(set! ,a ,b) e]
-    [`(begin ,e ...) `(begin ,@(map normalize-effect e))]))
+    [`(begin ,e ...) `(begin ,@(map normalize-effect e))]
+    [`(if ,p ,e1 ,e2) `(if ,(normalize-pred p) ,(normalize-effect e1) ,(normalize-pred e2))]
+    [_ (error (format "normalize-bind:  Failed match.\n No valid effect: ~a" e))]))
 
 ;
 ;(normalize-pred p)->pred?
@@ -118,7 +120,8 @@
   (check-equal? (normalize-effect '(set! z.3 (if (true) (begin (set! x.1 y.2) x.1) (if (= x.1 y.2) y.2 (+ x.1 y.2)))))
                 '(if (true) (begin (set! x.1 y.2) (set! z.3 x.1)) (if (= x.1 y.2) (set! z.3 y.2) (set! z.3 (+ x.1 y.2))))
                 "normalize-effect: succes-08: normalize nested if")
-
+  ;failure
+  (check-exn exn:fail? (thunk (normalize-effect '(not))) "normalize-effect: failure-01: wrong expression")
   ;normalize-pred
   ;succes
   (check-equal? (normalize-pred '(< x.1 y.1)) '(< x.1 y.1) "normalize-pred: succes-01: relop")

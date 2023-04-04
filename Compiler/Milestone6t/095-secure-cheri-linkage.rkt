@@ -13,9 +13,9 @@
   (match e
     [`(return-point ,l ,t) `(begin
                               (set! ,(newFvar parasize) ,(current-return-address-register))
-                              (set! ,(newFvar (add1 parasize)) ,(current-frame-base-pointer-register))
+                              (set! ,(newFvar (add1 parasize)) ,(current-return-sealed-register))
                               (return-point ,l ,(secure-tail t parasize))
-                              (set! ,(current-frame-base-pointer-register) ,(newFvar (add1 parasize)))
+                              (set! ,(current-return-sealed-register)  ,(newFvar (add1 parasize)))
                               (set! ,(current-return-address-register) ,(newFvar parasize)))]
     [_ (error (format "secure-cheri-linkage:  Failed match.\n No valid return-point: ~a" e))]))
 

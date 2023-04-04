@@ -44,7 +44,7 @@
     [`(let ,a ,tail) `(begin ,@(sequentialize-alocs a) ,(sequentialize-tail tail))]
     [`(if ,p ,t1 ,t2) `(if ,(sequentialize-pred p) ,(sequentialize-tail t1) ,(sequentialize-tail t2))]
     [`(call ,n ,a ...) `(call ,n ,@a)]
-    [t t]))
+    [t (sequentialize-value t)]))
 
 ;
 ;(sequentialize-func f)->'(define label? (lambda (aloc? ...) tail?))

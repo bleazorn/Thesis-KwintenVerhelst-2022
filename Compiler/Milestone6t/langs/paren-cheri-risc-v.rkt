@@ -26,7 +26,7 @@
      (split reg reg reg int64)
      (splice reg reg reg int64)
      (seal reg ... int64)
-     (unseal reg ... int64)
+     (unseal reg ... int64) 
      (sentry reg)
      (invoke reg reg)
      (setLinear! loc triv)

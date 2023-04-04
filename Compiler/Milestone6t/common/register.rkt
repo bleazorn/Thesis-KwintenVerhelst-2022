@@ -18,6 +18,8 @@
          current-seal-register
          current-seal-location-register
          current-seal-got-call-register
+         current-return-sealed-register
+         current-return-unsealed-register
          register?
          isNonCapRegister?
          isCapability?
@@ -98,6 +100,14 @@
 
 (define current-seal-got-call-register
   (make-parameter 'cs1))
+
+(define current-return-sealed-register
+  (make-parameter 'cfp))
+
+(define current-return-unsealed-register
+  (make-parameter 'cfp))
+         
+         
 
 (define special-registers
   (make-parameter '(pcc)))

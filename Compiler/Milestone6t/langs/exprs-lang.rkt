@@ -7,27 +7,22 @@
 (provide
  (all-defined-out))
 
-@define-grammar/pred[values-lang
+@define-grammar/pred[exprs-lang
   #:literals (info? name? int64?)
   #:datum-literals (define lambda module let call true false not if * + < <= =
    >= > !=)
-  [p     (module info (define x (lambda (x ...) tail)) ... tail)]
-  [info info?]
+  [p     (module (define x (lambda (x ...) value)) ... value)]
   [pred  (relop triv triv)
          (true)
          (false)
          (not pred)
          (let ([x value] ...) pred)
          (if pred pred pred)]
-  [tail  value
-         (let ([x value] ...) tail)
-         (if pred tail tail)
-         (call x triv ...)]
   [value triv
-         (binop triv triv)
+         (binop value value)
          (let ([x value] ...) value)
          (if pred value value)
-         (call x triv ...)]
+         (call x value ...)]
   [triv  int64 x]
   [x     name?]
   [binop * + -]

@@ -37,7 +37,7 @@
     [`(split ,a ,b ,c ,d) `(split ,a ,b ,c ,d)]
     [`(splice ,a ,b ,c ,d) `(splice ,a ,b ,c ,d)]
     [`(return-point ,l ,t) `(begin (return-point ,l ,(change-tail t))
-                                   (set! ,(current-frame-base-pointer-register) ,(current-invoke-data-register)))]
+                                   (set! ,(current-return-unsealed-register) ,(current-invoke-data-register)))]
     [`(set-addr! ,a ,b) `(set-addr! ,a ,b)]
     [_ (error (format "change-return-seal:  Failed match.\n No valid effect: ~a" e))]))
 
@@ -49,7 +49,7 @@
     [`(begin ,e ... ,tail) `(begin ,@(map change-effect e) ,(change-tail tail))]
     [`(if ,p ,t1 ,t2) `(if ,(change-pred p) ,(change-tail t1) ,(change-tail t2))]
     [`(jump-call ,trg) `(jump-call ,trg)]
-    [`(jump-return ,trg) `(begin (set! ,(current-invoke-data-register) ,(current-frame-base-pointer-register))
+    [`(jump-return ,trg) `(begin (set! ,(current-invoke-data-register) ,(current-return-sealed-register))
                                  (invoke ,(current-return-address-register) ,(current-invoke-data-register)))]
     [`(invoke ,a ,b) `(invoke ,a ,b)]
     [_ (error (format "change-return-seal:  Failed match.\n No valid tail: ~a" t))]))

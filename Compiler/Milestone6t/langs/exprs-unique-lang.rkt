@@ -7,7 +7,7 @@
 (provide
  (all-defined-out))
 
-@define-grammar/pred[values-unique-lang
+@define-grammar/pred[exprs-unique-lang
   #:literals (info? int64? label? aloc?)
   #:datum-literals (define lambda module let call true false not if * + < <= =
    >= > !=)
@@ -22,12 +22,12 @@
   [tail  value
          (let ([aloc value] ...) tail)
          (if pred tail tail)
-         (call triv opand ...)]
+         (call triv value ...)]
   [value triv
-         (binop opand opand)
+         (binop value value)
          (let ([aloc value] ...) value)
          (if pred value value)
-         (call triv opand ...)]
+         (call triv value ...)]
   [opand int64 aloc]
   [triv  opand label]
   [binop * + -]

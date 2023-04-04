@@ -122,17 +122,18 @@
 ;
 (define (patch-seal e)
   (match e
-    [`(seal ,a ,b ,c ,s) `(,(patch-binop c c s '+)
-                           (seal ,a ,b ,c ,s))]
+    [`(seal ,a ... ,c ,s) `(,@(patch-binop c c s '+)
+                            ,@(map (lambda (x) `(seal ,x ,x ,c ,s)) a)
+                            ,@(patch-binop c c s '-))]
     [_ #f]))
-
 ;
 ;
 ;
 (define (patch-unseal e)
   (match e
-    [`(unseal ,a ,b ,c ,s) `(,(patch-binop c c s '+)
-                           (unseal ,a ,b ,c ,s))]
+    [`(unseal ,a ,b ,c ,s) `(,@(patch-binop c c s '+)
+                             ,@(map (lambda (x) `(unseal ,x ,x ,c ,s)) a)
+                             ,@(patch-binop c c s '-))]
     [_ #f]))
 
 ;
@@ -164,28 +165,6 @@
     [`(begin ,i ,s ...)  `(begin ,i ,@(foldl (lambda (e sets) (append sets (patch-effect e))) '() s))]
     [_ #f]))
 
-#;(patch-instructions '(begin
-                       (with-label L.tmp.0 (set! t0 cra))
-                       (set! (cfp - 16) 2)
-                       (set! (cfp - 0) 1)
-                       (set! cra t0)
-                       (jump L.swap.1)
-                       (with-label L.swap.1 (set! (cfp - 16) cra))
-                       (set! t0 (cfp - 0))
-                       (set! (cfp - 0) (cfp - 16))
-                       (jump-if L.tmp.1 (< (cfp - 0) t0))
-                       (jump L.tmp.2)
-                       (with-label L.tmp.1 (set! ca0 t0))
-                       (jump (cfp - 16))
-                       (with-label L.tmp.2 (set! cfp (- cfp 24)))
-                       (set! (cfp - 16) t0)
-                       (set! (cfp - 0) (cfp - -24))
-                       (set! cra L.rp-label.6)
-                       (jump L.swap.1)
-                       (with-label L.rp-label.6 (set! cfp (+ cfp 24)))
-                       (set! t0 ca0)
-                       (set! ca0 (+ t0 (cfp - 0)))
-                       (jump (cfp - 16))))
 
 (module+ test
   (define (check-patch? t1 t2 text)

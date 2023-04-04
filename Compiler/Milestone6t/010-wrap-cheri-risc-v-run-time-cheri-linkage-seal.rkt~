@@ -39,7 +39,7 @@
                                                       (indent-instr (format "cmove csp, cs11"))
                                                       (indent-instr (format "CSetAddr cs11, cs11, t4"))
                                                       (indent-instr (format "CSeal cra, cra, cs11"))
-                                                      (indent-instr (format "CSeal csp, cfp, cs11"))
+                                                      (indent-instr (format "CSeal csp, csp, cs11"))
                                                       "//PCC init\n"
                                                       (indent-instr (format "cllc ct0, L.pcJump"))
                                                       (indent-instr (format "li t5, 259"))

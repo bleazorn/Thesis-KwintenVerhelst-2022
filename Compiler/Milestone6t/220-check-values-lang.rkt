@@ -1,5 +1,6 @@
 #lang racket
 
+(require "langs/exprs-lang.rkt")
 (provide check-values-lang)
 
 (module+ test
@@ -73,22 +74,9 @@
   (match v
     [`(let (,l ...) ,val) `(let ,(map (lambda (le) (check-let le locs funcs)) l) ,(check-value val (append locs (map car l)) funcs))]
     [`(if ,p ,v1 ,v2)     `(if ,(check-predi p locs funcs) ,(check-value v1 locs funcs) ,(check-value v2 locs funcs))] 
-    [`(call ,x ,trivs ...) `(call ,(check-name x funcs) ,@(map (lambda (x) (check-triv x locs)) trivs))]
-    [`(,binop ,t1 ,t2)    `(,(check-binop binop) ,(check-triv t1 locs) ,(check-triv t2 locs))]
+    [`(call ,x ,vs ...) `(call ,(check-name x funcs) ,@(map (lambda (vi) (check-value vi locs funcs)) vs))]
+    [`(,binop ,v1 ,v2)    `(,(check-binop binop) ,(check-value v1 locs funcs) ,(check-value v2 locs funcs))]
     [t                     (check-triv t locs)]))
-
-
-;
-;(interp-tail t '())->tail?
-;t: tail?
-;locs: list? '(name? ...)
-;funcs: list? '(name? ...)
-(define (check-tail t locs funcs)
-  (match t
-    [`(let (,l ...) ,tail) `(let ,(map (lambda (le) (check-let le locs funcs)) l) ,(check-tail tail (append locs (map car l)) funcs))]
-    [`(if ,p ,t1 ,t2)      `(if ,(check-predi p locs funcs) ,(check-tail t1 locs funcs) ,(check-tail t2 locs funcs))]
-    [`(call ,x ,trivs ...) `(call ,(check-name x funcs) ,@(map (lambda (x) (check-triv x locs)) trivs))]
-    [v                      (check-value v locs funcs)]))
 
 ;
 ;(interp-func x t locs funcs)->'(define name? (lambda (name? ...) tail?))
@@ -98,16 +86,16 @@
 ;funcs: list? '(name? ...)
 (define (check-func f funcs)
   (match f
-    [`(define ,l (lambda ,a ,t)) `(define ,(check-name l funcs) (lambda ,a ,(check-tail t a funcs)))]
+    [`(define ,l (lambda ,a ,t)) `(define ,(check-name l funcs) (lambda ,a ,(check-value t a funcs)))]
     [_ (error (format "check functie ~a failed" (take f 2)))]))
 
 ;
 ;(interp-values-lang p) →integer?
 ;p : Values-lang-V3?
-(define (check-values-lang p)
+(define/contract (check-values-lang p) (-> exprs-lang? exprs-lang?)
   (match p
     [`(module ,f ... ,t) (let ([funcs (map second f)])
-                           `(module () ,@(map (lambda (fun) (check-func fun funcs)) f) ,(check-tail t '() funcs)))]
+                           `(module ,@(map (lambda (fun) (check-func fun funcs)) f) ,(check-value t '() funcs)))]
     [_ (error "check values-lang failed in module")]))
 
 (module+ test
@@ -126,7 +114,7 @@
               [(= 5 leng) (check-exn exn:fail? (thunk ((first l) (second l) (third l) (fourth l)) (fifth l)))]))))
 
   (define (check-values-lang? p t)
-    (check-equal? (check-values-lang p) (cons (car p) (cons '() (cdr p))) t))
+    (check-equal? (check-values-lang p) p t))
 ;check-name
   ;succes
   (check-check? check-name 'y '(x y z) "check-name: succes-01: name exists")
@@ -198,28 +186,6 @@
 
   (check-error? check-value '(let ([a (* x y)]) (+ a z)) '(x z) '() "check-value: failure-09: let value failed")
   (check-error? check-value '(let ([a (* x y)]) (+ a z)) '(x y) '() "check-value: failure-10: let pred failed")
-;check-tail
-  ;succes
-  (check-check? check-tail 'y '(x y z) '(fun1 fun2) "check-tail: succes-01: name exists")
-  (check-check? check-tail '(+ x y) '(x y z) '(fun1 fun2) "check-tail: succes-02: binop")
-  (check-check? check-tail '(if (< x y) (+ y z) (* x z)) '(x y z) '(fun1 fun2) "check-tail: succes-03: if")
-  (check-check? check-tail '(let ([a (+ x y)]) a) '(x y z) '(fun1 fun2) "check-tail: succes-04: let")
-  (check-check? check-tail '(call fun2 x y) '(x y z) '(fun1 fun2) "check-tail: succes-05: call")
-  ;failure
-  (check-error? check-tail 'y '(x) '() "check-tail: failure-01: not a name")
-  (check-error? check-tail '(= x y) '(x y) '() "check-tail: failure-02: not a binop")
-  (check-error? check-tail '(+ x y) '(x) '() "check-tail: failure-03: binop triv 1 failed")
-  (check-error? check-tail '(* x y) '(y) '() "check-tail: failure-04: binop triv 2 failed")
-
-  (check-error? check-tail '(if (< x y) (+ y z) (* x z)) '(x z) '() "check-tail: failure-06: if not pred")
-  (check-error? check-tail '(if (< x y) (+ y z) (* x y)) '(x y) '() "check-tail: failure-07: if not val 1")
-  (check-error? check-tail '(if (< x y) (+ y x) (* x z)) '(x y) '() "check-tail: failure-08: if not val 2")
-
-  (check-error? check-tail '(let ([a (* x y)]) (+ a z)) '(x z) '() "check-tail: failure-09: let value failed")
-  (check-error? check-tail '(let ([a (* x y)]) (+ a z)) '(x y) '() "check-tail: failure-10: let pred failed")
-
-  (check-error? check-tail '(call fun2 x y) '(x y z) '(fun1) "check-tail: succes-05: call name doesn't exist")
-  (check-error? check-tail '(call fun2 x y) '(x z) '(fun1 fun2) "check-tail: succes-05: arg name doesn't exist")
 
 ;check-values-lang
   ;succes

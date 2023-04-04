@@ -4,6 +4,7 @@
          "common/register.rkt"
          "220-check-values-lang.rkt"
          "210-uniquify.rkt"
+         "205-remove-complex-opera.rkt"
          "200-sequentialize-let.rkt"
          "190-normalize-bind.rkt"
          "180-impose-calling-conventions-full.rkt"
@@ -89,6 +90,7 @@
          impose-calling-conventions-full
          normalize-bind
          sequentialize-let
+         remove-complex-opera
          uniquify
          check-values-lang)))
 
@@ -134,6 +136,7 @@
                      sI (list replace-call-got-sentry
                               create-got
                               add-stktokens-sentry
+                              change-return-seal
                               clean-registers
                               secure-stktokens
                              ))])
@@ -148,13 +151,13 @@
          [switchedL (list-set
                      (list-set
                       (list-set l wI wrap-cheri-risc-v-run-time-cheri-linkage-seal)
-                      cI add-saved-registers-cheri-linkage
+                      cI add-saved-registers-cheri-linkage)
                       sI (list replace-call-got-sentry
                                create-got
                                change-return-seal
                                clean-registers
                                secure-cheri-linkage
-                               )))])
+                               ))])
     (flatten switchedL)))
 
 (define (cheri-linkage-trampoline l)

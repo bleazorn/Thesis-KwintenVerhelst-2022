@@ -116,25 +116,25 @@
 
 
 ;
-;(createFunc funcs)->'(define name? (lambda (name? ...) tail?))
+;(createFunc funcs)->'(define name? (lambda (name? ...) value?))
 ;i: integer?
 ;funcs: '((name? integer? boolean?) ...)
 (define (createFunc i fun)
   (resetGen)
   (let ([args (build-list (second fun) (lambda (x) (newName)))])
     (setFun i (list-set fun 2 #t))
-    (addFunc `(define ,(first fun) (lambda ,args ,(generate-tail args))))))
+    (addFunc `(define ,(first fun) (lambda ,args ,(generate-value args))))))
 
 
 ;
-;(generate-func funcs)->'(call name? name? ...) '((define name? (lambda (name? ...) tail?)) ...)
+;(generate-func funcs)->'(call name? name? ...) '((define name? (lambda (name? ...) value?)) ...)
 ;names->list? '(name? ...)
 ;funcs: '((name? integer? boolean?) ...)
 (define (generate-func names)
   (let* ([i (random (length funcs))]
          [fun (getFun i)])
     (cond [(not (third fun)) (createFunc i fun)])
-    `(call ,(first fun) ,@(build-list (second fun) (lambda (x) (generate-triv names))))))
+    `(call ,(first fun) ,@(build-list (second fun) (lambda (x) (generate-value names))))))
 
 ;
 ;(generate-let)->list? list? '(name? ...) '((name? value?) ...)
@@ -161,9 +161,9 @@
 ;(generate-value names)->value?
 ;names->list? '(name? ...)
 (define (generate-value names)
-  (match (getRandom 6 2)
+  (match (getRandom 6 1)
     [0 (generate-triv names)]
-    [1 `(,(generate-binop) ,(generate-triv names) ,(generate-triv names))]
+    [1 `(,(generate-binop) ,(generate-value names) ,(generate-value names))]
     [2 (let-values ([(newNames letName) (generate-let names)])
          `(let ,letName ,(generate-value newNames)))]
     [3 `(if ,(generate-pred names) ,(generate-value names) ,(generate-value names))]
@@ -171,26 +171,12 @@
     [5 (generate-func names)]
     [_ `(,(generate-binop) ,(generate-triv names) ,(generate-triv names))]))
 
-;
-;(generate-tail names)->tail?
-;names->list? '(name? ...)
-;funcs: '((name? integer? boolean?) ...)
-(define (generate-tail names)
-  (match (getRandom 5 1)
-    [0 (generate-value names)]
-    [1 (let-values ([(newNames letName) (generate-let names)])
-         `(let ,letName ,(generate-tail newNames)))]
-    [2 `(if ,(generate-pred names) ,(generate-tail names) ,(generate-tail names))]
-    [3 (generate-func names)]
-    [4 (generate-func names)]
-    [_ (generate-value names)]))
-
 
 ;
 ;(generate-program n)->Values-lang
 ;n: integer?
 (define (generate-program)
-  (let ([newTail (generate-tail '())])
+  (let ([newTail (generate-value '())])
     `(module ,@newFuncs ,newTail)))
 
 ;
