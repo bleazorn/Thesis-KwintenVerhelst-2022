@@ -4,10 +4,10 @@
 
 #Variables
 #arguments
-MVersion=6s
+MVersion=6t
 MEmulator="off"
 MVerbose="on"
-CFLAGS=
+CFLAGS=""
 
 #local variables
 varCurLoc=${PWD}
@@ -24,9 +24,13 @@ ifeq ($(call VERS, $(MVersion)),yes)
 else
 	varBuilder=Builders/elf-cheri-risc-v-builder/
 endif
-
+varRiscBuilder=Builders/elf-risc-v-builder/
+varCheriBuilder=Builders/elf-cheri-risc-v-builder/
 varLinBuilder=Builders/elf-cheri-risc-v-builder-linear-cap/
+
+
 varBuilder=$(varLinBuilder)
+MEmulator="T/sail-borrowed-cap/sail-cheri-riscv/ocaml_emulator/cheri_riscv_ocaml_sim_RV64"
 
 compiler:
 	@echo "Creating bytecode files"
@@ -88,15 +92,47 @@ examp:
 
 examl:
 	@echo "\nMake elf for " $(varCurLoc)
-	make -C $(varLinBuilder) $(varCurLoc)/example.elf
+	make -C $(varBuilder) $(varCurLoc)/example.elf
 	@echo "Run program: " $(varCurLoc)
 	~/T/sail-borrowed-cap/sail-cheri-riscv/ocaml_emulator/cheri_riscv_ocaml_sim_RV64 $(varCurLoc)/example.elf
 
 exampl:
 	@echo "Compile program in: " $(varCurLoc)/$(varCurLoc)
+	racket $(varCompile) -o example.S example.txt
+	@echo "\nMake elf for " $(varCurLoc)
+	make -C $(varBuilder) $(varCurLoc)/example.elf
+	@echo "Run program: " $(varCurLoc)
+	~/T/sail-borrowed-cap/sail-cheri-riscv/ocaml_emulator/cheri_riscv_ocaml_sim_RV64 $(varCurLoc)/example.elf
+
+examsl:
+	@echo "Compile program in: " $(varCurLoc)/$(varCurLoc)
 	racket $(varCompile) -s -o example.S example.txt
 	@echo "\nMake elf for " $(varCurLoc)
-	make -C $(varLinBuilder) $(varCurLoc)/example.elf
+	make -C $(varBuilder) $(varCurLoc)/example.elf
+	@echo "Run program: " $(varCurLoc)
+	~/T/sail-borrowed-cap/sail-cheri-riscv/ocaml_emulator/cheri_riscv_ocaml_sim_RV64 $(varCurLoc)/example.elf
+
+examel:
+	@echo "Compile program in: " $(varCurLoc)/$(varCurLoc)
+	racket $(varCompile) -e -o example.S example.txt
+	@echo "\nMake elf for " $(varCurLoc)
+	make -C $(varBuilder) $(varCurLoc)/example.elf
+	@echo "Run program: " $(varCurLoc)
+	~/T/sail-borrowed-cap/sail-cheri-riscv/ocaml_emulator/cheri_riscv_ocaml_sim_RV64 $(varCurLoc)/example.elf
+
+examcl:
+	@echo "Compile program in: " $(varCurLoc)/$(varCurLoc)
+	racket $(varCompile) -c -o example.S example.txt
+	@echo "\nMake elf for " $(varCurLoc)
+	make -C $(varBuilder) $(varCurLoc)/example.elf
+	@echo "Run program: " $(varCurLoc)
+	~/T/sail-borrowed-cap/sail-cheri-riscv/ocaml_emulator/cheri_riscv_ocaml_sim_RV64 $(varCurLoc)/example.elf
+
+examtl:
+	@echo "Compile program in: " $(varCurLoc)/$(varCurLoc)
+	racket $(varCompile) -t -o example.S example.txt
+	@echo "\nMake elf for " $(varCurLoc)
+	make -C $(varBuilder) $(varCurLoc)/example.elf
 	@echo "Run program: " $(varCurLoc)
 	~/T/sail-borrowed-cap/sail-cheri-riscv/ocaml_emulator/cheri_riscv_ocaml_sim_RV64 $(varCurLoc)/example.elf
 
@@ -111,14 +147,7 @@ combined:
 	~/T/sail-borrowed-cap/sail-cheri-riscv/ocaml_emulator/cheri_riscv_ocaml_sim_RV64 /media/kwinten/Data1/Thesis/New/Compiler/main.elf
 generate:
 	raco make tester.rkt
-	raco make Milestone2/main.rkt
-	raco make Milestone3/main.rkt
-	raco make Milestone4/main.rkt
-	raco make Milestone4c/main.rkt
-	raco make Milestone5/main.rkt
-	raco make Milestone6/main.rkt
-	raco make Milestone6f/main.rkt
-	raco make Milestone6s/main.rkt
+	raco make Milestone6t/main.rkt
 cleanbin:
 	rm -rvf compiled/ 
 	rm -rvf Milestone2/compiled/ 
@@ -129,6 +158,7 @@ cleanbin:
 	rm -rvf Milestone6/compiled/ 
 	rm -rvf Milestone6f/compiled/ 
 	rm -rvf Milestone6s/compiled/ 
+	rm -rvf Milestone6t/compiled/ 
 
 cleanS:
 	rm -fv *.S

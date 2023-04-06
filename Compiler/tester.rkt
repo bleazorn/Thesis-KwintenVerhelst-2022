@@ -1,16 +1,25 @@
 #lang racket
 
 (require racket/system)
-(require "Milestone6s/generate-values-lang.rkt")
-(require "Milestone6s/interp-values-lang.rkt"
-         "Milestone6s/common/register.rkt"
-         "Milestone6s/steps.rkt")
+(require "Milestone6t/generate-values-lang.rkt")
+(require "Milestone6t/interp-values-lang.rkt"
+         "Milestone6t/common/register.rkt"
+         "Milestone6t/steps.rkt")
 (module+ test
   (require rackunit))
 
 ;(define emulatorLoc "T/sail-cheri-riscv/c_emulator/cheri_riscv_sim_RV64")
 (define emulatorLoc "T/sail-borrowed-cap/sail-cheri-riscv/ocaml_emulator/cheri_riscv_ocaml_sim_RV64")
-(define flags "-c -o tmpTest.S")
+(define flag-cc "-t")
+#|
+
+-s
+-e
+-c
+-t
+-r
+|#
+(define flags (format "~a -o tmpTest.S" flag-cc))
 (define (check-program-file program result)
   (define-values (sp out in err)
     (subprocess #f #f #f "/bin/bash" "./tester.sh" program (number->string result) emulatorLoc flags))
@@ -67,7 +76,7 @@
       (check-equal? (check-random) "Test Succeed" (format "RandomTest ~a" i))))
 
 ;RandomTest
-  ;#|
+  #|
   (randomTesting 5)
   ;|#
   

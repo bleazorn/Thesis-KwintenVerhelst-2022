@@ -163,8 +163,11 @@
 (define (cheri-linkage-trampoline l)
   (let* ([wI (index-where l (curry equal? wrap-cheri-risc-v-run-time))]
          [sI (index-where l (curry equal? change-frame-pointer))]
+         [cI (index-where l (curry equal? add-saved-registers-full))]
          [switchedL (list-set
-                     (list-set l wI wrap-cheri-risc-v-run-time-cheri-linkage-trampoline)
+                     (list-set
+                      (list-set l wI wrap-cheri-risc-v-run-time-cheri-linkage-trampoline)
+                      cI add-saved-registers-cheri-linkage)
                      sI (list replace-call-got-sentry
                               create-got
                               clean-registers

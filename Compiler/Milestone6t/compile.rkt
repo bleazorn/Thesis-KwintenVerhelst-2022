@@ -195,13 +195,13 @@
 (module+ test
   (check-equal? #t #t "test"))
 
-;#|
+#|
 (parameterize (;[cc (cc)]
                ;[cc 'vanilla-cheri-riscv]
                ;[cc 'stktokens]
                ;[cc 'stkTokens-sentry]
-               [cc 'cheri-linkage-seal]
-               ;[cc 'cheri-linkage-trampoline]
+               ;[cc 'cheri-linkage-seal]
+               [cc 'cheri-linkage-trampoline]
                ;[cc 'risc-v]
                ;[cc 'tail-calls]
                )
