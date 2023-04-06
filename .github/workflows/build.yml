@@ -23,4 +23,4 @@ jobs:
      - name: Install cpsc411/cpsc411-lib
        run: raco pkg install --auto --skip-installed https://github.com/cpsc411/cpsc411-pub.git\?path\=cpsc411-lib\#2021w2
      - name: Test latest compiler
-       run: raco test ./Compiler/Milestone6s/*.rkt
+       run: raco test ./Compiler/Milestone6t/*.rkt
